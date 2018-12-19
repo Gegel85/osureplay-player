@@ -1,3 +1,6 @@
 [submodule "lib/osureplay-parser"]
 	path = lib/osureplay-parser
 	url = https://github.com/Gegel85/osureplay-parser
+[submodule "lib/osumap-parser"]
+	path = lib/osumap-parser
+	url = git@github.com:/Gegel85/osumap-parser.git
