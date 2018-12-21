@@ -5,7 +5,8 @@ SRC =	main.c					\
 OBJ =	$(SRC:%.c=src/%.o)
 
 INC =	-Iinclude			\
-	-Ilib/osureplay-parser/include		\
+	-Ilib/osureplay-parser/include	\
+	-Ilib/osumap-parser/include	\
 
 CSFML = -lcsfml-audio		\
 	-lcsfml-graphics	\
@@ -17,6 +18,8 @@ CSFML = -lcsfml-audio		\
 LDFLAGS =			\
 	-L lib/osureplay-parser	\
 	-losureplayparser	\
+	-L lib/osumap-parser	\
+	-losumapparser		\
 	-llzma			\
 
 CFLAGS= $(INC)			\
@@ -29,6 +32,7 @@ CC =	gcc
 RULE =	all
 
 LIBS =	lib/osureplay-parser/libosureplay-parser.a	\
+	lib/osumap-parser/osumap-parser.a		\
 
 RES =
 
@@ -36,12 +40,16 @@ all:	$(LIBS) $(NAME)
 
 lib/osureplay-parser/libosureplay-parser.a:
 	$(MAKE) -C lib/osureplay-parser $(RULE)
+	
+lib/osumap-parser/osumap-parser.a:
+	$(MAKE) -C lib/osumap-parser $(RULE)
 
 $(NAME):$(OBJ)
 	$(CC) -o $(NAME) $(OBJ) $(LDFLAGS) $(CSFML) $(RES)
 
 clean:
 	$(MAKE) -C lib/osureplay-parser clean
+	$(MAKE) -C lib/osumap-parser clean
 	$(RM) $(OBJ)
 	$(RM) icon.res
 
@@ -50,14 +58,10 @@ fclean:	clean
 
 ffclean:fclean
 	$(MAKE) -C lib/osureplay-parser fclean
+	$(MAKE) -C lib/osumap-parser fclean
 
 re:	fclean all
 
 dbg:	CFLAGS += -g -O0
 dbg:	RULE = dbg
 dbg:	ffclean all
-
-epi:	CSFML = -lc_graph_prog
-epi:	CFLAGS += -g -O0
-epi:	RULE = dbg
-epi:	re
