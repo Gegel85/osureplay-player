@@ -7,6 +7,7 @@ OBJ =	$(SRC:%.c=src/%.o)
 INC =	-Iinclude			\
 	-Ilib/osureplay-parser/include	\
 	-Ilib/osumap-parser/include	\
+	-Ilib/concatf/include		\
 
 CSFML = -lcsfml-audio		\
 	-lcsfml-graphics	\
@@ -20,6 +21,8 @@ LDFLAGS =			\
 	-losureplayparser	\
 	-L lib/osumap-parser	\
 	-losumapparser		\
+	-L lib/concatf		\
+	-lconcatf		\
 	-llzma			\
 
 CFLAGS= $(INC)			\
@@ -33,6 +36,7 @@ RULE =	all
 
 LIBS =	lib/osureplay-parser/libosureplay-parser.a	\
 	lib/osumap-parser/osumap-parser.a		\
+	lib/concatf/libconcatf.a			\
 
 RES =
 
@@ -44,12 +48,16 @@ lib/osureplay-parser/libosureplay-parser.a:
 lib/osumap-parser/osumap-parser.a:
 	$(MAKE) -C lib/osumap-parser $(RULE)
 
+lib/concatf/libconcatf.a:
+	$(MAKE) -C lib/concatf $(RULE)
+
 $(NAME):$(OBJ)
 	$(CC) -o $(NAME) $(OBJ) $(LDFLAGS) $(CSFML) $(RES)
 
 clean:
 	$(MAKE) -C lib/osureplay-parser clean
 	$(MAKE) -C lib/osumap-parser clean
+	$(MAKE) -C lib/concatf clean
 	$(RM) $(OBJ)
 	$(RM) icon.res
 
@@ -59,6 +67,7 @@ fclean:	clean
 ffclean:fclean
 	$(MAKE) -C lib/osureplay-parser fclean
 	$(MAKE) -C lib/osumap-parser fclean
+	$(MAKE) -C lib/concatf clean
 
 re:	fclean all
 
