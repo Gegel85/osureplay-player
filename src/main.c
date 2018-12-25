@@ -158,7 +158,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap)
 	sfVideoMode	mode = {640, 480, 32};
 	sfEvent		event;
 	unsigned long	totalTicks = 0;
-	unsigned long	ticks = 0;
+	unsigned long	ticks = 500;
 	unsigned long	currentTimingPoint = 0;
 	unsigned int	currentGameEvent = 0;
 	unsigned int	currentLifeEvent = 0;
@@ -170,9 +170,11 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap)
 	int		sound = 0;
 	float		life = 1;
 	int		oldTime = 0;
-	bool		playing = true;
+	int 		time = 0;
 	sfClock		*clock = NULL;
+	bool		played[beatmap->hitObjects.length];
 
+	memset(played, 0, sizeof(played));
 	lifeBar = sfRectangleShape_create();
 	cursor = sfRectangleShape_create();
 	objects = sfCircleShape_create();
@@ -207,90 +209,94 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap)
 			}*/
 		}
 		sfRenderWindow_clear(window, (sfColor){0, 0, 0, 255});
-		if (playing) {
-			int 	time = 0;
 
-			if (clock)
-				time = sfTime_asMilliseconds(sfClock_getElapsedTime(clock));
-			if (replay->mods | MODE_DOUBLE_TIME || replay->mods | MODE_NIGHTCORE) {
-				totalTicks = time * 1.5;
-				ticks += (time - oldTime) * 1.5;
-			} else {
-				totalTicks = time;
-				ticks += time - oldTime;
-			}
-
-			if (beatmap->generalInfos.audioLeadIn <= totalTicks && music && sfMusic_getStatus(music) != sfPlaying) {
-				sfMusic_play(music);
-				sfMusic_setLoop(music, sfFalse);
-				if (replay->mods | MODE_DOUBLE_TIME || replay->mods | MODE_NIGHTCORE)
-					sfMusic_setPitch(music, 1.5);
-			}
-
-			while (
-				currentLifeEvent < replay->lifeBar.length &&
-				replay->lifeBar.content[currentLifeEvent].timeToHappen <= totalTicks
-			) {
-				life = replay->lifeBar.content[currentLifeEvent].newValue;
-				currentLifeEvent++;
-			}
-			sfRectangleShape_setSize(lifeBar, (sfVector2f){300 * life, 20});
-
-			while (
-				currentGameEvent < replay->gameEvents.length &&
-				replay->gameEvents.content[currentGameEvent].timeToHappen <= ticks
-			) {
-				ticks -= replay->gameEvents.content[currentGameEvent].timeToHappen;
-				cursorPos = *(sfVector2f *)&replay->gameEvents.content[currentGameEvent].cursorPos;
-				pressed = replay->gameEvents.content[currentGameEvent].keysPressed;
-				currentGameEvent++;
-			}
-			sfRectangleShape_setPosition(cursor, cursorPos);
-			sfRectangleShape_setFillColor(cursor, (sfColor){
-				(pressed & INPUT_KEY1) > 0 ? 0 : 255,
-				(pressed & INPUT_KEY2) > 0 ? 0 : 255,
-				255,
-				255
-			});
-
-			/*if (hitsound[0] && beatmap->hitObjects.content[currentGameHitObject].timeToAppear <= totalTicks && beatmap->hitObjects.content[currentGameHitObject].timeToAppear > totalTicks - time + oldTime) {
-				sfSound_play(hitsound[sound]);
-				printf("Sound: %i (%p  %p)\n", sound, hitsound[sound], sfSound_getBuffer(hitsound[sound]));
-				sound += 1;
-				sound %= nbOfSound;
-			}*/
-			while (
-				currentGameHitObject < beatmap->hitObjects.length && (
-					(
-						!(beatmap->hitObjects.content[currentGameHitObject].type & HITOBJ_SLIDER) &&
-						beatmap->hitObjects.content[currentGameHitObject].timeToAppear + 20 <= totalTicks
-					) || (
-						beatmap->hitObjects.content[currentGameHitObject].type & HITOBJ_SLIDER &&
-						beatmap->hitObjects.content[currentGameHitObject].timeToAppear +
-						sliderLength(beatmap, currentGameHitObject, beatmap->timingPoints.content[currentTimingPoint]) <= totalTicks
-					)
-				)
-			) {
-				sfSound_play(hitsound[sound]);
-				sound += 1;
-				sound %= nbOfSound;
-				if (beatmap->hitObjects.content[currentGameHitObject].type & HITOBJ_NEW_COMBO) {
-					beginCombo = 0;
-					currentComboColor = (currentComboColor + 1) % beatmap->colors.length;
-				}
-				beginCombo++;
-				currentGameHitObject++;
-			}
-			oldTime = time;
-			if (!clock)
-				clock = sfClock_create();
+		time = 0;
+		if (clock)
+			time = sfTime_asMilliseconds(sfClock_getElapsedTime(clock));
+		if ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE)) {
+			totalTicks = time * 1.5;
+			ticks += (time - oldTime) * 1.5;
+		} else {
+			totalTicks = time;
+			ticks += time - oldTime;
 		}
+
+		if (beatmap->generalInfos.audioLeadIn <= totalTicks && music && sfMusic_getStatus(music) != sfPlaying) {
+			sfMusic_play(music);
+			sfMusic_setLoop(music, sfFalse);
+			if ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE))
+				sfMusic_setPitch(music, 1.5);
+		}
+
+		while (
+			currentLifeEvent < replay->lifeBar.length &&
+			replay->lifeBar.content[currentLifeEvent].timeToHappen <= totalTicks
+		) {
+			life = replay->lifeBar.content[currentLifeEvent].newValue;
+			currentLifeEvent++;
+		}
+		sfRectangleShape_setSize(lifeBar, (sfVector2f){300 * life, 20});
+
+		while (
+			currentGameEvent < replay->gameEvents.length &&
+			replay->gameEvents.content[currentGameEvent].timeToHappen <= ticks
+		) {
+			ticks -= replay->gameEvents.content[currentGameEvent].timeToHappen;
+			cursorPos = *(sfVector2f *)&replay->gameEvents.content[currentGameEvent].cursorPos;
+			pressed = replay->gameEvents.content[currentGameEvent].keysPressed;
+			currentGameEvent++;
+			if (currentGameEvent == replay->gameEvents.length)
+				printf("End !\n");
+		}
+		sfRectangleShape_setPosition(cursor, cursorPos);
+		sfRectangleShape_setFillColor(cursor, (sfColor){
+			(pressed & INPUT_KEY1) > 0 ? 0 : 255,
+			(pressed & INPUT_KEY2) > 0 ? 0 : 255,
+			255,
+			255
+		});
+
+		if (!played[currentGameHitObject] && *hitsound && beatmap->hitObjects.content[currentGameHitObject].timeToAppear <= totalTicks) {
+			sfSound_play(hitsound[sound]);
+			sound += 1;
+			sound %= nbOfSound;
+			played[currentGameHitObject] = true;
+		}
+		while (
+			currentGameHitObject < beatmap->hitObjects.length && (
+				(
+					!(beatmap->hitObjects.content[currentGameHitObject].type & HITOBJ_SLIDER) &&
+					beatmap->hitObjects.content[currentGameHitObject].timeToAppear + 20 <= totalTicks
+				) || (
+					beatmap->hitObjects.content[currentGameHitObject].type & HITOBJ_SLIDER &&
+					beatmap->hitObjects.content[currentGameHitObject].timeToAppear +
+					sliderLength(beatmap, currentGameHitObject, beatmap->timingPoints.content[currentTimingPoint]) <= totalTicks
+				)
+			)
+		) {
+			if (*hitsound && (!played[currentGameHitObject] || beatmap->hitObjects.content[currentGameHitObject].type & HITOBJ_SLIDER)) {
+				sfSound_play(hitsound[sound]);
+				sound += 1;
+				sound %= nbOfSound;
+			}
+			played[currentGameHitObject] = true;
+			if (beatmap->hitObjects.content[currentGameHitObject].type & HITOBJ_NEW_COMBO) {
+				beginCombo = 0;
+				currentComboColor = (currentComboColor + 1) % beatmap->colors.length;
+			}
+			beginCombo++;
+			currentGameHitObject++;
+		}
+		oldTime = time;
+
 		displayHitObjects(currentComboColor, currentGameHitObject, currentTimingPoint, beatmap, totalTicks, beginCombo);
 
 		sfRenderWindow_drawRectangleShape(window, lifeBar, NULL);
 		sfRenderWindow_drawRectangleShape(window, cursor, NULL);
 
 		sfRenderWindow_display(window);
+		if (!clock)
+			clock = sfClock_create();
 	}
 }
 
