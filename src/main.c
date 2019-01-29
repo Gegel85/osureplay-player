@@ -178,7 +178,6 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap)
 	sfVideoMode	mode = {640, 480, 32};
 	sfEvent		event;
 	unsigned long	totalTicks = 0;
-	unsigned long	ticks = 0;
 	unsigned long	currentTimingPoint = 0;
 	unsigned int	currentGameEvent = 0;
 	unsigned int	currentLifeEvent = 0;
@@ -189,8 +188,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap)
 	unsigned int	pressed = 0;
 	int		sound = 0;
 	float		life = 1;
-	int		oldTime = 0;
-	int 		time = 0;
+	unsigned long	time = 0;
 	bool		musicPlayed = false;
 	sfClock		*clock = NULL;
 	bool		played[beatmap->hitObjects.length];
@@ -235,23 +233,18 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap)
 		time = 0;
 		if (clock)
 			time = sfTime_asMilliseconds(sfClock_getElapsedTime(clock));
-		if ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE)) {
+		if ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE))
 			totalTicks = time * 1.5;
-			ticks += time - oldTime;
-		} else {
+		else
 			totalTicks = time;
-			ticks += time - oldTime;
-		}
 
 		if ((unsigned)beatmap->generalInfos.audioLeadIn <= totalTicks && music && sfMusic_getStatus(music) != sfPlaying) {
-			if (musicPlayed) {
-				sfRenderWindow_close(window);
-				continue;
+			if (!musicPlayed) {
+				sfMusic_play(music);
+				if ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE))
+					sfMusic_setPitch(music, 1.5);
+				musicPlayed = true;
 			}
-			sfMusic_play(music);
-			if ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE))
-				sfMusic_setPitch(music, 1.5);
-			musicPlayed = true;
 		}
 
 		while (
@@ -265,10 +258,8 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap)
 
 		while (
 			currentGameEvent < replay->gameEvents.length &&
-			replay->gameEvents.content[currentGameEvent].timeToHappen <= ticks
+			replay->gameEvents.content[currentGameEvent].timeToHappen <= totalTicks
 		) {
-			if (replay->gameEvents.content[currentGameEvent].timeToHappen > 0)
-				ticks -= replay->gameEvents.content[currentGameEvent].timeToHappen;
 			cursorPos = *(sfVector2f *)&replay->gameEvents.content[currentGameEvent].cursorPos;
 			cursorPos.x += padding.x;
 			cursorPos.y += padding.y;
@@ -318,12 +309,11 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap)
 			beginCombo++;
 			currentGameHitObject++;
 		}
-		oldTime = time;
 
 		displayHitObjects(currentComboColor, currentGameHitObject, currentTimingPoint, beatmap, totalTicks, beginCombo);
 
 		char buffer[1000];
-		sprintf(buffer, "Time elapsed: %.2f/%.2fs", time / 1000.f, replay->replayLength / 1000.f);
+		sprintf(buffer, "Time elapsed: %.2f/%.2fs", time / 1000.f, replay->replayLength / ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE) ? 1500.f : 1000.f));
 		sfText_setColor(text, (sfColor){255, 255, 255, 255});
 		sfText_setCharacterSize(text, 15);
 		sfText_setString(text, buffer);

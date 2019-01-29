@@ -34,18 +34,18 @@ CC =	gcc
 
 RULE =	all
 
-LIBS =	lib/osureplay-parser/libosureplay-parser.a	\
-	lib/osumap-parser/osumap-parser.a		\
-	lib/concatf/libconcatf.a			\
+LIBS =	lib/osureplay-parser/libosureplayparser.a	\
+		lib/osumap-parser/libosumapparser.a			\
+		lib/concatf/libconcatf.a					\
 
 RES =
 
 all:	$(LIBS) $(NAME)
 
-lib/osureplay-parser/libosureplay-parser.a:
+lib/osureplay-parser/libosureplayparser.a:
 	$(MAKE) -C lib/osureplay-parser $(RULE)
 	
-lib/osumap-parser/osumap-parser.a:
+lib/osumap-parser/libosumapparser.a:
 	$(MAKE) -C lib/osumap-parser $(RULE)
 
 lib/concatf/libconcatf.a:
@@ -67,7 +67,7 @@ fclean:	clean
 ffclean:fclean
 	$(MAKE) -C lib/osureplay-parser fclean
 	$(MAKE) -C lib/osumap-parser fclean
-	$(MAKE) -C lib/concatf clean
+	$(MAKE) -C lib/concatf fclean
 
 re:	fclean all
 
