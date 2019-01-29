@@ -23,7 +23,7 @@ LDFLAGS =			\
 	-losumapparser		\
 	-L lib/concatf		\
 	-lconcatf		\
-	-llzma			\
+	-lm
 
 CFLAGS= $(INC)			\
 	-W			\
@@ -44,7 +44,7 @@ all:	$(LIBS) $(NAME)
 
 lib/osureplay-parser/libosureplayparser.a:
 	$(MAKE) -C lib/osureplay-parser $(RULE)
-	
+
 lib/osumap-parser/libosumapparser.a:
 	$(MAKE) -C lib/osumap-parser $(RULE)
 
