@@ -63,19 +63,26 @@ unsigned	getLastObjToDisplay(unsigned currentGameHitObject, unsigned currentTimi
 	return end;
 }
 
-void	displayApproachCircle(sfColor color, OsuMap_hitObject object, OsuMap *beatmap, unsigned long ticks)
+void	displayApproachCircle(sfColor color, OsuMap_hitObject object, OsuMap *beatmap, unsigned long ticks, Dict *images)
 {
 	if (object.timeToAppear < ticks)
 		return;
-	FrameBuffer_drawCircle(
+	FrameBuffer_drawImage(
 		&frame_buffer,
-		2,
 		(sfVector2i){
-			object.position.x - (54.4f - 4.48f * (float)beatmap->difficulty.circleSize + (object.timeToAppear - ticks) / 8.f) + padding.x,
-			object.position.y - (54.4f - 4.48f * (float)beatmap->difficulty.circleSize + (object.timeToAppear - ticks) / 8.f) + padding.y
+			object.position.x + padding.x,
+			object.position.y + padding.y
 		},
-		54.4f - 4.48f * (float)beatmap->difficulty.circleSize + (object.timeToAppear - ticks) / 8.f,
-		color
+		Dict_getElement(
+			images,
+			"approachcircle"
+		),
+		(sfVector2i){
+			(54.4f - 4.48f * (float)beatmap->difficulty.circleSize + (object.timeToAppear - ticks) / 8.f) * 2,
+			(54.4f - 4.48f * (float)beatmap->difficulty.circleSize + (object.timeToAppear - ticks) / 8.f) * 2
+		},
+		color,
+		true
 	);
 }
 
@@ -135,16 +142,14 @@ void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject
 							sliderInfos(
 								beatmap->hitObjects.content[i].additionalInfos
 							)->curvePoints.length - 1
-						].x - 54.4f -
-						4.48f * (float)beatmap->difficulty.circleSize + padding.x,
+						].x + padding.x,
 						sliderInfos(
 							beatmap->hitObjects.content[i].additionalInfos
 						)->curvePoints.content[
 							sliderInfos(
 								beatmap->hitObjects.content[i].additionalInfos
 							)->curvePoints.length - 1
-						].y - 54.4f -
-						4.48f * (float)beatmap->difficulty.circleSize + padding.y
+						].y + padding.y
 					},
 					Dict_getElement(
 						images,
@@ -159,7 +164,8 @@ void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject
 						beatmap->colors.content[color].green * 0.5,
 						beatmap->colors.content[color].blue * 0.5,
 						alpha
-					}
+					},
+					true
 				);
 				for (unsigned j = 0; j < sliderInfos(
 					beatmap->hitObjects.content[i].additionalInfos
@@ -199,10 +205,8 @@ void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject
 			FrameBuffer_drawImage(
 				&frame_buffer,
 				(sfVector2i){
-					beatmap->hitObjects.content[i].position.x -
-					(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) + padding.x,
-					beatmap->hitObjects.content[i].position.y -
-					(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) + padding.y
+					beatmap->hitObjects.content[i].position.x + padding.x,
+					beatmap->hitObjects.content[i].position.y + padding.y
 				},
 				Dict_getElement(
 					images,
@@ -217,15 +221,14 @@ void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject
 					beatmap->colors.content[color].green * 0.5,
 					beatmap->colors.content[color].blue * 0.5,
 					alpha
-				}
+				},
+				true
 			);
 			FrameBuffer_drawImage(
 				&frame_buffer,
 				(sfVector2i){
-					beatmap->hitObjects.content[i].position.x -
-					(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) + padding.x,
-					beatmap->hitObjects.content[i].position.y -
-					(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) + padding.y
+					beatmap->hitObjects.content[i].position.x + padding.x,
+					beatmap->hitObjects.content[i].position.y + padding.y
 				},
 				Dict_getElement(
 					images,
@@ -235,7 +238,8 @@ void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject
 					(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) * 2,
 					(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) * 2
 				},
-				(sfColor){255, 255, 255, alpha}
+				(sfColor){255, 255, 255, alpha},
+				true
 			);
 			displayApproachCircle(
 				(sfColor){
@@ -246,7 +250,8 @@ void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject
 				},
 				beatmap->hitObjects.content[i],
 				beatmap,
-				totalTicks
+				totalTicks,
+				images
 			);
 		}
 	}
@@ -298,7 +303,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 		FrameBuffer_clear(&frame_buffer, (sfColor){0, 0, 0, 255});
 		sfRenderWindow_clear(window, (sfColor){0, 0, 0, 255});
 
-		FrameBuffer_drawImage(&frame_buffer, (sfVector2i){0, 0}, Dict_getElement(images, beatmap->backgroundPath), (sfVector2i){-1, -1}, (sfColor){255, 255, 255, 255});
+		FrameBuffer_drawImage(&frame_buffer, (sfVector2i){0, 0}, Dict_getElement(images, beatmap->backgroundPath), (sfVector2i){-1, -1}, (sfColor){255, 255, 255, 255}, false);
 		time = 0;
 		if (clock)
 			time = sfTime_asMilliseconds(sfClock_getElapsedTime(clock));
@@ -384,7 +389,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 		sfRenderWindow_drawRectangleShape(window, cursor, NULL);*/
 
 		FrameBuffer_drawFilledRectangle(&frame_buffer, (sfVector2i){10, 10}, (sfVector2u){300 * life, 20}, (sfColor){255, 255, 255, 255});
-		FrameBuffer_drawImage(&frame_buffer, (sfVector2i){cursorPos.x, cursorPos.y}, Dict_getElement(images, "cursor"), (sfVector2i){-1, -1}, (sfColor){255, 255, 255, 255});
+		FrameBuffer_drawImage(&frame_buffer, (sfVector2i){cursorPos.x, cursorPos.y}, Dict_getElement(images, "cursor"), (sfVector2i){-1, -1}, (sfColor){255, 255, 255, 255}, true);
 
 		FrameBuffer_draw(&frame_buffer, window);
 		sfRenderWindow_display(window);
@@ -417,10 +422,10 @@ LoadingPair	*createPair(void *(*creator)(const char *), void (*destroyer)(void *
 
 void	createLoader(Dict *loaders)
 {
-	Dict_addElement(loaders, "ogg", createPair(sfSoundBuffer_createFromFile, sfSoundBuffer_destroy, SOUND), free);
-	Dict_addElement(loaders, "wav", createPair(sfSoundBuffer_createFromFile, sfSoundBuffer_destroy, SOUND), free);
-	Dict_addElement(loaders, "png", createPair(sfImage_createFromFile, sfImage_destroy, IMAGE), free);
-	Dict_addElement(loaders, "jpg", createPair(sfImage_createFromFile, sfImage_destroy, IMAGE), free);
+	Dict_addElement(loaders, "ogg", createPair((void *)sfSoundBuffer_createFromFile, (void *)sfSoundBuffer_destroy, SOUND), free);
+	Dict_addElement(loaders, "wav", createPair((void *)sfSoundBuffer_createFromFile, (void *)sfSoundBuffer_destroy, SOUND), free);
+	Dict_addElement(loaders, "png", createPair((void *)sfImage_createFromFile, (void *)sfImage_destroy, IMAGE), free);
+	Dict_addElement(loaders, "jpg", createPair((void *)sfImage_createFromFile, (void *)sfImage_destroy, IMAGE), free);
 }
 
 int	main(int argc, char **args)

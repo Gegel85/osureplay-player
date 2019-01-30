@@ -77,7 +77,7 @@ void	FrameBuffer_drawFilledRectangle(FrameBuffer *buffer, sfVector2i pos, sfVect
 			FrameBuffer_drawPoint(buffer, (sfVector2i){x + pos.x, y + pos.y}, color);
 }
 
-void	FrameBuffer_drawImage(FrameBuffer *buffer, sfVector2i pos, sfImage *image, sfVector2i newSize, sfColor tint)
+void	FrameBuffer_drawImage(FrameBuffer *buffer, sfVector2i pos, sfImage *image, sfVector2i newSize, sfColor tint, bool centered)
 {
 	if (!image)
 		return;
@@ -89,6 +89,11 @@ void	FrameBuffer_drawImage(FrameBuffer *buffer, sfVector2i pos, sfImage *image, 
 		newSize.y < 0 ? 1 : ((float)newSize.y / size.y)
 	};
 	sfColor col;
+
+	if (centered) {
+		pos.x -= (size.x * scale.x) / 2;
+		pos.y -= (size.y * scale.y) / 2;
+	}
 
 	for (unsigned x = 0; x < size.x * scale.x; x++)
 		for (unsigned y = 0; y < size.y * scale.y; y++) {
