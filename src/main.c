@@ -258,7 +258,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap)
 
 		while (
 			currentGameEvent < replay->gameEvents.length &&
-			replay->gameEvents.content[currentGameEvent].timeToHappen <= totalTicks
+			replay->gameEvents.content[currentGameEvent].timeToHappen <= (int)totalTicks
 		) {
 			cursorPos = *(sfVector2f *)&replay->gameEvents.content[currentGameEvent].cursorPos;
 			cursorPos.x += padding.x;
@@ -266,6 +266,11 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap)
 			pressed = replay->gameEvents.content[currentGameEvent].keysPressed;
 			currentGameEvent++;
 		}
+		if (
+                	currentGameEvent == replay->gameEvents.length &&
+                	replay->gameEvents.content[currentGameEvent].timeToHappen <= (int)totalTicks
+                )
+			sfRenderWindow_close(window);
 		sfRectangleShape_setPosition(cursor, cursorPos);
 		sfRectangleShape_setFillColor(cursor, (sfColor){
 			(pressed & INPUT_KEY1) > 0 ? 0 : 255,
