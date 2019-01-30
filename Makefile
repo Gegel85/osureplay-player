@@ -1,34 +1,38 @@
 NAME =	osuReplayPlayer
 
-SRC =	main.c					\
+SRC =	main.c			\
+		globals.c		\
+		frame_buffer.c	\
+		dict.c			\
+		load_skin.c		\
 
 OBJ =	$(SRC:%.c=src/%.o)
 
-INC =	-Iinclude			\
-	-Ilib/osureplay-parser/include	\
-	-Ilib/osumap-parser/include	\
-	-Ilib/concatf/include		\
+INC =	-Iinclude						\
+		-Ilib/osureplay-parser/include	\
+		-Ilib/osumap-parser/include		\
+		-Ilib/concatf/include			\
 
 CSFML = -lcsfml-audio		\
-	-lcsfml-graphics	\
-	-lcsfml-network		\
-	-lcsfml-system		\
-	-lcsfml-window		\
+		-lcsfml-graphics	\
+		-lcsfml-network		\
+		-lcsfml-system		\
+		-lcsfml-window		\
 
 
-LDFLAGS =			\
+LDFLAGS =					\
 	-L lib/osureplay-parser	\
-	-losureplayparser	\
+	-losureplayparser		\
 	-L lib/osumap-parser	\
-	-losumapparser		\
-	-L lib/concatf		\
-	-lconcatf		\
+	-losumapparser			\
+	-L lib/concatf			\
+	-lconcatf				\
 	-lm
 
-CFLAGS= $(INC)			\
+CFLAGS= $(INC)	\
 	-W			\
-	-Wall			\
-	-Wextra			\
+	-Wall		\
+	-Wextra		\
 
 CC =	gcc
 

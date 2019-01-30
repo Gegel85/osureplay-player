@@ -7,23 +7,28 @@
 #include <concatf.h>
 #include <osu_replay_parser.h>
 #include <osu_map_parser.h>
+#include "skin.h"
+#include "dict.h"
+#include "defines.h"
+#include "globals.h"
 
-#define toSfVector2f(x, y)	((sfVector2f){x, y})
-#define sliderInfos(elem)	((OsuMap_hitObjectSliderInfos *)elem)
-#define sliderLength(beatmap, elem, timeingpt)	sliderInfos(beatmap->hitObjects.content[elem].additionalInfos)->pixelLength / (100 * beatmap->difficulty.sliderMultiplayer) * timeingpt.millisecondsPerBeat
-#define BASE_OBJ_ALPHA		200
-#define nbOfSound		8
+void	playSound(sfSoundBuffer *buffer)
+{
+	static sfSound	*sounds[nbOfSound];
+	static int	current = 0;
+	static bool	first = true;
 
-sfRectangleShape*lifeBar;
-sfRectangleShape*cursor;
-sfCircleShape	*objects;
-sfCircleShape	*aproachCircle;
-sfFont		*font;
-sfText		*text;
-sfRenderWindow	*window;
-sfMusic		*music;
-sfSound		*hitsound[nbOfSound];
-sfVector2u	padding;
+	if (first) {
+		for (int i = 0; i < nbOfSound; i++)
+			sounds[i] = sfSound_create();
+		first = false;
+	}
+	if (!buffer)
+		return;
+	sfSound_setBuffer(sounds[current], buffer);
+	sfSound_play(sounds[current++]);
+	current %= nbOfSound;
+}
 
 sfVector2f	getTextSize(unsigned char *str, unsigned charSize)
 {
@@ -62,18 +67,19 @@ void	displayApproachCircle(sfColor color, OsuMap_hitObject object, OsuMap *beatm
 {
 	if (object.timeToAppear < ticks)
 		return;
-	sfCircleShape_setFillColor(aproachCircle, (sfColor){0, 0, 0, 0});
-	sfCircleShape_setOutlineColor(aproachCircle, color);
-	sfCircleShape_setOutlineThickness(aproachCircle, 2);
-	sfCircleShape_setRadius(aproachCircle, 54.4f - 4.48f * (float)beatmap->difficulty.circleSize + (object.timeToAppear - ticks) / 8.f);
-	sfCircleShape_setPosition(aproachCircle, toSfVector2f(
-		object.position.x - (54.4f - 4.48f * (float)beatmap->difficulty.circleSize + (object.timeToAppear - ticks) / 8.f) + padding.x,
-		object.position.y - (54.4f - 4.48f * (float)beatmap->difficulty.circleSize + (object.timeToAppear - ticks) / 8.f) + padding.y
-	));
-	sfRenderWindow_drawCircleShape(window, aproachCircle, NULL);
+	FrameBuffer_drawCircle(
+		&frame_buffer,
+		2,
+		(sfVector2i){
+			object.position.x - (54.4f - 4.48f * (float)beatmap->difficulty.circleSize + (object.timeToAppear - ticks) / 8.f) + padding.x,
+			object.position.y - (54.4f - 4.48f * (float)beatmap->difficulty.circleSize + (object.timeToAppear - ticks) / 8.f) + padding.y
+		},
+		54.4f - 4.48f * (float)beatmap->difficulty.circleSize + (object.timeToAppear - ticks) / 8.f,
+		color
+	);
 }
 
-void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject, unsigned currentTimingPoint, OsuMap *beatmap, unsigned long totalTicks, unsigned beginCombo)
+void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject, unsigned currentTimingPoint, OsuMap *beatmap, unsigned long totalTicks, unsigned beginCombo, Dict *images, Dict *sounds)
 {
 	char		buffer[11];
 	unsigned	end;
@@ -89,7 +95,17 @@ void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject
 			long	remaining = *(long *)beatmap->hitObjects.content[i].additionalInfos - totalTicks;
 			float	radius = beatmap->hitObjects.content[i].timeToAppear >= totalTicks ? 200 : 2 * (100 - (duration - remaining) * 100.f / duration);
 
-			sfCircleShape_setFillColor(aproachCircle, (sfColor){0, 0, 0, 0});
+			FrameBuffer_drawCircle(
+				&frame_buffer,
+				4,
+				(sfVector2i){
+					320 - radius,
+					240 - radius
+				},
+				radius,
+				(sfColor){255, 255, 255, alpha}
+			);
+			/*sfCircleShape_setFillColor(aproachCircle, (sfColor){0, 0, 0, 0});
 			sfCircleShape_setOutlineColor(aproachCircle, (sfColor){255, 255, 255, alpha});
 			sfCircleShape_setOutlineThickness(aproachCircle, 4);
 			sfCircleShape_setRadius(aproachCircle, radius);
@@ -97,7 +113,7 @@ void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject
 				320 - radius,
 				240 - radius
 			));
-			sfRenderWindow_drawCircleShape(window, aproachCircle, NULL);
+			sfRenderWindow_drawCircleShape(window, aproachCircle, NULL);*/
 		} else {
 			combo = beginCombo;
 			color = currentComboColor;
@@ -110,9 +126,45 @@ void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject
 			}
 
 			if (beatmap->hitObjects.content[i].type & HITOBJ_SLIDER) {
+				FrameBuffer_drawImage(
+					&frame_buffer,
+					(sfVector2i){
+						sliderInfos(
+							beatmap->hitObjects.content[i].additionalInfos
+						)->curvePoints.content[
+							sliderInfos(
+								beatmap->hitObjects.content[i].additionalInfos
+							)->curvePoints.length - 1
+						].x - 54.4f -
+						4.48f * (float)beatmap->difficulty.circleSize + padding.x,
+						sliderInfos(
+							beatmap->hitObjects.content[i].additionalInfos
+						)->curvePoints.content[
+							sliderInfos(
+								beatmap->hitObjects.content[i].additionalInfos
+							)->curvePoints.length - 1
+						].y - 54.4f -
+						4.48f * (float)beatmap->difficulty.circleSize + padding.y
+					},
+					Dict_getElement(
+						images,
+						"sliderendcircle"
+					),
+					(sfVector2i){
+						(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) * 2,
+						(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) * 2
+					},
+					(sfColor){
+						beatmap->colors.content[color].red * 0.5,
+						beatmap->colors.content[color].green * 0.5,
+						beatmap->colors.content[color].blue * 0.5,
+						alpha
+					}
+				);
 				for (unsigned j = 0; j < sliderInfos(
-					beatmap->hitObjects.content[i].additionalInfos)->curvePoints.length; j++) {
-					sfCircleShape_setFillColor(objects, (sfColor){
+					beatmap->hitObjects.content[i].additionalInfos
+				)->curvePoints.length; j++) {
+				/*	sfCircleShape_setFillColor(objects, (sfColor){
 						beatmap->colors.content[color].red * 0.5,
 						beatmap->colors.content[color].green * 0.5,
 						beatmap->colors.content[color].blue * 0.5,
@@ -128,26 +180,12 @@ void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject
 						)->curvePoints.content[j].y - 54.4f -
 						4.48f * (float)beatmap->difficulty.circleSize + padding.y
 					));
-					sfRenderWindow_drawCircleShape(window, objects, NULL);
+					sfRenderWindow_drawCircleShape(window, objects, NULL);*/
 				}
 			}
 
 			sprintf(buffer, "%u", combo);
-			sfCircleShape_setRadius(objects, 54.4f - 4.48f * (float)beatmap->difficulty.circleSize);
-			sfCircleShape_setFillColor(objects, (sfColor){
-				beatmap->colors.content[color].red,
-				beatmap->colors.content[color].green,
-				beatmap->colors.content[color].blue,
-				alpha
-			});
-			sfCircleShape_setPosition(objects, toSfVector2f(
-				beatmap->hitObjects.content[i].position.x -
-				(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) + padding.x,
-				beatmap->hitObjects.content[i].position.y -
-				(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) + padding.y
-			));
-			sfRenderWindow_drawCircleShape(window, objects, NULL);
-
+			/*
 			sfText_setCharacterSize(text, 20);
 			sfText_setPosition(text, toSfVector2f(
 				beatmap->hitObjects.content[i].position.x -
@@ -157,7 +195,48 @@ void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject
 			));
 			sfText_setString(text, buffer);
 			sfText_setColor(text, (sfColor){0, 0, 0, alpha});
-			sfRenderWindow_drawText(window, text, NULL);
+			sfRenderWindow_drawText(window, text, NULL);*/
+			FrameBuffer_drawImage(
+				&frame_buffer,
+				(sfVector2i){
+					beatmap->hitObjects.content[i].position.x -
+					(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) + padding.x,
+					beatmap->hitObjects.content[i].position.y -
+					(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) + padding.y
+				},
+				Dict_getElement(
+					images,
+					beatmap->hitObjects.content[i].type & HITOBJ_SLIDER ? "sliderstartcircle" : "hitcircle"
+				),
+				(sfVector2i){
+					(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) * 2,
+					(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) * 2
+				},
+				(sfColor){
+					beatmap->colors.content[color].red * 0.5,
+					beatmap->colors.content[color].green * 0.5,
+					beatmap->colors.content[color].blue * 0.5,
+					alpha
+				}
+			);
+			FrameBuffer_drawImage(
+				&frame_buffer,
+				(sfVector2i){
+					beatmap->hitObjects.content[i].position.x -
+					(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) + padding.x,
+					beatmap->hitObjects.content[i].position.y -
+					(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) + padding.y
+				},
+				Dict_getElement(
+					images,
+					beatmap->hitObjects.content[i].type & HITOBJ_SLIDER ? "sliderstartcircleoverlay" : "hitcircleoverlay"
+				),
+				(sfVector2i){
+					(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) * 2,
+					(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) * 2
+				},
+				(sfColor){255, 255, 255, alpha}
+			);
 			displayApproachCircle(
 				(sfColor){
 					beatmap->colors.content[color].red,
@@ -173,9 +252,9 @@ void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject
 	}
 }
 
-void	playReplay(OsuReplay *replay, OsuMap *beatmap)
+void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sounds, Dict *images)
 {
-	sfVideoMode	mode = {640, 480, 32};
+	sfVideoMode	mode = {size.x, size.y, 32};
 	sfEvent		event;
 	unsigned long	totalTicks = 0;
 	unsigned long	currentTimingPoint = 0;
@@ -194,27 +273,15 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap)
 	bool		played[beatmap->hitObjects.length];
 
 	memset(played, 0, sizeof(played));
-	lifeBar = sfRectangleShape_create();
-	cursor = sfRectangleShape_create();
-	objects = sfCircleShape_create();
-	aproachCircle = sfCircleShape_create();
 	font = sfFont_createFromFile("arial.ttf");
-	text = sfText_create();
 	window = sfRenderWindow_create(mode, "Osu Replay Player", sfDefaultStyle, NULL);
-	if (!window || !lifeBar || !cursor || !font || !text || !objects || !aproachCircle)
+	if (!window || !font)
 		exit(EXIT_FAILURE);
 
 	padding = (sfVector2u){64, 48};
-	sfText_setFont(text, font);
 
-	sfRectangleShape_setSize(lifeBar, (sfVector2f){300, 20});
-	sfRectangleShape_setPosition(lifeBar, (sfVector2f){10, 10});
-	sfRectangleShape_setFillColor(lifeBar, (sfColor){255, 255, 255, 255});
-
-	sfRectangleShape_setSize(cursor, (sfVector2f){15, 15});
-	sfRectangleShape_setPosition(cursor, cursorPos);
-	sfRectangleShape_setFillColor(cursor, (sfColor){255, 255, 255, 255});
-
+	beatmap->backgroundPath = beatmap->backgroundPath ? strToLower(getFileName(beatmap->backgroundPath)) : NULL;
+	FrameBuffer_init(&frame_buffer, size);
 	sfRenderWindow_setFramerateLimit(window, 60);
 	while (sfRenderWindow_isOpen(window)) {
 		while (sfRenderWindow_pollEvent(window, &event)) {
@@ -228,8 +295,10 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap)
 				}
 			}*/
 		}
+		FrameBuffer_clear(&frame_buffer, (sfColor){0, 0, 0, 255});
 		sfRenderWindow_clear(window, (sfColor){0, 0, 0, 255});
 
+		FrameBuffer_drawImage(&frame_buffer, (sfVector2i){0, 0}, Dict_getElement(images, beatmap->backgroundPath), (sfVector2i){-1, -1}, (sfColor){255, 255, 255, 255});
 		time = 0;
 		if (clock)
 			time = sfTime_asMilliseconds(sfClock_getElapsedTime(clock));
@@ -254,7 +323,6 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap)
 			life = replay->lifeBar.content[currentLifeEvent].newValue;
 			currentLifeEvent++;
 		}
-		sfRectangleShape_setSize(lifeBar, (sfVector2f){300 * life, 20});
 
 		while (
 			currentGameEvent < replay->gameEvents.length &&
@@ -271,18 +339,9 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap)
                 	replay->gameEvents.content[currentGameEvent].timeToHappen <= (int)totalTicks
                 )
 			sfRenderWindow_close(window);
-		sfRectangleShape_setPosition(cursor, cursorPos);
-		sfRectangleShape_setFillColor(cursor, (sfColor){
-			(pressed & INPUT_KEY1) > 0 ? 0 : 255,
-			(pressed & INPUT_KEY2) > 0 ? 0 : 255,
-			255,
-			255
-		});
 
-		if (!played[currentGameHitObject] && *hitsound && beatmap->hitObjects.content[currentGameHitObject].timeToAppear <= totalTicks && beatmap->hitObjects.content[currentGameHitObject].type & HITOBJ_SLIDER) {
-			sfSound_play(hitsound[sound]);
-			sound += 1;
-			sound %= nbOfSound;
+		if (!played[currentGameHitObject] && beatmap->hitObjects.content[currentGameHitObject].timeToAppear <= totalTicks && beatmap->hitObjects.content[currentGameHitObject].type & HITOBJ_SLIDER) {
+			playSound(Dict_getElement(sounds, "drum-hitnormal"));
 			played[currentGameHitObject] = true;
 		}
 		while (
@@ -301,11 +360,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap)
 				)
 			)
 		) {
-			if (*hitsound) {
-				sfSound_play(hitsound[sound]);
-				sound += 1;
-				sound %= nbOfSound;
-			}
+			playSound(Dict_getElement(sounds, "drum-hitnormal"));
 			played[currentGameHitObject] = true;
 			if (beatmap->hitObjects.content[currentGameHitObject].type & HITOBJ_NEW_COMBO) {
 				beginCombo = 0;
@@ -315,49 +370,67 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap)
 			currentGameHitObject++;
 		}
 
-		displayHitObjects(currentComboColor, currentGameHitObject, currentTimingPoint, beatmap, totalTicks, beginCombo);
+		displayHitObjects(currentComboColor, currentGameHitObject, currentTimingPoint, beatmap, totalTicks, beginCombo, images, sounds);
 
 		char buffer[1000];
 		sprintf(buffer, "Time elapsed: %.2f/%.2fs", time / 1000.f, replay->replayLength / ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE) ? 1500.f : 1000.f));
-		sfText_setColor(text, (sfColor){255, 255, 255, 255});
+		/*sfText_setColor(text, (sfColor){255, 255, 255, 255});
 		sfText_setCharacterSize(text, 15);
 		sfText_setString(text, buffer);
 		sfText_setPosition(text, toSfVector2f(400, 0));
 
 		sfRenderWindow_drawText(window, text, NULL);
 		sfRenderWindow_drawRectangleShape(window, lifeBar, NULL);
-		sfRenderWindow_drawRectangleShape(window, cursor, NULL);
+		sfRenderWindow_drawRectangleShape(window, cursor, NULL);*/
 
+		FrameBuffer_drawFilledRectangle(&frame_buffer, (sfVector2i){10, 10}, (sfVector2u){300 * life, 20}, (sfColor){255, 255, 255, 255});
+		FrameBuffer_drawImage(&frame_buffer, (sfVector2i){cursorPos.x, cursorPos.y}, Dict_getElement(images, "cursor"), (sfVector2i){-1, -1}, (sfColor){255, 255, 255, 255});
+
+		FrameBuffer_draw(&frame_buffer, window);
 		sfRenderWindow_display(window);
 		if (!clock)
 			clock = sfClock_create();
 	}
+	FrameBuffer_destroy(&frame_buffer);
 }
 
-void	loadBeatmapAssets(OsuMap *beatmap, char *path)
+void	loadBeatmapAssets(OsuMap *beatmap, char *path, Dict *images, Dict *sounds, Dict *loaders)
 {
 	char		*buffer;
-	sfSoundBuffer	*sBuffer;
 
 	buffer = concatf("%s/%s", path, beatmap->generalInfos.audioFileName);
 	music = sfMusic_createFromFile(buffer);
-	free(buffer);
-	buffer = concatf("%s/drum-hitnormal.wav", path);
-	sBuffer = sfSoundBuffer_createFromFile(buffer);
-	free(buffer);
-	if (!sBuffer)
-		sBuffer = sfSoundBuffer_createFromFile("assets/drum-hitnormal.wav");
-	memset(hitsound, 0, sizeof(hitsound));
-	for (int i = 0; sBuffer && i < nbOfSound; i++) {
-		hitsound[i] = sfSound_create();
-		sfSound_setBuffer(hitsound[i], sBuffer);
-	}
+	loadSkin(path, images, sounds, loaders);
+}
+
+LoadingPair	*createPair(void *(*creator)(const char *), void (*destroyer)(void *), enum filetype type)
+{
+	LoadingPair	*buffer = malloc(sizeof(*buffer));
+
+	if (!buffer)
+		display_error("Memory allocation error\n");
+	buffer->type = type;
+	buffer->creator = creator;
+	buffer->destroyer = destroyer;
+	return buffer;
+}
+
+void	createLoader(Dict *loaders)
+{
+	Dict_addElement(loaders, "ogg", createPair(sfSoundBuffer_createFromFile, sfSoundBuffer_destroy, SOUND), free);
+	Dict_addElement(loaders, "wav", createPair(sfSoundBuffer_createFromFile, sfSoundBuffer_destroy, SOUND), free);
+	Dict_addElement(loaders, "png", createPair(sfImage_createFromFile, sfImage_destroy, IMAGE), free);
+	Dict_addElement(loaders, "jpg", createPair(sfImage_createFromFile, sfImage_destroy, IMAGE), free);
 }
 
 int	main(int argc, char **args)
 {
 	OsuReplay	replay;
 	OsuMap		beatmap;
+	Dict		images = {NULL, NULL, NULL, NULL};
+	Dict		sounds = {NULL, NULL, NULL, NULL};
+	Dict		loaders = {NULL, NULL, NULL, NULL};
+	OsuSkin		skin;
 
 	if (argc != 3) {
 		printf("Usage: %s <map.osu> <replay.osr>\n", args[0]);
@@ -383,7 +456,13 @@ int	main(int argc, char **args)
 			break;
 		}
 	}
-	loadBeatmapAssets(&beatmap, args[1]);
-	playReplay(&replay, &beatmap);
+	createLoader(&loaders);
+	if (!loadSkin("assets", &images, &sounds, &loaders))
+		display_error("Default skin is invalid or corrupted\n");
+	loadBeatmapAssets(&beatmap, args[1], &images, &sounds, &loaders);
+	Dict_destroy(&loaders, true);
+	playReplay(&replay, &beatmap, (sfVector2u){640, 480}, &sounds, &images);
+	Dict_destroy(&images, true);
+	Dict_destroy(&sounds, true);
 	return EXIT_SUCCESS;
 }
