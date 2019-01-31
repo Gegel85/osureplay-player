@@ -82,7 +82,8 @@ void	displayApproachCircle(sfColor color, OsuMap_hitObject object, OsuMap *beatm
 			(54.4f - 4.48f * (float)beatmap->difficulty.circleSize + (object.timeToAppear - ticks) / 8.f) * 2
 		},
 		color,
-		true
+		true,
+		0
 	);
 }
 
@@ -165,7 +166,8 @@ void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject
 						beatmap->colors.content[color].blue * 0.5,
 						alpha
 					},
-					true
+					true,
+					0
 				);
 				for (unsigned j = 0; j < sliderInfos(
 					beatmap->hitObjects.content[i].additionalInfos
@@ -222,7 +224,8 @@ void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject
 					beatmap->colors.content[color].blue * 0.5,
 					alpha
 				},
-				true
+				true,
+				0
 			);
 			FrameBuffer_drawImage(
 				&frame_buffer,
@@ -239,7 +242,8 @@ void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject
 					(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) * 2
 				},
 				(sfColor){255, 255, 255, alpha},
-				true
+				true,
+				0
 			);
 			displayApproachCircle(
 				(sfColor){
@@ -276,6 +280,8 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 	bool		musicPlayed = false;
 	sfClock		*clock = NULL;
 	bool		played[beatmap->hitObjects.length];
+	float		angle = 0;
+	int		bgAlpha = 120;
 
 	memset(played, 0, sizeof(played));
 	font = sfFont_createFromFile("arial.ttf");
@@ -286,6 +292,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 	padding = (sfVector2u){64, 48};
 
 	beatmap->backgroundPath = beatmap->backgroundPath ? strToLower(getFileName(beatmap->backgroundPath)) : NULL;
+	printf("%s\n", beatmap->backgroundPath ?: "(null)");
 	FrameBuffer_init(&frame_buffer, size);
 	sfRenderWindow_setFramerateLimit(window, 60);
 	while (sfRenderWindow_isOpen(window)) {
@@ -303,7 +310,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 		FrameBuffer_clear(&frame_buffer, (sfColor){0, 0, 0, 255});
 		sfRenderWindow_clear(window, (sfColor){0, 0, 0, 255});
 
-		FrameBuffer_drawImage(&frame_buffer, (sfVector2i){0, 0}, Dict_getElement(images, beatmap->backgroundPath), (sfVector2i){-1, -1}, (sfColor){255, 255, 255, 255}, false);
+		FrameBuffer_drawImage(&frame_buffer, (sfVector2i){0, 0}, Dict_getElement(images, beatmap->backgroundPath), (sfVector2i){size.x, size.y}, (sfColor){255, 255, 255, bgAlpha}, false, 0);
 		time = 0;
 		if (clock)
 			time = sfTime_asMilliseconds(sfClock_getElapsedTime(clock));
@@ -389,7 +396,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 		sfRenderWindow_drawRectangleShape(window, cursor, NULL);*/
 
 		FrameBuffer_drawFilledRectangle(&frame_buffer, (sfVector2i){10, 10}, (sfVector2u){300 * life, 20}, (sfColor){255, 255, 255, 255});
-		FrameBuffer_drawImage(&frame_buffer, (sfVector2i){cursorPos.x, cursorPos.y}, Dict_getElement(images, "cursor"), (sfVector2i){-1, -1}, (sfColor){255, 255, 255, 255}, true);
+		FrameBuffer_drawImage(&frame_buffer, (sfVector2i){cursorPos.x, cursorPos.y}, Dict_getElement(images, "cursor"), (sfVector2i){-1, -1}, (sfColor){255, 255, 255, 255}, true, 0);
 
 		FrameBuffer_draw(&frame_buffer, window);
 		sfRenderWindow_display(window);
@@ -422,10 +429,10 @@ LoadingPair	*createPair(void *(*creator)(const char *), void (*destroyer)(void *
 
 void	createLoader(Dict *loaders)
 {
-	Dict_addElement(loaders, "ogg", createPair((void *)sfSoundBuffer_createFromFile, (void *)sfSoundBuffer_destroy, SOUND), free);
-	Dict_addElement(loaders, "wav", createPair((void *)sfSoundBuffer_createFromFile, (void *)sfSoundBuffer_destroy, SOUND), free);
-	Dict_addElement(loaders, "png", createPair((void *)sfImage_createFromFile, (void *)sfImage_destroy, IMAGE), free);
-	Dict_addElement(loaders, "jpg", createPair((void *)sfImage_createFromFile, (void *)sfImage_destroy, IMAGE), free);
+	Dict_addElement(loaders, "ogg", createPair((void *(*)(const char *))sfSoundBuffer_createFromFile, (void (*)(void *))sfSoundBuffer_destroy, SOUND), free);
+	Dict_addElement(loaders, "wav", createPair((void *(*)(const char *))sfSoundBuffer_createFromFile, (void (*)(void *))sfSoundBuffer_destroy, SOUND), free);
+	Dict_addElement(loaders, "png", createPair((void *(*)(const char *))sfImage_createFromFile, (void (*)(void *))sfImage_destroy, IMAGE), free);
+	Dict_addElement(loaders, "jpg", createPair((void *(*)(const char *))sfImage_createFromFile, (void (*)(void *))sfImage_destroy, IMAGE), free);
 }
 
 int	main(int argc, char **args)

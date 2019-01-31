@@ -12,16 +12,13 @@ void	display_error(char *msg)
 	abort();
 }
 
-void	mergeColors(sfColor *col1, sfColor col2)
-{
-
-}
-
 void	FrameBuffer_clear(FrameBuffer *buffer, sfColor color)
 {
 	for (unsigned x = 0; x < buffer->size.x; x++)
-		for (unsigned y = 0; y < buffer->size.y; y++)
+		for (unsigned y = 0; y < buffer->size.y; y++) {
 			buffer->content[y][x] = color;
+			buffer->content[y][x].a = 255;
+		}
 }
 
 void	FrameBuffer_init(FrameBuffer *buffer, sfVector2u size)
@@ -46,11 +43,11 @@ void	FrameBuffer_destroy(FrameBuffer *buffer)
 	free(buffer->content);
 }
 
-void	FrameBuffer_drawPoint(FrameBuffer *buffer, sfVector2i pos, sfColor color)
+void	FrameBuffer_drawPixel(FrameBuffer *buffer, sfVector2i pos, sfColor color)
 {
 	double	a = 0;
 
-	if (pos.x < 0 || pos.y < 0 || pos.x >= (int)buffer->size.x || pos.y >= (int)buffer->size.y)
+	if (buffer->content[pos.y][pos.x].a != 255)
 		return;
 	a = color.a / 255.;
 	buffer->content[pos.y][pos.x].r += (color.r - buffer->content[pos.y][pos.x].r) * a;
@@ -58,26 +55,39 @@ void	FrameBuffer_drawPoint(FrameBuffer *buffer, sfVector2i pos, sfColor color)
 	buffer->content[pos.y][pos.x].b += (color.b - buffer->content[pos.y][pos.x].b) * a;
 }
 
+void	FrameBuffer_drawPoint(FrameBuffer *buffer, sfVector2f pos, sfColor color)
+{
+	if (pos.x < 0 || pos.y < 0 || pos.x >= (int)buffer->size.x || pos.y >= (int)buffer->size.y)
+		return;
+	FrameBuffer_drawPixel(buffer, (sfVector2i){pos.x, pos.y}, color);
+	if ((int)pos.x != pos.x)
+		FrameBuffer_drawPixel(buffer, (sfVector2i){pos.x + 1, pos.y}, color);
+	if ((int)pos.y != pos.y)
+		FrameBuffer_drawPixel(buffer, (sfVector2i){pos.x, pos.y + 1}, color);
+	if ((int)pos.x != pos.x && (int)pos.y != pos.y)
+		FrameBuffer_drawPixel(buffer, (sfVector2i){pos.x + 1, pos.y + 1}, color);
+}
+
 void	FrameBuffer_drawRectangle(FrameBuffer *buffer, sfVector2i pos, sfVector2u size, sfColor color)
 {
 	for (unsigned x = 0; x < size.x; x++)
-		FrameBuffer_drawPoint(buffer, (sfVector2i){x + pos.x, pos.y}, color);
+		FrameBuffer_drawPoint(buffer, (sfVector2f){x + pos.x, pos.y}, color);
 	for (unsigned x = 0; x < size.x; x++)
-		FrameBuffer_drawPoint(buffer, (sfVector2i){x + pos.x, pos.y + size.y - 1}, color);
+		FrameBuffer_drawPoint(buffer, (sfVector2f){x + pos.x, pos.y + size.y - 1}, color);
 	for (unsigned y = 0; y < size.x; y++)
-		FrameBuffer_drawPoint(buffer, (sfVector2i){pos.x, pos.y + y}, color);
+		FrameBuffer_drawPoint(buffer, (sfVector2f){pos.x, pos.y + y}, color);
 	for (unsigned y = 0; y < size.x; y++)
-		FrameBuffer_drawPoint(buffer, (sfVector2i){pos.x + size.x - 1, pos.y + y}, color);
+		FrameBuffer_drawPoint(buffer, (sfVector2f){pos.x + size.x - 1, pos.y + y}, color);
 }
 
 void	FrameBuffer_drawFilledRectangle(FrameBuffer *buffer, sfVector2i pos, sfVector2u size, sfColor color)
 {
 	for (unsigned x = 0; x < size.x; x++)
 		for (unsigned y = 0; y < size.y; y++)
-			FrameBuffer_drawPoint(buffer, (sfVector2i){x + pos.x, y + pos.y}, color);
+			FrameBuffer_drawPoint(buffer, (sfVector2f){x + pos.x, y + pos.y}, color);
 }
 
-void	FrameBuffer_drawImage(FrameBuffer *buffer, sfVector2i pos, sfImage *image, sfVector2i newSize, sfColor tint, bool centered)
+void	FrameBuffer_drawImage(FrameBuffer *buffer, sfVector2i pos, sfImage *image, sfVector2i newSize, sfColor tint, bool centered, float rotation)
 {
 	if (!image)
 		return;
@@ -88,8 +98,15 @@ void	FrameBuffer_drawImage(FrameBuffer *buffer, sfVector2i pos, sfImage *image, 
 		newSize.x < 0 ? 1 : ((float)newSize.x / size.x),
 		newSize.y < 0 ? 1 : ((float)newSize.y / size.y)
 	};
+	double	c;
+	double	s;
 	sfColor col;
 
+	rotation = rotation * M_PI / 180;
+	c = cos(rotation);
+	s = sin(rotation);
+	newSize.x = size.x * scale.x;
+	newSize.y = size.y * scale.y;
 	if (centered) {
 		pos.x -= (size.x * scale.x) / 2;
 		pos.y -= (size.y * scale.y) / 2;
@@ -103,7 +120,17 @@ void	FrameBuffer_drawImage(FrameBuffer *buffer, sfVector2i pos, sfImage *image, 
 				array[(int)(y / scale.y) * size.x + (int)(x / scale.x)].b * (tint.b / 255.),
 				array[(int)(y / scale.y) * size.x + (int)(x / scale.x)].a * (tint.a / 255.),
 			};
-			FrameBuffer_drawPoint(buffer, (sfVector2i) {x + pos.x, y + pos.y}, col);
+			if (rotation == 0) {
+				FrameBuffer_drawPoint(buffer, (sfVector2f) {
+					pos.x + x,
+					pos.y + y
+				}, col);
+			} else {
+				FrameBuffer_drawPoint(buffer, (sfVector2f) {
+					c * (x - newSize.x / 2.) - s * (y - newSize.y / 2.) + newSize.x / 2. + pos.x,
+					s * (x - newSize.x / 2.) + c * (y - newSize.y / 2.) + newSize.y / 2. + pos.y
+				}, col);
+			}
 		}
 }
 
@@ -112,7 +139,7 @@ void	FrameBuffer_drawFilledCircle(FrameBuffer *buffer, sfVector2i pos, int radiu
 	for (int x = 0; x < radius * 2; x++)
 		for (int y = 0; y < radius * 2; y++)
 			if (sqrt(pow(radius - x, 2) + pow(radius - y, 2)) <= radius)
-				FrameBuffer_drawPoint(buffer, (sfVector2i) {x + pos.x, y + pos.y}, color);
+				FrameBuffer_drawPoint(buffer, (sfVector2f) {x + pos.x, y + pos.y}, color);
 }
 
 void	FrameBuffer_drawCircle(FrameBuffer *buffer, unsigned thickness, sfVector2i pos, int radius, sfColor color)
@@ -123,7 +150,7 @@ void	FrameBuffer_drawCircle(FrameBuffer *buffer, unsigned thickness, sfVector2i 
 		for (int y = -thickness; y < radius * 2 + (int)thickness; y++) {
 			distance = sqrt(pow(x - radius, 2) + pow(y - radius, 2));
 			if (distance >= radius && distance <= radius + thickness) {
-				FrameBuffer_drawPoint(buffer, (sfVector2i) {x + pos.x, y + pos.y}, color);
+				FrameBuffer_drawPoint(buffer, (sfVector2f) {x + pos.x, y + pos.y}, color);
 			}
 		}
 }
