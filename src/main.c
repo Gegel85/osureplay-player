@@ -302,7 +302,6 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 	padding = (sfVector2u){64, 48};
 
 	beatmap->backgroundPath = beatmap->backgroundPath ? strToLower(getFileName(beatmap->backgroundPath)) : NULL;
-	printf("%s\n", beatmap->backgroundPath ?: "(null)");
 	FrameBuffer_init(&frame_buffer, size);
 	sfRenderWindow_setFramerateLimit(window, 60);
 	while (sfRenderWindow_isOpen(window)) {
