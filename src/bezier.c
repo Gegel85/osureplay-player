@@ -54,7 +54,7 @@ OsuIntegerVectorArray	getBezierPoints(OsuIntegerVectorArray points, OsuIntegerVe
 			pts[arrLen - 1].length = 0;
 			pts[arrLen - 1].content = NULL;
 		}
-		pts[arrLen - 1].content = realloc(pts[arrLen - 1].content, ++pts[arrLen - 1].length);
+		pts[arrLen - 1].content = realloc(pts[arrLen - 1].content, ++pts[arrLen - 1].length * sizeof(*pts[arrLen - 1].content));
 		if (!pts->content)
 			display_error("Memory allocation error\n");
 		pts[arrLen - 1].content[pts[arrLen - 1].length - 1] = points.content[i];
