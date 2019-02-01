@@ -7,6 +7,7 @@
 #include <concatf.h>
 #include <osu_replay_parser.h>
 #include <osu_map_parser.h>
+#include <slider_calcs.h>
 #include "skin.h"
 #include "dict.h"
 #include "defines.h"
@@ -113,15 +114,6 @@ void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject
 				radius,
 				(sfColor){255, 255, 255, alpha}
 			);
-			/*sfCircleShape_setFillColor(aproachCircle, (sfColor){0, 0, 0, 0});
-			sfCircleShape_setOutlineColor(aproachCircle, (sfColor){255, 255, 255, alpha});
-			sfCircleShape_setOutlineThickness(aproachCircle, 4);
-			sfCircleShape_setRadius(aproachCircle, radius);
-			sfCircleShape_setPosition(aproachCircle, toSfVector2f(
-				320 - radius,
-				240 - radius
-			));
-			sfRenderWindow_drawCircleShape(window, aproachCircle, NULL);*/
 		} else {
 			combo = beginCombo;
 			color = currentComboColor;
@@ -157,8 +149,8 @@ void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject
 						"sliderendcircle"
 					),
 					(sfVector2i){
-						(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) * 2,
-						(54.4f - 4.48f * (float)beatmap->difficulty.circleSize) * 2
+						(54.4f - 4.48f * beatmap->difficulty.circleSize) * 2,
+						(54.4f - 4.48f * beatmap->difficulty.circleSize) * 2
 					},
 					(sfColor){
 						beatmap->colors.content[color].red * 0.5,
@@ -172,6 +164,26 @@ void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject
 				for (unsigned j = 0; j < sliderInfos(
 					beatmap->hitObjects.content[i].additionalInfos
 				)->curvePoints.length; j++) {
+					FrameBuffer_drawFilledCircle(
+						&frame_buffer,
+						(sfVector2i) {
+							sliderInfos(
+								beatmap->hitObjects.content[i].additionalInfos
+							)->curvePoints.content[j].x - (54.4f - 4.48f *
+							beatmap->difficulty.circleSize) + padding.x,
+							sliderInfos(
+								beatmap->hitObjects.content[i].additionalInfos
+							)->curvePoints.content[j].y - (54.4f - 4.48f *
+							beatmap->difficulty.circleSize) + padding.y
+						},
+						54.4f - 4.48f * beatmap->difficulty.circleSize,
+						(sfColor){
+							beatmap->colors.content[color].red * 0.5,
+							beatmap->colors.content[color].green * 0.5,
+							beatmap->colors.content[color].blue * 0.5,
+							alpha
+						}
+					);
 				/*	sfCircleShape_setFillColor(objects, (sfColor){
 						beatmap->colors.content[color].red * 0.5,
 						beatmap->colors.content[color].green * 0.5,
@@ -274,13 +286,11 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 	unsigned int	currentComboColor = 0;
 	sfVector2f	cursorPos = {0, 0};
 	unsigned int	pressed = 0;
-	int		sound = 0;
 	float		life = 1;
 	unsigned long	time = 0;
 	bool		musicPlayed = false;
 	sfClock		*clock = NULL;
 	bool		played[beatmap->hitObjects.length];
-	float		angle = 0;
 	int		bgAlpha = 120;
 
 	memset(played, 0, sizeof(played));
@@ -435,6 +445,49 @@ void	createLoader(Dict *loaders)
 	Dict_addElement(loaders, "jpg", createPair((void *(*)(const char *))sfImage_createFromFile, (void (*)(void *))sfImage_destroy, IMAGE), free);
 }
 
+OsuIntegerVectorArray	getLinePoints(OsuIntegerVectorArray points, OsuIntegerVector pos)
+{
+	OsuIntegerVectorArray	array = {100, malloc(100 * sizeof(*array.content))};
+	OsuIntegerVector	diff;
+
+	if (!array.content)
+		display_error("Memory allocation error");
+	if (points.length != 1)
+		display_error("Invalid linear slider: there is more than a single point");
+	diff = (OsuIntegerVector){pos.x - points.content[0].x, pos.y - points.content[0].y};
+	for (unsigned i = 0; i < array.length; i++)
+		array.content[i] = (OsuIntegerVector){
+			diff.x * ((float)i / array.length) + points.content[0].x,
+			diff.y * ((float)i / array.length) + points.content[0].y
+		};
+	return array;
+}
+
+void	getRealPointsSliders(OsuMap_hitObject *obj)
+{
+	OsuMap_hitObjectSliderInfos	*infos = obj->additionalInfos;
+	OsuIntegerVectorArray		points = infos->curvePoints;
+
+	switch (infos->type) {
+		case 'B':
+			infos->curvePoints = getBezierPoints(points, obj->position);
+			free(points.content);
+			break;
+		case 'L':
+			infos->curvePoints = getLinePoints(points, obj->position);
+			free(points.content);
+			break;
+		case 'C':
+			display_error("Catmull slider are deprecated and are, therefore, not supported");
+			break;
+		case 'P':
+			break;
+		default:
+			display_error("Invalid slider type");
+
+	}
+}
+
 int	main(int argc, char **args)
 {
 	OsuReplay	replay;
@@ -473,6 +526,9 @@ int	main(int argc, char **args)
 		display_error("Default skin is invalid or corrupted\n");
 	loadBeatmapAssets(&beatmap, args[1], &images, &sounds, &loaders);
 	Dict_destroy(&loaders, true);
+	for (unsigned i = 0; i < beatmap.hitObjects.length; i++)
+		if (beatmap.hitObjects.content[i].type & HITOBJ_SLIDER)
+			getRealPointsSliders(&beatmap.hitObjects.content[i]);
 	playReplay(&replay, &beatmap, (sfVector2u){640, 480}, &sounds, &images);
 	Dict_destroy(&images, true);
 	Dict_destroy(&sounds, true);

@@ -5,6 +5,7 @@ SRC =	main.c			\
 		frame_buffer.c	\
 		dict.c			\
 		load_skin.c		\
+		bezier.c		\
 
 OBJ =	$(SRC:%.c=src/%.o)
 
