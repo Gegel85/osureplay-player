@@ -4,6 +4,8 @@
 #include <string.h>
 #include <stdbool.h>
 #include <math.h>
+#include <replay_player.h>
+#include <stdio.h>
 #include "frame_buffer.h"
 
 void	display_error(char *msg)
@@ -166,4 +168,43 @@ void	FrameBuffer_draw(FrameBuffer *buffer, sfRenderWindow *window)
 	sfImage_destroy(image);
 	sfTexture_destroy(texture);
 	sfSprite_destroy(sprite);
+}
+
+void	FrameBuffer_encode(FrameBuffer *buffer, replayPlayerState *state)
+{
+	fflush(stdout);
+
+	/* make sure the frame data is writable */
+	if (av_frame_make_writable(state->frame) < 0)
+		display_error("The frame data is not writable\n");
+
+	/* prepare the frame */
+	/* Y */
+	for (int y = 0; y < state->codecContext->height; y++) {
+		for (int x = 0; x < state->codecContext->width; x++) {
+			state->frame->data[0][y * state->frame->linesize[0] + x] =
+				0.299 * buffer->content[y][x].r +
+				0.587 * buffer->content[y][x].g +
+				0.114 * buffer->content[y][x].b;
+		}
+	}
+
+	/*Cb Cr*/
+	for (int y = 0; y < state->codecContext->height / 2; y++) {
+		for (int x = 0; x < state->codecContext->width / 2; x++) {
+			state->frame->data[1][y * state->frame->linesize[1] + x] =
+				-0.1687 * buffer->content[y * 2][x * 2].r +
+				-0.3313 * buffer->content[y * 2][x * 2].g +
+				0.5 *     buffer->content[y * 2][x * 2].b + 128;
+			state->frame->data[2][y * state->frame->linesize[2] + x] =
+				0.5 *     buffer->content[y * 2][x * 2].r +
+				-0.4187 * buffer->content[y * 2][x * 2].g +
+				-0.0813 * buffer->content[y * 2][x * 2].b + 128;
+		}
+	}
+
+	state->frame->pts = state->frameNb++;
+
+	/* encode the image */
+	encode_frame(state->codecContext, state->frame, state->packet, state->stream);
 }

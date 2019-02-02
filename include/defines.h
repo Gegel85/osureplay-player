@@ -9,5 +9,6 @@
 
 #define BASE_OBJ_ALPHA		255
 #define nbOfSound		8
+#define bgAlpha			120
 
 #endif //OSUREPLAY_PLAYER_DEFINES_H

@@ -56,3 +56,4 @@ cmake-build-*
 *.osu
 *.osr
 CMakeLists.txt
+*.mp4

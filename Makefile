@@ -1,18 +1,26 @@
 NAME =	osuReplayPlayer
 
-SRC =	main.c			\
-		globals.c		\
-		frame_buffer.c	\
-		dict.c			\
-		load_skin.c		\
-		bezier.c		\
+SRC =	main.c					\
+		globals.c				\
+		frame_buffer.c			\
+		dict.c					\
+		load_skin.c				\
+		bezier.c				\
+		replay_player.c			\
+		display_hit_object.c	\
+		utils.c					\
+		sound.c					\
+		perfect_line.c			\
+		get_slider_points.c		\
+		encode_frame.c			\
 
 OBJ =	$(SRC:%.c=src/%.o)
 
 INC =	-Iinclude						\
-		-Ilib/osureplay-parser/include	\
-		-Ilib/osumap-parser/include		\
+		-Ilib/libav-12.3				\
 		-Ilib/concatf/include			\
+		-Ilib/osumap-parser/include		\
+		-Ilib/osureplay-parser/include	\
 
 CSFML = -lcsfml-audio		\
 		-lcsfml-graphics	\
@@ -21,14 +29,21 @@ CSFML = -lcsfml-audio		\
 		-lcsfml-window		\
 
 
-LDFLAGS =					\
-	-L lib/osureplay-parser	\
-	-losureplayparser		\
-	-L lib/osumap-parser	\
-	-losumapparser			\
-	-L lib/concatf			\
-	-lconcatf				\
-	-lm
+LDFLAGS =							\
+	-L lib/concatf					\
+	-lconcatf						\
+	-L lib/osumap-parser			\
+	-losumapparser					\
+	-L lib/osureplay-parser			\
+	-losureplayparser				\
+	-L lib/libav-12.3/libavcodec/	\
+	-lavcodec						\
+	-L lib/libav-12.3/libavresample/\
+	-lavresample					\
+	-L lib/libav-12.3/libavutil/	\
+	-lavutil						\
+	-lm								\
+	-lz
 
 CFLAGS= $(INC)	\
 	-W			\
@@ -40,12 +55,16 @@ CC =	gcc
 RULE =	all
 
 LIBS =	lib/osureplay-parser/libosureplayparser.a	\
+		lib/libav-12.3/libavcodec/libavcodec.a		\
 		lib/osumap-parser/libosumapparser.a			\
 		lib/concatf/libconcatf.a					\
 
 RES =
 
 all:	$(LIBS) $(NAME)
+
+linux:	LD_FLAGS += -lvdpau -lX11
+linux:	all
 
 lib/osureplay-parser/libosureplayparser.a:
 	$(MAKE) -C lib/osureplay-parser $(RULE)
@@ -55,6 +74,9 @@ lib/osumap-parser/libosumapparser.a:
 
 lib/concatf/libconcatf.a:
 	$(MAKE) -C lib/concatf $(RULE)
+
+lib/libav-12.3/libavcodec/libavcodec.a:
+	cd lib/libav-12.3 && ./configure && make
 
 $(NAME):$(OBJ)
 	$(CC) -o $(NAME) $(OBJ) $(LDFLAGS) $(CSFML) $(RES)
