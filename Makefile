@@ -76,6 +76,7 @@ lib/concatf/libconcatf.a:
 	$(MAKE) -C lib/concatf $(RULE)
 
 lib/libav-12.3/libavcodec/libavcodec.a:
+	chmod +x lib/libav-12.3/configure
 	cd lib/libav-12.3 && ./configure && make
 
 $(NAME):$(OBJ)
