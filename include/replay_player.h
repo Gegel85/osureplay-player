@@ -29,7 +29,8 @@ typedef struct replayPlayerState {
 	int		*played;
 	bool		musicStarted;
 	FILE		*stream;
-	AVCodecContext	*codecContext;
+	AVCodecContext	*videoCodecContext;
+	AVCodecContext	*audioCodecContext;
 	AVFrame		*frame;
 	AVPacket	*packet;
 	int		frameNb;

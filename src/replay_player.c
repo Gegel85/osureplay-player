@@ -30,38 +30,44 @@ void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *bea
 	/* find the mpeg1video encoder */
 	codec = avcodec_find_encoder(AV_CODEC_ID_MPEG1VIDEO);
 	if (!codec)
-		display_error("Codec not found\n");
+		display_error("Video codec not found\n");
+	state->videoCodecContext = avcodec_alloc_context3(codec);
 
-	state->codecContext = avcodec_alloc_context3(codec);
+	/* find the MAD encoder */
+	codec = avcodec_find_encoder(AV_CODEC_ID_MAD);
+	if (!codec)
+		display_error("Audio codec not found\n");
+	state->audioCodecContext = avcodec_alloc_context3(codec);
+
 	state->packet = av_packet_alloc();
 	state->frame = av_frame_alloc();
 	if (!state->packet)
 		display_error("Memory allocation error\n");
 
 	/* put sample parameters */
-	state->codecContext->bit_rate = 800000;
+	state->videoCodecContext->bit_rate = 4000000;
 	/* resolution must be a multiple of two */
-	state->codecContext->width = 640;
-	state->codecContext->height = 480;
+	state->videoCodecContext->width = 640;
+	state->videoCodecContext->height = 480;
 	/* frames per second */
-	state->codecContext->time_base = (AVRational){1, 60};
-	state->codecContext->framerate = (AVRational){60, 1};
+	state->videoCodecContext->time_base = (AVRational){1, 60};
+	state->videoCodecContext->framerate = (AVRational){60, 1};
 
-	state->codecContext->gop_size = 10; /* emit one intra frame every ten frames */
-	state->codecContext->max_b_frames = 1;
-	state->codecContext->pix_fmt = AV_PIX_FMT_YUV420P;
+	state->videoCodecContext->gop_size = 10; /* emit one intra frame every ten frames */
+	state->videoCodecContext->max_b_frames = 1;
+	state->videoCodecContext->pix_fmt = AV_PIX_FMT_YUV420P;
 
 	/* open it */
-	if (avcodec_open2(state->codecContext, codec, NULL) < 0)
+	if (avcodec_open2(state->videoCodecContext, codec, NULL) < 0)
 		display_error("Couldn't open codec\n");
 
 	state->stream = fopen(path, "wb");
 	if (!state->stream)
 		display_error(concatf("%s: %s\n", path, strerror(errno)));
 
-	state->frame->format = state->codecContext->pix_fmt;
-	state->frame->width  = state->codecContext->width;
-	state->frame->height = state->codecContext->height;
+	state->frame->format = state->videoCodecContext->pix_fmt;
+	state->frame->width  = state->videoCodecContext->width;
+	state->frame->height = state->videoCodecContext->height;
 	state->frame->quality = 1;
 
 	if (av_frame_get_buffer(state->frame, 32) < 0)
@@ -70,19 +76,20 @@ void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *bea
 
 void	finishReplaySession(replayPlayerState *state)
 {
-	uint8_t endcode[] = { 0, 0, 1, 0xb7 };
+	uint8_t endcode[] = {0, 0, 1, 0xb7};
 
 	if (!state->stream)
 		return;
 
 	/* flush the encoder */
-	encode_frame(state->codecContext, NULL, state->packet, state->stream);
+	encode_frame(state->videoCodecContext, NULL, state->packet, state->stream);
 
 	/* add sequence end code to have a real MPEG file */
 	fwrite(endcode, 1, sizeof(endcode), state->stream);
 	fclose(state->stream);
 
-	avcodec_free_context(&state->codecContext);
+	avcodec_free_context(&state->videoCodecContext);
+	avcodec_free_context(&state->audioCodecContext);
 	av_frame_free(&state->frame);
 	av_packet_free(&state->packet);
 }

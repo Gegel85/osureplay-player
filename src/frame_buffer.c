@@ -180,8 +180,8 @@ void	FrameBuffer_encode(FrameBuffer *buffer, replayPlayerState *state)
 
 	/* prepare the frame */
 	/* Y */
-	for (int y = 0; y < state->codecContext->height; y++) {
-		for (int x = 0; x < state->codecContext->width; x++) {
+	for (int y = 0; y < state->videoCodecContext->height; y++) {
+		for (int x = 0; x < state->videoCodecContext->width; x++) {
 			state->frame->data[0][y * state->frame->linesize[0] + x] =
 				0.299 * buffer->content[y][x].r +
 				0.587 * buffer->content[y][x].g +
@@ -190,8 +190,8 @@ void	FrameBuffer_encode(FrameBuffer *buffer, replayPlayerState *state)
 	}
 
 	/*Cb Cr*/
-	for (int y = 0; y < state->codecContext->height / 2; y++) {
-		for (int x = 0; x < state->codecContext->width / 2; x++) {
+	for (int y = 0; y < state->videoCodecContext->height / 2; y++) {
+		for (int x = 0; x < state->videoCodecContext->width / 2; x++) {
 			state->frame->data[1][y * state->frame->linesize[1] + x] =
 				-0.1687 * buffer->content[y * 2][x * 2].r +
 				-0.3313 * buffer->content[y * 2][x * 2].g +
@@ -206,5 +206,5 @@ void	FrameBuffer_encode(FrameBuffer *buffer, replayPlayerState *state)
 	state->frame->pts = state->frameNb++;
 
 	/* encode the image */
-	encode_frame(state->codecContext, state->frame, state->packet, state->stream);
+	encode_frame(state->videoCodecContext, state->frame, state->packet, state->stream);
 }
