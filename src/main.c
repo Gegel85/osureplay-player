@@ -27,6 +27,7 @@ void	loadBeatmapAssets(OsuMap *beatmap, char *path, Dict *images, Dict *sounds, 
 	buffer = concatf("%s/%s", path, beatmap->generalInfos.audioFileName);
 	music = sfMusic_createFromFile(buffer);
 	loadSkin(path, images, sounds, loaders);
+	free(buffer);
 }
 
 LoadingPair	*createPair(void *(*creator)(const char *), void (*destroyer)(void *), enum filetype type)
