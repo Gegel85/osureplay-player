@@ -46,16 +46,16 @@ void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *bea
 
 	avcodec_register_all();
 
-	/* find the mpeg1video encoder */
+	/* find the video encoder */
 	videoCodec = avcodec_find_encoder(AV_CODEC_ID_MPEG1VIDEO);
 	if (!videoCodec)
-		display_error("Video videoCodec not found\n");
+		display_error("Video codec not found\n");
 	state->videoCodecContext = avcodec_alloc_context3(videoCodec);
 
-	/* find the MAD encoder */
+	/* find the audio encoder */
 	audioCodec = avcodec_find_encoder(AV_CODEC_ID_MP3);
 	if (!videoCodec)
-		display_error("Audio videoCodec not found\n");
+		display_error("Audio codec not found\n");
 	state->audioCodecContext = avcodec_alloc_context3(videoCodec);
 
 	state->packet = av_packet_alloc();
