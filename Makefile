@@ -32,6 +32,7 @@ CSFML = -lcsfml-audio		\
 LDFLAGS =							\
 	-L lib/concatf					\
 	-lconcatf						\
+	-lpthread						\
 	-L lib/osumap-parser			\
 	-losumapparser					\
 	-L lib/osureplay-parser			\
@@ -63,7 +64,7 @@ RES =
 
 all:	$(LIBS) $(NAME)
 
-linux:	LD_FLAGS += -lvdpau -lX11
+linux:	LDFLAGS += -lvdpau -lX11
 linux:	all
 
 lib/osureplay-parser/libosureplayparser.a:
