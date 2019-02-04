@@ -10,9 +10,28 @@
 #include "globals.h"
 #include "replay_player.h"
 
+void	initVideoCodec(AVCodecContext *codec)
+{
+	/* put sample parameters */
+	codec->bit_rate = 4000000;
+
+	/* resolution must be a multiple of two */
+	codec->width = 640;
+	codec->height = 480;
+
+	/* frames per second */
+	codec->time_base = (AVRational){1, 60};
+	codec->framerate = (AVRational){60, 1};
+
+	codec->gop_size = 200; /* emit one intra frame every ten frames */
+	codec->max_b_frames = 1;
+	codec->pix_fmt = AV_PIX_FMT_YUV420P;
+}
+
 void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *beatmap)
 {
-	const AVCodec *codec;
+	const AVCodec *videoCodec;
+	const AVCodec *audioCodec;
 
 	memset(state, 0, sizeof(*state));
 	state->life = 1;
@@ -28,38 +47,27 @@ void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *bea
 	avcodec_register_all();
 
 	/* find the mpeg1video encoder */
-	codec = avcodec_find_encoder(AV_CODEC_ID_MPEG1VIDEO);
-	if (!codec)
-		display_error("Video codec not found\n");
-	state->videoCodecContext = avcodec_alloc_context3(codec);
+	videoCodec = avcodec_find_encoder(AV_CODEC_ID_MPEG1VIDEO);
+	if (!videoCodec)
+		display_error("Video videoCodec not found\n");
+	state->videoCodecContext = avcodec_alloc_context3(videoCodec);
 
 	/* find the MAD encoder */
-	codec = avcodec_find_encoder(AV_CODEC_ID_MAD);
-	if (!codec)
-		display_error("Audio codec not found\n");
-	state->audioCodecContext = avcodec_alloc_context3(codec);
+	audioCodec = avcodec_find_encoder(AV_CODEC_ID_MP3);
+	if (!videoCodec)
+		display_error("Audio videoCodec not found\n");
+	state->audioCodecContext = avcodec_alloc_context3(videoCodec);
 
 	state->packet = av_packet_alloc();
 	state->frame = av_frame_alloc();
 	if (!state->packet)
 		display_error("Memory allocation error\n");
 
-	/* put sample parameters */
-	state->videoCodecContext->bit_rate = 4000000;
-	/* resolution must be a multiple of two */
-	state->videoCodecContext->width = 640;
-	state->videoCodecContext->height = 480;
-	/* frames per second */
-	state->videoCodecContext->time_base = (AVRational){1, 60};
-	state->videoCodecContext->framerate = (AVRational){60, 1};
-
-	state->videoCodecContext->gop_size = 10; /* emit one intra frame every ten frames */
-	state->videoCodecContext->max_b_frames = 1;
-	state->videoCodecContext->pix_fmt = AV_PIX_FMT_YUV420P;
+	initVideoCodec(state->videoCodecContext);
 
 	/* open it */
-	if (avcodec_open2(state->videoCodecContext, codec, NULL) < 0)
-		display_error("Couldn't open codec\n");
+	if (avcodec_open2(state->videoCodecContext, videoCodec, NULL) < 0)
+		display_error("Couldn't open video codec\n");
 
 	state->stream = fopen(path, "wb");
 	if (!state->stream)

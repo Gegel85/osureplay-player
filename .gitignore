@@ -57,3 +57,5 @@ cmake-build-*
 *.osr
 CMakeLists.txt
 *.mp4
+lib/libav\-12\.3
+osuReplayPlayer
