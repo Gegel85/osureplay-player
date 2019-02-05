@@ -10,6 +10,8 @@
 #include "globals.h"
 #include "replay_player.h"
 
+unsigned long totalFrames;
+
 void	initVideoCodec(AVCodecContext *codec)
 {
 	/* put sample parameters */
@@ -23,7 +25,7 @@ void	initVideoCodec(AVCodecContext *codec)
 	codec->time_base = (AVRational){1, 60};
 	codec->framerate = (AVRational){60, 1};
 
-	codec->gop_size = 200; /* emit one intra frame every ten frames */
+	codec->gop_size = 10; /* emit one intra frame every ten frames */
 	codec->max_b_frames = 1;
 	codec->pix_fmt = AV_PIX_FMT_YUV420P;
 }
@@ -118,6 +120,8 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 		sfRenderWindow_setFramerateLimit(window, 60);
 	}
 
+	totalFrames = replay->replayLength * 60 / ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE) ? 1500 : 1000);
+	printf("Replay length: %lums, %lu frame(s)\n", replay->replayLength, totalFrames);
 	padding = (sfVector2u){64, 48};
 
 	beatmap->backgroundPath = beatmap->backgroundPath ? strToLower(getFileName(beatmap->backgroundPath)) : NULL;
@@ -141,7 +145,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 					state.totalTicks = sfTime_asMilliseconds(sfClock_getElapsedTime(clock));
 			}
 		} else
-			state.totalTicks += ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE) ? 1500 : 1000) / 60;
+			state.totalTicks += ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE) ? 1500 : 1000) / 60.;
 
 		FrameBuffer_clear(&frame_buffer, (sfColor){0, 0, 0, 255});
 		FrameBuffer_drawImage(

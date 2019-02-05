@@ -19,8 +19,8 @@ OsuIntegerVector	bezier(OsuIntegerVectorArray points, double percent)
 		display_error("Memory allocation error\n");
 	for (unsigned i = 0; i < pts.length; i++)
 		pts.content[i] = (OsuIntegerVector){
-			((points.content[i].x - points.content[i + 1].x) * percent / 100) + points.content[i].x,
-			((points.content[i].y - points.content[i + 1].y) * percent / 100) + points.content[i].y
+			((points.content[i + 1].x - points.content[i].x) * percent / 100) + points.content[i].x,
+			((points.content[i + 1].y - points.content[i].y) * percent / 100) + points.content[i].y
 		};
 	result = bezier(pts, percent);
 	free(pts.content);

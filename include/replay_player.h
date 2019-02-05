@@ -16,7 +16,7 @@
 #include "dict.h"
 
 typedef struct replayPlayerState {
-	unsigned long	totalTicks;
+	double		totalTicks;
 	unsigned long	currentTimingPoint;
 	unsigned int	currentGameEvent;
 	unsigned int	currentLifeEvent;
