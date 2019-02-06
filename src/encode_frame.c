@@ -10,8 +10,6 @@
 
 #include "frame_buffer.h"
 
-extern unsigned long totalFrames;
-
 void	encode_frame(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfile)
 {
 	int ret;
@@ -27,8 +25,8 @@ void	encode_frame(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *
 			return;
 		else if (ret < 0)
 			display_error("error during encoding\n");
-		printf("Encoded frame %3"PRId64"/%li (size=%5d)\n", pkt->pts, totalFrames, pkt->size);
-		fwrite(pkt->data, 1, pkt->size, outfile);
+		if (fwrite(pkt->data, 1, pkt->size, outfile) != pkt->size)
+			display_error("Cannot write in file\n");
 		av_packet_unref(pkt);
 	}
 }

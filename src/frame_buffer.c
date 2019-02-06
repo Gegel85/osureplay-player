@@ -6,6 +6,7 @@
 #include <math.h>
 #include <replay_player.h>
 #include <stdio.h>
+#include <libavutil/imgutils.h>
 #include "frame_buffer.h"
 
 void	display_error(char *msg)
@@ -175,14 +176,14 @@ void	FrameBuffer_encode(FrameBuffer *buffer, replayPlayerState *state)
 	fflush(stdout);
 
 	/* make sure the frame data is writable */
-	if (av_frame_make_writable(state->frame) < 0)
+	if (av_frame_make_writable(state->videoFrame) < 0)
 		display_error("The frame data is not writable\n");
 
 	/* prepare the frame */
 	/* Y */
 	for (int y = 0; y < state->videoCodecContext->height; y++) {
 		for (int x = 0; x < state->videoCodecContext->width; x++) {
-			state->frame->data[0][y * state->frame->linesize[0] + x] =
+			state->videoFrame->data[0][y * state->videoFrame->linesize[0] + x] =
 				0.299 * buffer->content[y][x].r +
 				0.587 * buffer->content[y][x].g +
 				0.114 * buffer->content[y][x].b;
@@ -192,19 +193,21 @@ void	FrameBuffer_encode(FrameBuffer *buffer, replayPlayerState *state)
 	/*Cb Cr*/
 	for (int y = 0; y < state->videoCodecContext->height / 2; y++) {
 		for (int x = 0; x < state->videoCodecContext->width / 2; x++) {
-			state->frame->data[1][y * state->frame->linesize[1] + x] =
+			state->videoFrame->data[1][y * state->videoFrame->linesize[1] + x] =
 				-0.1687 * buffer->content[y * 2][x * 2].r +
 				-0.3313 * buffer->content[y * 2][x * 2].g +
 				0.5 *     buffer->content[y * 2][x * 2].b + 128;
-			state->frame->data[2][y * state->frame->linesize[2] + x] =
+			state->videoFrame->data[2][y * state->videoFrame->linesize[2] + x] =
 				0.5 *     buffer->content[y * 2][x * 2].r +
 				-0.4187 * buffer->content[y * 2][x * 2].g +
 				-0.0813 * buffer->content[y * 2][x * 2].b + 128;
 		}
 	}
 
-	state->frame->pts = state->frameNb++;
+	state->videoFrame->pts = state->frameNb++;
 
 	/* encode the image */
-	encode_frame(state->videoCodecContext, state->frame, state->packet, state->stream);
+	encode_frame(state->videoCodecContext, state->videoFrame, state->videoPacket, state->stream);
+
+	printf("Sent frame %5i/%5li\n", state->frameNb, state->totalFrames);
 }

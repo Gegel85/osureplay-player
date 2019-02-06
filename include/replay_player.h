@@ -31,9 +31,13 @@ typedef struct replayPlayerState {
 	FILE		*stream;
 	AVCodecContext	*videoCodecContext;
 	AVCodecContext	*audioCodecContext;
-	AVFrame		*frame;
-	AVPacket	*packet;
+	AVFrame		*videoFrame;
+	AVFrame		*audioFrame;
+	AVPacket	*videoPacket;
+	AVPacket	*audioPacket;
 	int		frameNb;
+	unsigned long	totalFrames;
+
 } replayPlayerState;
 
 void	encode_frame(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfile);
