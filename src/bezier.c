@@ -64,7 +64,7 @@ OsuIntegerVectorArray	getBezierPoints(OsuIntegerVectorArray points, OsuIntegerVe
 	result.content = malloc(result.length * sizeof(*result.content));
 	for (unsigned i = 0; i < arrLen; i++)
 		for (unsigned j = 0; j < (pts[i].length > 1 ? POINTS_PRECISION : 1); j += 1) {
-			result.content[counter] = bezier(pts[i], j / 10.);
+			result.content[counter] = bezier(pts[i], j / (POINTS_PRECISION / 100.));
 			counter++;
 		}
 	return result;
