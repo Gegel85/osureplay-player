@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <libavutil/channel_layout.h>
 #include <osu_replay_parser.h>
 #include <osu_map_parser.h>
 #include <SFML/Graphics.h>
@@ -45,14 +46,23 @@ AVCodecContext *initVideoCodec()
 
 AVCodecContext *initAudioCodec()
 {
-	const AVCodec	*audioCodec;
+	const AVCodec	*codec;
 	AVCodecContext	*codecContext;
 
 	/* find the audio encoder */
-	audioCodec = avcodec_find_encoder(AV_CODEC_ID_MP2);
-	if (!audioCodec)
+	codec = avcodec_find_encoder(AV_CODEC_ID_MP2);
+	if (!codec)
 		display_error("Audio codec not found\n");
-	codecContext = avcodec_alloc_context3(audioCodec);
+	codecContext = avcodec_alloc_context3(codec);
+	codecContext->bit_rate = 64000;
+	codecContext->sample_rate = 44100;
+	codecContext->channels = 2;
+	codecContext->channel_layout = AV_CH_LAYOUT_STEREO;
+	codecContext->sample_fmt = AV_SAMPLE_FMT_S16;
+
+	/* open it */
+	if (avcodec_open2(codecContext, codec, NULL) < 0)
+		display_error("Couldn't open audio codec\n");
 
 	return codecContext;
 }
@@ -65,6 +75,22 @@ AVFrame	*initVideoFrame(AVCodecContext *context)
 	frame->format = context->pix_fmt;
 	frame->width = context->width;
 	frame->height = context->height;
+	frame->quality = 1;
+
+	if (av_frame_get_buffer(frame, 32) < 0)
+		display_error("Memory allocation error\n");
+	return frame;
+}
+
+AVFrame	*initAudioFrames(AVCodecContext *context, uint64_t layout)
+{
+	AVFrame	*frame;
+
+	frame = av_frame_alloc();
+	frame->format = context->sample_fmt;
+	frame->nb_samples = context->sample_rate / 60 + 1;
+	frame->sample_rate = context->sample_rate;
+	frame->channel_layout = layout;
 	frame->quality = 1;
 
 	if (av_frame_get_buffer(frame, 32) < 0)
@@ -95,6 +121,12 @@ void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *bea
 	if (!state->videoPacket)
 		display_error("Memory allocation error\n");
 
+	state->audioFrames[0] = initAudioFrames(state->audioCodecContext, AV_CH_STEREO_LEFT);
+	state->audioFrames[1] = initAudioFrames(state->audioCodecContext, AV_CH_STEREO_RIGHT);
+	state->audioPacket = av_packet_alloc();
+	if (!state->audioPacket)
+		display_error("Memory allocation error\n");
+
 	state->stream = fopen(path, "wb");
 	if (!state->stream)
 		display_error(concatf("%s: %s\n", path, strerror(errno)));
@@ -108,16 +140,24 @@ void	finishReplaySession(replayPlayerState *state)
 		return;
 
 	/* flush the encoder */
-	encode_frame(state->videoCodecContext, NULL, state->videoPacket, state->stream);
+	encodeFrame(state->videoCodecContext, NULL, state->videoPacket, state->stream);
 
 	/* add sequence end code to have a real MPEG file */
 	fwrite(endcode, 1, sizeof(endcode), state->stream);
 	fclose(state->stream);
 
+	/* free frames */
+	av_frame_free(&state->videoFrame);
+	av_frame_free(&state->audioFrames[0]);
+	av_frame_free(&state->audioFrames[1]);
+
+	/* free packets */
+	av_packet_free(&state->videoPacket);
+	av_packet_free(&state->audioPacket);
+
+	/* free codec contexts */
 	avcodec_free_context(&state->videoCodecContext);
 	avcodec_free_context(&state->audioCodecContext);
-	av_frame_free(&state->videoFrame);
-	av_packet_free(&state->videoPacket);
 }
 
 void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sounds, Dict *images, char *path)
@@ -137,7 +177,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 	}
 
 	state.totalFrames = replay->replayLength * 60 / ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE) ? 1500 : 1000) + 1;
-	printf("Replay length: %lums, %lu frame(s)\n", replay->replayLength, state.totalFrames);
+	printf("Replay length: %lums, %lu video frame(s), %lu audio frames\n", replay->replayLength, state.totalFrames, state.totalFrames * 44100);
 	padding = (sfVector2u){64, 48};
 
 	beatmap->backgroundPath = beatmap->backgroundPath ? strToLower(getFileName(beatmap->backgroundPath)) : NULL;

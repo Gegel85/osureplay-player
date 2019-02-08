@@ -10,7 +10,7 @@
 
 #include "frame_buffer.h"
 
-void	encode_frame(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfile)
+void	encodeFrame(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfile)
 {
 	int ret;
 

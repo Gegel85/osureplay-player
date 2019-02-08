@@ -12,7 +12,7 @@
 void	display_error(char *msg)
 {
 	write(2, msg, strlen(msg));
-	abort();
+	exit(EXIT_FAILURE);
 }
 
 void	FrameBuffer_clear(FrameBuffer *buffer, sfColor color)
@@ -207,7 +207,8 @@ void	FrameBuffer_encode(FrameBuffer *buffer, replayPlayerState *state)
 	state->videoFrame->pts = state->frameNb++;
 
 	/* encode the image */
-	encode_frame(state->videoCodecContext, state->videoFrame, state->videoPacket, state->stream);
+	encodeFrame(state->videoCodecContext, state->videoFrame,
+		    state->videoPacket, state->stream);
 
 	printf("Sent frame %5i/%5li\n", state->frameNb, state->totalFrames);
 }
