@@ -10,8 +10,7 @@
 #include <SFML/Audio.h>
 #include "dict.h"
 
-void	playSound(sfSoundBuffer *buffer);
-void	displayHitObjects(unsigned currentComboColor, unsigned currentGameHitObject, unsigned currentTimingPoint, OsuMap *beatmap, unsigned long totalTicks, unsigned beginCombo, Dict *images, Dict *sounds);
+void	displayHitObjects(replayPlayerState *state, OsuMap *beatmap);
 
 
 #endif //OSUREPLAY_PLAYER_DISPLAY_H

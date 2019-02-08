@@ -3,14 +3,32 @@
 
 #include <SFML/Graphics.h>
 #include <stdbool.h>
-#include "replay_player.h"
+#include <stdlib.h>
+#include <stdio.h>
+
+#ifdef __GNUC_VA_LIST
+#define display_msg(msg, ...)	{fprintf(stdout, "%s: line %u in function %s: ", __FILE__, __LINE__, __FUNCTION__);\
+				fprintf(stdout, msg, ##__VA_ARGS__);}
+
+#define display_error(msg, ...) {fprintf(stderr, "%s: line %u in function %s: ", __FILE__, __LINE__, __FUNCTION__);\
+				fprintf(stderr, msg, ##__VA_ARGS__);\
+				exit(EXIT_FAILURE);}
+#else
+#define display_msg(msg, ...)	{fprintf(stdout, "%s: line %u in function %s: ", __FILE__, __LINE__, __FUNCTION__);\
+				fprintf(stdout, msg, __VA_ARGS__)}
+
+#define display_error(msg, ...) {fprintf(stderr, "%s: line %u in function %s: ", __FILE__, __LINE__, __FUNCTION__);\
+				fprintf(stderr, msg, __VA_ARGS__);\
+				exit(EXIT_FAILURE)}
+#endif
 
 typedef struct FrameBuffer {
 	sfColor		**content;
 	sfVector2u	size;
 } FrameBuffer;
 
-void	display_error(char *msg);
+struct replayPlayerState;
+
 void	FrameBuffer_clear(FrameBuffer *buffer, sfColor color);
 void	FrameBuffer_draw(FrameBuffer *buffer, sfRenderWindow *window);
 void	FrameBuffer_init(FrameBuffer *buffer, sfVector2u size);
@@ -21,6 +39,6 @@ void	FrameBuffer_drawFilledRectangle(FrameBuffer *buffer, sfVector2i pos, sfVect
 void	FrameBuffer_drawImage(FrameBuffer *buffer, sfVector2i pos, sfImage *image, sfVector2i newSize, sfColor tint, bool centered, float rotation);
 void	FrameBuffer_drawCircle(FrameBuffer *buffer, unsigned thinkness, sfVector2i pos, int radius, sfColor color);
 void	FrameBuffer_drawFilledCircle(FrameBuffer *buffer, sfVector2i pos, int radius, sfColor color);
-void	FrameBuffer_encode(FrameBuffer *buffer, replayPlayerState *state);
+void	FrameBuffer_encode(FrameBuffer *buffer, struct replayPlayerState *state);
 
 #endif //OSUREPLAY_PLAYER_FRAME_BUFFER_H

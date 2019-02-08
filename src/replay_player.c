@@ -5,13 +5,14 @@
 #include <osu_map_parser.h>
 #include <SFML/Graphics.h>
 #include <concatf.h>
+#include "sound.h"
 #include "display.h"
 #include "skin.h"
 #include "dict.h"
 #include "globals.h"
 #include "replay_player.h"
 
-AVCodecContext *initVideoCodec()
+AVCodecContext *initVideoCodec(sfVector2u size)
 {
 	const AVCodec	*codec;
 	AVCodecContext	*codecContext;
@@ -19,15 +20,15 @@ AVCodecContext *initVideoCodec()
 	/* find the video encoder */
 	codec = avcodec_find_encoder(AV_CODEC_ID_MPEG1VIDEO);
 	if (!codec)
-		display_error("Video codec not found\n");
+		display_error("MPEG1VIDEO codec not found\n");
 	codecContext = avcodec_alloc_context3(codec);
 
 	/* put sample parameters */
 	codecContext->bit_rate = 4000000;
 
 	/* resolution must be a multiple of two */
-	codecContext->width = 640;
-	codecContext->height = 480;
+	codecContext->width = size.x;
+	codecContext->height = size.y;
 
 	/* frames per second */
 	codecContext->time_base = (AVRational){1, 60};
@@ -52,7 +53,7 @@ AVCodecContext *initAudioCodec()
 	/* find the audio encoder */
 	codec = avcodec_find_encoder(AV_CODEC_ID_MP2);
 	if (!codec)
-		display_error("Audio codec not found\n");
+		display_error("MP2 codec not found\n");
 	codecContext = avcodec_alloc_context3(codec);
 	codecContext->bit_rate = 64000;
 	codecContext->sample_rate = 44100;
@@ -98,38 +99,49 @@ AVFrame	*initAudioFrames(AVCodecContext *context, uint64_t layout)
 	return frame;
 }
 
-void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *beatmap)
+void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *beatmap, sfVector2u size)
 {
+	/* Put base values */
 	memset(state, 0, sizeof(*state));
 	state->life = 1;
 	state->beginCombo = 1;
 	state->played = malloc(sizeof(*state->played) * beatmap->hitObjects.length);
 	if (!state->played)
-		display_error("Memory allocation error\n");
+		display_error("Memory allocation error (%luB)\n", sizeof(*state->played) * beatmap->hitObjects.length);
 	memset(state->played, 0, sizeof(*state->played) * beatmap->hitObjects.length);
+	state->stream = NULL;
 
+	/* Debug mode -> don't create audio/video contexts */
 	if (!path)
 		return;
 
+	/* init framebuffer */
+	FrameBuffer_init(&state->frame_buffer, size);
+
+	/* register all codecs */
 	avcodec_register_all();
 
-	state->videoCodecContext = initVideoCodec();
+	/* init codecs */
+	state->videoCodecContext = initVideoCodec(size);
 	state->audioCodecContext = initAudioCodec();
 
+	/* init video frame */
 	state->videoFrame = initVideoFrame(state->videoCodecContext);
 	state->videoPacket = av_packet_alloc();
 	if (!state->videoPacket)
 		display_error("Memory allocation error\n");
 
+	/* init audio frames */
 	state->audioFrames[0] = initAudioFrames(state->audioCodecContext, AV_CH_STEREO_LEFT);
 	state->audioFrames[1] = initAudioFrames(state->audioCodecContext, AV_CH_STEREO_RIGHT);
 	state->audioPacket = av_packet_alloc();
 	if (!state->audioPacket)
 		display_error("Memory allocation error\n");
 
+	/* open file */
 	state->stream = fopen(path, "wb");
 	if (!state->stream)
-		display_error(concatf("%s: %s\n", path, strerror(errno)));
+		display_error("Connot open %s: %s\n", path, strerror(errno));
 }
 
 void	finishReplaySession(replayPlayerState *state)
@@ -138,6 +150,9 @@ void	finishReplaySession(replayPlayerState *state)
 
 	if (!state->stream)
 		return;
+
+	/* destroy framebuffer */
+	FrameBuffer_destroy(&state->frame_buffer);
 
 	/* flush the encoder */
 	encodeFrame(state->videoCodecContext, NULL, state->videoPacket, state->stream);
@@ -167,7 +182,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 	sfClock			*clock = NULL;
 	replayPlayerState	state;
 
-	startResplaySession(&state, path, beatmap);
+	startResplaySession(&state, path, beatmap, size);
 
 	if (!path) {
 		window = sfRenderWindow_create(mode, "Osu Replay Player", sfDefaultStyle, NULL);
@@ -176,12 +191,13 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 		sfRenderWindow_setFramerateLimit(window, 60);
 	}
 
+	state.sounds = sounds;
+	state.images = images;
 	state.totalFrames = replay->replayLength * 60 / ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE) ? 1500 : 1000) + 1;
 	printf("Replay length: %lums, %lu video frame(s), %lu audio frames\n", replay->replayLength, state.totalFrames, state.totalFrames * 44100);
 	padding = (sfVector2u){64, 48};
 
 	beatmap->backgroundPath = beatmap->backgroundPath ? strToLower(getFileName(beatmap->backgroundPath)) : NULL;
-	FrameBuffer_init(&frame_buffer, size);
 	while (
 		state.currentGameEvent < replay->gameEvents.length ||
 		replay->gameEvents.content[state.currentGameEvent].timeToHappen > (long)state.totalTicks
@@ -203,9 +219,9 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 		} else
 			state.totalTicks += ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE) ? 1500 : 1000) / 60.;
 
-		FrameBuffer_clear(&frame_buffer, (sfColor){0, 0, 0, 255});
+		FrameBuffer_clear(&state.frame_buffer, (sfColor){0, 0, 0, 255});
 		FrameBuffer_drawImage(
-			&frame_buffer,
+			&state.frame_buffer,
 			(sfVector2i){0, 0},
 			Dict_getElement(images, beatmap->backgroundPath),
 			(sfVector2i){size.x, size.y},
@@ -250,7 +266,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 			beatmap->hitObjects.content[state.currentGameHitObject].type & HITOBJ_SLIDER
 		) {
 			if (!path)
-				playSound(Dict_getElement(sounds, "drum-hitnormal"));
+				playSound(&state, "drum-hitnormal", 1);
 			state.played[state.currentGameHitObject]++;
 		}
 		while (
@@ -270,7 +286,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 			)
 		) {
 			if (!path)
-				playSound(Dict_getElement(sounds, "drum-hitnormal"));
+				playSound(&state, "drum-hitnormal", 1);
 			state.played[state.currentGameHitObject] = true;
 			if (beatmap->hitObjects.content[state.currentGameHitObject].type & HITOBJ_NEW_COMBO) {
 				state.beginCombo = 0;
@@ -280,19 +296,18 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 			state.currentGameHitObject++;
 		}
 
-		displayHitObjects(state.currentComboColor, state.currentGameHitObject, state.currentTimingPoint, beatmap, state.totalTicks, state.beginCombo, images, sounds);
+		displayHitObjects(&state, beatmap);
 
-		FrameBuffer_drawFilledRectangle(&frame_buffer, (sfVector2i){10, 10}, (sfVector2u){300 * state.life, 20}, (sfColor){255, 255, 255, 255});
-		FrameBuffer_drawImage(&frame_buffer, (sfVector2i){state.cursorPos.x, state.cursorPos.y}, Dict_getElement(images, "cursor"), (sfVector2i){-1, -1}, (sfColor){255, 255, 255, 255}, true, 0);
+		FrameBuffer_drawFilledRectangle(&state.frame_buffer, (sfVector2i){10, 10}, (sfVector2u){300 * state.life, 20}, (sfColor){255, 255, 255, 255});
+		FrameBuffer_drawImage(&state.frame_buffer, (sfVector2i){state.cursorPos.x, state.cursorPos.y}, Dict_getElement(images, "cursor"), (sfVector2i){-1, -1}, (sfColor){255, 255, 255, 255}, true, 0);
 
 		if (!path) {
-			FrameBuffer_draw(&frame_buffer, window);
+			FrameBuffer_draw(&state.frame_buffer, window);
 			sfRenderWindow_display(window);
 			if (!clock)
 				clock = sfClock_create();
 		} else
-			FrameBuffer_encode(&frame_buffer, &state);
+			FrameBuffer_encode(&state.frame_buffer, &state);
 	}
-	FrameBuffer_destroy(&frame_buffer);
 	finishReplaySession(&state);
 }

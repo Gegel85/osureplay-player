@@ -35,7 +35,7 @@ LoadingPair	*createPair(void *(*creator)(const char *), void (*destroyer)(void *
 	LoadingPair	*buffer = malloc(sizeof(*buffer));
 
 	if (!buffer)
-		display_error("Memory allocation error\n");
+		display_error("Memory allocation error (%luB)\n", sizeof(*buffer));
 	buffer->type = type;
 	buffer->creator = creator;
 	buffer->destroyer = destroyer;
@@ -65,16 +65,12 @@ int	main(int argc, char **args)
 	}
 
 	replay = OsuReplay_parseReplayFile(args[2]);
-	if (replay.error) {
-		printf("Parsing for replay file '%s' failed:\n%s", args[2], replay.error);
-		return EXIT_FAILURE;
-	}
+	if (replay.error)
+		display_error("\nParsing for replay file '%s' failed:\n%s\n", args[2], replay.error);
 
 	beatmap = OsuMap_parseMapFile(args[1]);
-	if (beatmap.error) {
-		printf("Parsing for beatmap file '%s' failed:\n%s\n", args[1], beatmap.error);
-		return EXIT_FAILURE;
-	}
+	if (beatmap.error)
+		display_error("\nParsing for beatmap file '%s' failed:\n%s", args[1], beatmap.error);
 
 	createLoader(&loaders);
 	if (!loadSkin("assets", &images, &sounds, &loaders))

@@ -16,7 +16,7 @@ OsuIntegerVector	bezier(OsuIntegerVectorArray points, double percent)
 		return *points.content;
 	pts.content = malloc(pts.length * sizeof(*pts.content));
 	if (!pts.content)
-		display_error("Memory allocation error\n");
+		display_error("Memory allocation error (%luB)\n", pts.length * sizeof(*pts.content));
 	for (unsigned i = 0; i < pts.length; i++)
 		pts.content[i] = (OsuIntegerVector){
 			((points.content[i + 1].x - points.content[i].x) * percent / 100) + points.content[i].x,
@@ -35,11 +35,11 @@ OsuIntegerVectorArray	getBezierPoints(OsuIntegerVectorArray points, OsuIntegerVe
 	unsigned		counter = 0;
 
 	if (!pts)
-		display_error("Memory allocation error\n");
+		display_error("Memory allocation error (%luB)\n", sizeof(*pts));
 	pts->length = 1;
 	pts->content = malloc(sizeof(*pts->content));
 	if (!pts->content)
-		display_error("Memory allocation error\n");
+		display_error("Memory allocation error (%luB)\n", sizeof(*pts->content));
 	*pts->content = pos;
 	for (unsigned i = 0; i < points.length; i++) {
 		if (
@@ -50,18 +50,20 @@ OsuIntegerVectorArray	getBezierPoints(OsuIntegerVectorArray points, OsuIntegerVe
 			arrLen++;
 			pts = realloc(pts, arrLen * sizeof(*pts));
 			if (!pts)
-				display_error("Memory allocation error\n");
+				display_error("Memory allocation error (%luB)\n", sizeof(*pts));
 			pts[arrLen - 1].length = 0;
 			pts[arrLen - 1].content = NULL;
 		}
 		pts[arrLen - 1].content = realloc(pts[arrLen - 1].content, ++pts[arrLen - 1].length * sizeof(*pts[arrLen - 1].content));
 		if (!pts->content)
-			display_error("Memory allocation error\n");
+			display_error("Memory allocation error (%luB)\n", (pts[arrLen - 1].length + 1) * sizeof(*pts[arrLen - 1].content));
 		pts[arrLen - 1].content[pts[arrLen - 1].length - 1] = points.content[i];
 	}
 	for (unsigned i = 0; i < arrLen; i++)
 		result.length += pts[i].length > 1 ? POINTS_PRECISION : 1;
 	result.content = malloc(result.length * sizeof(*result.content));
+	if (!result.content)
+		display_error("Memory allocation error (%luB)\n", result.length * sizeof(*result.content));
 	for (unsigned i = 0; i < arrLen; i++)
 		for (unsigned j = 0; j < (pts[i].length > 1 ? POINTS_PRECISION : 1); j += 1) {
 			result.content[counter] = bezier(pts[i], j / (POINTS_PRECISION / 100.));

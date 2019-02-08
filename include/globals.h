@@ -6,10 +6,8 @@
 #include "defines.h"
 #include "frame_buffer.h"
 
-extern sfFont		*font;
 extern sfRenderWindow	*window;
 extern sfMusic		*music;
 extern sfVector2u	padding;
-extern FrameBuffer	frame_buffer;
 
 #endif //OSUREPLAY_PLAYER_GLOBALS_H

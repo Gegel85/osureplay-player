@@ -4,16 +4,10 @@
 #include <string.h>
 #include <stdbool.h>
 #include <math.h>
-#include <replay_player.h>
 #include <stdio.h>
 #include <libavutil/imgutils.h>
 #include "frame_buffer.h"
-
-void	display_error(char *msg)
-{
-	write(2, msg, strlen(msg));
-	exit(EXIT_FAILURE);
-}
+#include "replay_player.h"
 
 void	FrameBuffer_clear(FrameBuffer *buffer, sfColor color)
 {
@@ -31,10 +25,10 @@ void	FrameBuffer_init(FrameBuffer *buffer, sfVector2u size)
 	buffer->size = size;
 	buffer->content = malloc(size.y * sizeof(*buffer->content));
 	if (!buffer->content)
-		display_error("Memory allocation error\n");
+		display_error("Memory allocation error (%luB)\n", size.y * sizeof(*buffer->content));
 	*buffer->content = malloc(size.y * size.x * sizeof(**buffer->content));
 	if (!*buffer->content)
-		display_error("Memory allocation error\n");
+		display_error("Memory allocation error (%luB)\n", size.y * size.x * sizeof(**buffer->content));
 	memset(*buffer->content, 0, size.y * size.x * sizeof(**buffer->content));
 	for (unsigned i = 0; i < size.y; i++)
 		buffer->content[i] = &(*buffer->content)[i * size.x];

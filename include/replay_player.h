@@ -14,6 +14,7 @@
 #include <SFML/Graphics.h>
 
 #include "dict.h"
+#include "frame_buffer.h"
 
 typedef struct replayPlayerState {
 	double		totalTicks;
@@ -37,7 +38,9 @@ typedef struct replayPlayerState {
 	AVPacket	*audioPacket;
 	int		frameNb;
 	unsigned long	totalFrames;
-
+	Dict		*sounds;
+	Dict		*images;
+	FrameBuffer	frame_buffer;
 } replayPlayerState;
 
 void	encodeFrame(AVCodecContext *enc_ctx, AVFrame *frame,
