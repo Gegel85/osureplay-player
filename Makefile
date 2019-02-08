@@ -13,6 +13,7 @@ SRC =	main.c					\
 		perfect_line.c			\
 		get_slider_points.c		\
 		encode_frame.c			\
+		perfect_circle.c		\
 
 OBJ =	$(SRC:%.c=src/%.o)
 

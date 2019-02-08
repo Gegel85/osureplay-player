@@ -6,6 +6,7 @@
 
 void			getRealPointsSliders(OsuMap_hitObject *obj);
 OsuIntegerVectorArray	getBezierPoints(OsuIntegerVectorArray points, OsuIntegerVector pos);
+OsuIntegerVectorArray	getCirclePoints(OsuIntegerVectorArray points, OsuIntegerVector pos);
 OsuIntegerVectorArray	getLinePoints(OsuIntegerVectorArray points, OsuIntegerVector pos);
 
 

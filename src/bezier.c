@@ -3,7 +3,7 @@
 #include <osu_map_parser.h>
 #include "frame_buffer.h"
 
-#define POINTS_PRECISION 100
+#define POINTS_PRECISION 50
 
 OsuIntegerVector	bezier(OsuIntegerVectorArray points, double percent)
 {

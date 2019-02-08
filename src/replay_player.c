@@ -111,12 +111,12 @@ void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *bea
 	memset(state->played, 0, sizeof(*state->played) * beatmap->hitObjects.length);
 	state->stream = NULL;
 
+	/* init framebuffer */
+	FrameBuffer_init(&state->frame_buffer, size);
+
 	/* Debug mode -> don't create audio/video contexts */
 	if (!path)
 		return;
-
-	/* init framebuffer */
-	FrameBuffer_init(&state->frame_buffer, size);
 
 	/* register all codecs */
 	avcodec_register_all();
