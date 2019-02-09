@@ -141,7 +141,12 @@ void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *bea
 	/* open file */
 	state->stream = fopen(path, "wb");
 	if (!state->stream)
-		display_error("Connot open %s: %s\n", path, strerror(errno));
+		display_error("Cannot open %s: %s\n", path, strerror(errno));
+
+	state->playingSounds = malloc(sizeof(*state->playingSounds));
+	if (!state->playingSounds)
+		display_error("Memory allocation error (%lu)\n", sizeof(*state->playingSounds));
+	memset(state->playingSounds, 0, sizeof(*state->playingSounds));
 }
 
 void	finishReplaySession(replayPlayerState *state)
@@ -306,8 +311,10 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 			sfRenderWindow_display(window);
 			if (!clock)
 				clock = sfClock_create();
-		} else
+		} else {
 			FrameBuffer_encode(&state.frame_buffer, &state);
+			encodePlayingSounds(&state);
+		}
 	}
 	finishReplaySession(&state);
 }

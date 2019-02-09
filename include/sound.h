@@ -10,9 +10,22 @@
 
 
 #include <SFML/Audio.h>
-#include "replay_player.h"
 
-void	playSound(replayPlayerState *state, char *sound, float pitch);
+typedef struct Sound {
+	unsigned	*data;
+	size_t		length;
+} Sound;
+
+typedef struct PlayingSound {
+	Sound	*sound;
+	double	pitch;
+	double	pos;
+} PlayingSound;
+
+struct replayPlayerState;
+
+void	playSound(struct replayPlayerState *state, char *sound, float pitch);
+void	encodePlayingSounds(struct replayPlayerState *state);
 
 
 #endif //OSUREPLAY_PLAYER_SOUND_H

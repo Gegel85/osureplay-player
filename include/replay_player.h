@@ -15,6 +15,7 @@
 
 #include "dict.h"
 #include "frame_buffer.h"
+#include "sound.h"
 
 typedef struct replayPlayerState {
 	double		totalTicks;
@@ -41,10 +42,10 @@ typedef struct replayPlayerState {
 	Dict		*sounds;
 	Dict		*images;
 	FrameBuffer	frame_buffer;
+	PlayingSound	*playingSounds;
 } replayPlayerState;
 
-void	encodeFrame(AVCodecContext *enc_ctx, AVFrame *frame,
-			AVPacket *pkt, FILE *outfile);
+void	encodeFrame(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfile);
 void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sounds, Dict *images, char *path);
 
 

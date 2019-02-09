@@ -9,6 +9,7 @@
 #include <osu_map_parser.h>
 #include <SFML/Audio.h>
 #include "dict.h"
+#include "replay_player.h"
 
 void	displayHitObjects(replayPlayerState *state, OsuMap *beatmap);
 
