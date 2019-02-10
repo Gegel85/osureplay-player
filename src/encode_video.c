@@ -10,7 +10,7 @@
 
 #include "frame_buffer.h"
 
-void	encodeFrame(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfile)
+void	encodeVideoFrame(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfile)
 {
 	int ret;
 
@@ -25,7 +25,7 @@ void	encodeFrame(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *o
 			return;
 		else if (ret < 0)
 			display_error("error during encoding\n");
-		if (fwrite(pkt->data, 1, pkt->size, outfile) != pkt->size)
+		if (fwrite(pkt->data, 1, pkt->size, outfile) != (size_t)pkt->size)
 			display_error("Cannot write in file\n");
 		av_packet_unref(pkt);
 	}

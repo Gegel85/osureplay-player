@@ -7,19 +7,31 @@
 #include <stdio.h>
 
 #ifdef __GNUC_VA_LIST
-#define display_msg(msg, ...)	{fprintf(stdout, "%s: line %u in function %s: ", __FILE__, __LINE__, __FUNCTION__);\
-				fprintf(stdout, msg, ##__VA_ARGS__);}
+#define display_warning(msg, ...)\
+{\
+	fprintf(stderr, "Function %s: ", __FUNCTION__);\
+	fprintf(stderr, msg, ##__VA_ARGS__);\
+}
 
-#define display_error(msg, ...) {fprintf(stderr, "%s: line %u in function %s: ", __FILE__, __LINE__, __FUNCTION__);\
-				fprintf(stderr, msg, ##__VA_ARGS__);\
-				exit(EXIT_FAILURE);}
+#define display_error(msg, ...)\
+{\
+	fprintf(stderr, "%s: line %u in function %s: ", __FILE__, __LINE__, __FUNCTION__);\
+	fprintf(stderr, msg, ##__VA_ARGS__);\
+	exit(EXIT_FAILURE);\
+}
 #else
-#define display_msg(msg, ...)	{fprintf(stdout, "%s: line %u in function %s: ", __FILE__, __LINE__, __FUNCTION__);\
-				fprintf(stdout, msg, __VA_ARGS__)}
+#define display_warning(msg, ...)\
+{\
+	fprintf(stderr, "In %s: ", __FUNCTION__);\
+	fprintf(stderr, msg, __VA_ARGS__);\
+}
 
-#define display_error(msg, ...) {fprintf(stderr, "%s: line %u in function %s: ", __FILE__, __LINE__, __FUNCTION__);\
-				fprintf(stderr, msg, __VA_ARGS__);\
-				exit(EXIT_FAILURE)}
+#define display_error(msg, ...)\
+{\
+	fprintf(stderr, "%s: line %u in function %s: ", __FILE__, __LINE__, __FUNCTION__);\
+	fprintf(stderr, msg, __VA_ARGS__);\
+	exit(EXIT_FAILURE);\
+}
 #endif
 
 typedef struct FrameBuffer {

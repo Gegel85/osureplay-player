@@ -198,11 +198,11 @@ void	FrameBuffer_encode(FrameBuffer *buffer, replayPlayerState *state)
 		}
 	}
 
-	state->videoFrame->pts = state->frameNb++;
+	state->videoFrame->pts = state->frameNb;
 
 	/* encode the image */
-	encodeFrame(state->videoCodecContext, state->videoFrame,
-		    state->videoPacket, state->stream);
+	encodeVideoFrame(state->videoCodecContext, state->videoFrame,
+			 state->videoPacket, state->stream);
 
 	printf("Sent frame %5i/%5li\n", state->frameNb, state->totalFrames);
 }

@@ -23,7 +23,7 @@ void	getRealPointsSliders(OsuMap_hitObject *obj)
 			infos->curvePoints = getCirclePoints(points, obj->position);
 			break;
 		case 'C':
-			display_msg("Warning: Catmull sliders are deprecated and are, therefore, not supported");
+			display_warning("Warning: Catmull sliders are deprecated and are, therefore, not supported");
 			return;
 		default:
 			display_error("Invalid slider type");

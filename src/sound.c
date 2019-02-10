@@ -4,7 +4,7 @@
 #include "replay_player.h"
 #include "defines.h"
 
-void	playSound(replayPlayerState *state, char *index, float pitch)
+void	playSound(replayPlayerState *state, char *index, double pitch, double speed)
 {
 	void	*elem = Dict_getElement(state->sounds, index);
 	int	i = 0;
@@ -30,7 +30,7 @@ void	playSound(replayPlayerState *state, char *index, float pitch)
 		return;
 	}
 	for (; state->playingSounds[i].sound; i++) {
-		if (state->playingSounds[i].sound->length < state->playingSounds[i].pos) {
+		if (state->playingSounds[i].sound->length < state->playingSounds[i].pos * 2) {
 			best = &state->playingSounds[i];
 			break;
 		}
@@ -51,15 +51,23 @@ void	encodePlayingSounds(replayPlayerState *state)
 {
 	PlayingSound	*sounds = state->playingSounds;
 	static double	total = 0;
+	static FILE	*stream = NULL;
 
+	if (!stream)
+		stream = fopen("test.mp2", "wb");
+	memset(state->audioFrame->data[0], 0, state->audioFrame->nb_samples * 2);
 	total += state->audioCodecContext->sample_rate / 60.;
-	for (int sample = 0; total-- >= 1; sample++) {
-		for (int i = 0; sounds[i].sound; i++) {
-			state->audioFrames[0]->nb_samples
-			state->audioFrames[0]->data[0][sample] = 42;
-			state->audioFrames[1]->data[0][sample] = 0;
+	for (int i = 0; i < state->audioFrame->nb_samples; i++) {
+		for (int j = 0; sounds[j].sound; j++) {
+			if (sounds[j].sound->length < sounds[j].pos * 2) {
+				((short *)state->audioFrame->data[0])[i] += sounds[j].sound->data[(int)sounds[j].pos * 2] * sounds[j].pitch;
+				((short *)state->audioFrame->data[1])[i] += sounds[j].sound->data[(int)sounds[j].pos * 2 + 1] * sounds[j].pitch;
+				sounds[j].pos += sounds[j].speed;
+			}
 		}
 	}
-	encodeFrame(state->audioCodecContext, state->audioFrames[0], state->audioPacket, state->stream);
-	encodeFrame(state->audioCodecContext, state->audioFrames[1], state->audioPacket, state->stream);
+
+	state->audioFrame->pts = state->frameNb;
+
+	encodeAudioFrame(state->audioCodecContext, state->audioFrame, state->audioPacket, stream);
 }

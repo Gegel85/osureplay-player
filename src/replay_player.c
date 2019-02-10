@@ -83,15 +83,15 @@ AVFrame	*initVideoFrame(AVCodecContext *context)
 	return frame;
 }
 
-AVFrame	*initAudioFrames(AVCodecContext *context, uint64_t layout)
+AVFrame	*initAudioFrames(AVCodecContext *context)
 {
 	AVFrame	*frame;
 
 	frame = av_frame_alloc();
 	frame->format = context->sample_fmt;
-	frame->nb_samples = context->sample_rate / 60 + 1;
+	frame->nb_samples = context->frame_size;
 	frame->sample_rate = context->sample_rate;
-	frame->channel_layout = layout;
+	frame->channel_layout = context->channel_layout;
 	frame->quality = 1;
 
 	if (av_frame_get_buffer(frame, 32) < 0)
@@ -132,11 +132,12 @@ void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *bea
 		display_error("Memory allocation error\n");
 
 	/* init audio frames */
-	state->audioFrames[0] = initAudioFrames(state->audioCodecContext, AV_CH_STEREO_LEFT);
-	state->audioFrames[1] = initAudioFrames(state->audioCodecContext, AV_CH_STEREO_RIGHT);
+	state->audioFrame = initAudioFrames(state->audioCodecContext);
 	state->audioPacket = av_packet_alloc();
 	if (!state->audioPacket)
 		display_error("Memory allocation error\n");
+
+	state->frameNb = 1;
 
 	/* open file */
 	state->stream = fopen(path, "wb");
@@ -159,8 +160,11 @@ void	finishReplaySession(replayPlayerState *state)
 	/* destroy framebuffer */
 	FrameBuffer_destroy(&state->frame_buffer);
 
-	/* flush the encoder */
-	encodeFrame(state->videoCodecContext, NULL, state->videoPacket, state->stream);
+	/* flush the encoders */
+	encodeVideoFrame(state->videoCodecContext, NULL, state->videoPacket,
+			 state->stream);
+	encodeVideoFrame(state->audioCodecContext, NULL, state->audioPacket,
+			 state->stream);
 
 	/* add sequence end code to have a real MPEG file */
 	fwrite(endcode, 1, sizeof(endcode), state->stream);
@@ -168,8 +172,7 @@ void	finishReplaySession(replayPlayerState *state)
 
 	/* free frames */
 	av_frame_free(&state->videoFrame);
-	av_frame_free(&state->audioFrames[0]);
-	av_frame_free(&state->audioFrames[1]);
+	av_frame_free(&state->audioFrame);
 
 	/* free packets */
 	av_packet_free(&state->videoPacket);
@@ -203,6 +206,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 	padding = (sfVector2u){64, 48};
 
 	beatmap->backgroundPath = beatmap->backgroundPath ? strToLower(getFileName(beatmap->backgroundPath)) : NULL;
+	beatmap->generalInfos.audioFileName = beatmap->generalInfos.audioFileName ? strToLower(getFileName(beatmap->generalInfos.audioFileName)) : NULL;
 	while (
 		state.currentGameEvent < replay->gameEvents.length ||
 		replay->gameEvents.content[state.currentGameEvent].timeToHappen > (long)state.totalTicks
@@ -241,7 +245,8 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 					sfMusic_play(music);
 					if ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE))
 						sfMusic_setPitch(music, 1.5);
-				}
+				} else
+					playSound(&state, beatmap->generalInfos.audioFileName, 1, 1);
 				state.musicStarted = true;
 			}
 		}
@@ -270,8 +275,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 			beatmap->hitObjects.content[state.currentGameHitObject].timeToAppear <= state.totalTicks &&
 			beatmap->hitObjects.content[state.currentGameHitObject].type & HITOBJ_SLIDER
 		) {
-			if (!path)
-				playSound(&state, "drum-hitnormal", 1);
+			playSound(&state, "drum-hitnormal", 1, 1);
 			state.played[state.currentGameHitObject]++;
 		}
 		while (
@@ -290,8 +294,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 				)
 			)
 		) {
-			if (!path)
-				playSound(&state, "drum-hitnormal", 1);
+			playSound(&state, "drum-hitnormal", 1, 1);
 			state.played[state.currentGameHitObject] = true;
 			if (beatmap->hitObjects.content[state.currentGameHitObject].type & HITOBJ_NEW_COMBO) {
 				state.beginCombo = 0;
@@ -314,6 +317,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 		} else {
 			FrameBuffer_encode(&state.frame_buffer, &state);
 			encodePlayingSounds(&state);
+			state.frameNb++;
 		}
 	}
 	finishReplaySession(&state);

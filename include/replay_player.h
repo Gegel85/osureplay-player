@@ -34,7 +34,7 @@ typedef struct replayPlayerState {
 	AVCodecContext	*videoCodecContext;
 	AVCodecContext	*audioCodecContext;
 	AVFrame		*videoFrame;
-	AVFrame		*audioFrames[2];
+	AVFrame		*audioFrame;
 	AVPacket	*videoPacket;
 	AVPacket	*audioPacket;
 	int		frameNb;
@@ -45,7 +45,8 @@ typedef struct replayPlayerState {
 	PlayingSound	*playingSounds;
 } replayPlayerState;
 
-void	encodeFrame(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfile);
+void	encodeVideoFrame(AVCodecContext *enc_ctx, AVFrame *frame,
+			     AVPacket *pkt, FILE *outfile);
 void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sounds, Dict *images, char *path);
 
 

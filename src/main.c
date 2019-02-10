@@ -42,10 +42,16 @@ LoadingPair	*createPair(void *(*creator)(const char *), void (*destroyer)(void *
 	return buffer;
 }
 
-void	createLoader(Dict *loaders)
+void	createLoader(Dict *loaders, bool debug)
 {
-	Dict_addElement(loaders, "ogg", createPair((void *(*)(const char *))sfSoundBuffer_createFromFile, (void (*)(void *))sfSoundBuffer_destroy, SOUND), free);
-	Dict_addElement(loaders, "wav", createPair((void *(*)(const char *))sfSoundBuffer_createFromFile, (void (*)(void *))sfSoundBuffer_destroy, SOUND), free);
+	if (debug) {
+		Dict_addElement(loaders, "ogg", createPair((void *(*)(const char *))sfSoundBuffer_createFromFile, (void (*)(void *))sfSoundBuffer_destroy, SOUND), free);
+		Dict_addElement(loaders, "wav", createPair((void *(*)(const char *))sfSoundBuffer_createFromFile, (void (*)(void *))sfSoundBuffer_destroy, SOUND), free);
+	} else  {
+		Dict_addElement(loaders, "ogg", createPair((void *(*)(const char *))loadOggFile, (void (*)(void *))destroySound, SOUND), free);
+		Dict_addElement(loaders, "wav", createPair((void *(*)(const char *))loadWavFile, (void (*)(void *))destroySound, SOUND), free);
+		Dict_addElement(loaders, "mp3", createPair((void *(*)(const char *))loadMp3File, (void (*)(void *))destroySound, SOUND), free);
+	}
 	Dict_addElement(loaders, "png", createPair((void *(*)(const char *))sfImage_createFromFile, (void (*)(void *))sfImage_destroy, IMAGE), free);
 	Dict_addElement(loaders, "jpg", createPair((void *(*)(const char *))sfImage_createFromFile, (void (*)(void *))sfImage_destroy, IMAGE), free);
 }
@@ -60,19 +66,23 @@ int	main(int argc, char **args)
 	OsuSkin		skin;
 
 	if (argc != 4) {
-		printf("Usage: %s <map.osu> <replay.osr> <output file>\n", args[0]);
+		fprintf(stdout, "Usage: %s <map.osu> <replay.osr> <output file>\n", args[0]);
 		return EXIT_FAILURE;
 	}
 
 	replay = OsuReplay_parseReplayFile(args[2]);
-	if (replay.error)
-		display_error("\nParsing for replay file '%s' failed:\n%s\n", args[2], replay.error);
+	if (replay.error) {
+		fprintf(stderr, "\nParsing for replay file '%s' failed:\n%s\n", args[2], replay.error);
+		return EXIT_FAILURE;
+	}
 
 	beatmap = OsuMap_parseMapFile(args[1]);
-	if (beatmap.error)
-		display_error("\nParsing for beatmap file '%s' failed:\n%s", args[1], beatmap.error);
+	if (beatmap.error) {
+		fprintf(stderr, "\nParsing for beatmap file '%s' failed:\n%s", args[1], beatmap.error);
+		return EXIT_FAILURE;
+	}
 
-	createLoader(&loaders);
+	createLoader(&loaders, strcmp(args[3], "debug") == 0);
 	if (!loadSkin("assets", &images, &sounds, &loaders))
 		display_error("Default skin is invalid or corrupted\n");
 	loadBeatmapAssets(&beatmap, args[1], &images, &sounds, &loaders);

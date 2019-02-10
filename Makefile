@@ -12,8 +12,10 @@ SRC =	main.c					\
 		sound.c					\
 		perfect_line.c			\
 		get_slider_points.c		\
-		encode_frame.c			\
+		encode_video.c			\
+		encode_audio.c			\
 		perfect_circle.c		\
+		decode_audio_file.c		\
 
 OBJ =	$(SRC:%.c=src/%.o)
 
@@ -40,6 +42,8 @@ LDFLAGS =							\
 	-losureplayparser				\
 	-L lib/libav-12.3/libavcodec/	\
 	-lavcodec						\
+	-L lib/libav-12.3/libavformat/	\
+	-lavformat						\
 	-L lib/libav-12.3/libavresample/\
 	-lavresample					\
 	-L lib/libav-12.3/libavutil/	\
