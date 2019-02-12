@@ -14,15 +14,15 @@ OsuIntegerVectorArray	getLinePoints(OsuIntegerVectorArray points, OsuIntegerVect
 
 	if (points.length != 1)
 		display_error("Invalid linear slider: there is more than a single point");
-	diff = (OsuIntegerVector){pos.x - points.content[0].x, pos.y - points.content[0].y};
+	diff = (OsuIntegerVector){points.content[0].x - pos.x, points.content[0].y - pos.y};
 	array.length = sqrt(pow(diff.x, 2) + pow(diff.y, 2));
 	array.content = malloc(array.length * sizeof(*array.content));
 	if (!array.content)
 		display_error("Memory allocation error");
 	for (unsigned i = 0; i < array.length; i++)
 		array.content[i] = (OsuIntegerVector){
-			diff.x * ((float)i / array.length) + points.content[0].x,
-			diff.y * ((float)i / array.length) + points.content[0].y
+			diff.x * ((float)i / array.length) + pos.x,
+			diff.y * ((float)i / array.length) + pos.y
 		};
 	return array;
 }

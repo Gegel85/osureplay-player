@@ -14,7 +14,7 @@
 
 #include "libavcodec/avcodec.h"
 
-#define AUDIO_INBUF_SIZE 20480
+#define AUDIO_INBUF_SIZE 2048
 #define AUDIO_REFILL_THRESH 4096
 
 bool	decodeAudioFrame(AVCodecContext *dec_ctx, AVPacket *pkt, AVFrame *frame, int16_t **outbuf, size_t *offset)
@@ -71,11 +71,10 @@ bool	decode_audio_file(const char *path, int16_t **out, size_t *size, enum AVCod
 	const AVCodec *codec;
 	AVCodecContext *c = NULL;
 	AVCodecParserContext *parser = NULL;
-	int len, ret;
+	int ret;
 	FILE *file;
 	uint8_t inbuf[AUDIO_INBUF_SIZE + AV_INPUT_BUFFER_PADDING_SIZE];
-	uint8_t *data;
-	size_t data_size;
+	size_t data_size, len;
 	AVPacket *pkt;
 	AVFrame *decoded_frame = NULL;
 
@@ -116,7 +115,6 @@ bool	decode_audio_file(const char *path, int16_t **out, size_t *size, enum AVCod
 	}
 
 	/* decode until eof */
-	data = inbuf;
 	data_size = fread(inbuf, 1, AUDIO_INBUF_SIZE, file);
 
 	decoded_frame = av_frame_alloc();
@@ -132,7 +130,7 @@ bool	decode_audio_file(const char *path, int16_t **out, size_t *size, enum AVCod
 
 	while (data_size > 0) {
 		ret = av_parser_parse2(
-			parser, c, &pkt->data, &pkt->size, data, data_size, AV_NOPTS_VALUE, AV_NOPTS_VALUE, 0
+			parser, c, &pkt->data, &pkt->size, inbuf, data_size, AV_NOPTS_VALUE, AV_NOPTS_VALUE, 0
 		);
 		if (ret < 0) {
 			display_warning("Error while parsing\n");
@@ -144,7 +142,6 @@ bool	decode_audio_file(const char *path, int16_t **out, size_t *size, enum AVCod
 			return false;
 		}
 
-		data += ret;
 		data_size -= ret;
 		if (pkt->size && !decodeAudioFrame(c, pkt, decoded_frame, out, size)) {
 			fclose(file);
@@ -155,9 +152,8 @@ bool	decode_audio_file(const char *path, int16_t **out, size_t *size, enum AVCod
 			return false;
 		}
 		if (data_size < AUDIO_REFILL_THRESH) {
-			memmove(inbuf, data, data_size);
-			data = inbuf;
-			len = fread(data + data_size, 1, AUDIO_INBUF_SIZE - data_size, file);
+			memmove(inbuf + ret, inbuf, data_size);
+			len = fread(inbuf + data_size, 1, AUDIO_INBUF_SIZE - data_size, file);
 			if (len > 0)
 				data_size += len;
 		}
@@ -196,7 +192,7 @@ Sound	*loadMp3File(char *path)
 	if (!sound)
 		display_error("Memory allocation error (%lu)\n", sizeof(*sound));
 	memset(sound, 0, sizeof(*sound));
-	if (decode_audio_file(path, &sound->data, &sound->length, AV_CODEC_ID_MPEG4))
+	if (decode_audio_file(path, &sound->data, &sound->length, AV_CODEC_ID_MP3))
 		return sound;
 	display_warning("An error occured when reading file %s\n", path);
 	free(sound);

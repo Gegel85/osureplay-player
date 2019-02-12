@@ -50,21 +50,31 @@ AVCodecContext *initAudioCodec()
 	const AVCodec	*codec;
 	AVCodecContext	*codecContext;
 
-	/* find the audio encoder */
+	/* register all the codecs */
+	avcodec_register_all();
+
+	/* find the MP2 encoder */
 	codec = avcodec_find_encoder(AV_CODEC_ID_MP2);
-	if (!codec)
-		display_error("MP2 codec not found\n");
+	if (!codec) {
+		fprintf(stderr, "codec not found\n");
+		exit(1);
+	}
 	codecContext = avcodec_alloc_context3(codec);
+
+	/* put sample parameters */
 	codecContext->bit_rate = 64000;
-	codecContext->sample_rate = 44100;
-	codecContext->channels = 2;
-	codecContext->channel_layout = AV_CH_LAYOUT_STEREO;
 	codecContext->sample_fmt = AV_SAMPLE_FMT_S16;
+
+	/* select other audio parameters supported by the encoder */
+	codecContext->sample_rate = 48000;
+	codecContext->channel_layout = AV_CH_LAYOUT_STEREO;
+	codecContext->channels = 2;
 
 	/* open it */
 	if (avcodec_open2(codecContext, codec, NULL) < 0)
-		display_error("Couldn't open audio codec\n");
+		display_error("could not open codec\n");
 
+	printf("%i\n", codecContext->frame_size);
 	return codecContext;
 }
 
@@ -73,13 +83,15 @@ AVFrame	*initVideoFrame(AVCodecContext *context)
 	AVFrame	*frame;
 
 	frame = av_frame_alloc();
+	if (!frame)
+		display_error("could not allocate video frame\n");
 	frame->format = context->pix_fmt;
 	frame->width = context->width;
 	frame->height = context->height;
 	frame->quality = 1;
 
 	if (av_frame_get_buffer(frame, 32) < 0)
-		display_error("Memory allocation error\n");
+		display_error("could not allocate video data buffers\n");
 	return frame;
 }
 
@@ -87,15 +99,17 @@ AVFrame	*initAudioFrames(AVCodecContext *context)
 {
 	AVFrame	*frame;
 
+	/* frame containing input raw audio */
 	frame = av_frame_alloc();
-	frame->format = context->sample_fmt;
+	if (!frame)
+		display_error("could not allocate audio frame\n");
 	frame->nb_samples = context->frame_size;
-	frame->sample_rate = context->sample_rate;
+	frame->format = context->sample_fmt;
 	frame->channel_layout = context->channel_layout;
-	frame->quality = 1;
 
-	if (av_frame_get_buffer(frame, 32) < 0)
-		display_error("Memory allocation error\n");
+	/* allocate the data buffers */
+	if (av_frame_get_buffer(frame, 0) < 0)
+		display_error("could not allocate audio data buffers\n");
 	return frame;
 }
 
@@ -109,7 +123,7 @@ void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *bea
 	if (!state->played)
 		display_error("Memory allocation error (%luB)\n", sizeof(*state->played) * beatmap->hitObjects.length);
 	memset(state->played, 0, sizeof(*state->played) * beatmap->hitObjects.length);
-	state->stream = NULL;
+	state->videoStream = NULL;
 
 	/* init framebuffer */
 	FrameBuffer_init(&state->frame_buffer, size);
@@ -117,6 +131,13 @@ void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *bea
 	/* Debug mode -> don't create audio/video contexts */
 	if (!path)
 		return;
+
+	char	audioPath[strlen(path) + 5];
+	char	videoPath[strlen(path) + 5];
+
+	/* Get paths*/
+	sprintf(audioPath, "%s.mp2", path);
+	sprintf(videoPath, "%s.mp4", path);
 
 	/* register all codecs */
 	avcodec_register_all();
@@ -139,9 +160,12 @@ void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *bea
 
 	state->frameNb = 1;
 
-	/* open file */
-	state->stream = fopen(path, "wb");
-	if (!state->stream)
+	/* open files */
+	state->videoStream = fopen(videoPath, "wb");
+	if (!state->videoStream)
+		display_error("Cannot open %s: %s\n", path, strerror(errno));
+	state->audioStream = fopen(audioPath, "wb");
+	if (!state->audioStream)
 		display_error("Cannot open %s: %s\n", path, strerror(errno));
 
 	state->playingSounds = malloc(sizeof(*state->playingSounds));
@@ -154,7 +178,7 @@ void	finishReplaySession(replayPlayerState *state)
 {
 	uint8_t endcode[] = {0, 0, 1, 0xb7};
 
-	if (!state->stream)
+	if (!state->videoStream)
 		return;
 
 	/* destroy framebuffer */
@@ -162,13 +186,14 @@ void	finishReplaySession(replayPlayerState *state)
 
 	/* flush the encoders */
 	encodeVideoFrame(state->videoCodecContext, NULL, state->videoPacket,
-			 state->stream);
-	encodeVideoFrame(state->audioCodecContext, NULL, state->audioPacket,
-			 state->stream);
+			 state->videoStream);
+	encodeAudioFrame(state->audioCodecContext, NULL, state->audioPacket,
+			 state->videoStream);
 
 	/* add sequence end code to have a real MPEG file */
-	fwrite(endcode, 1, sizeof(endcode), state->stream);
-	fclose(state->stream);
+	fwrite(endcode, 1, sizeof(endcode), state->videoStream);
+	fclose(state->videoStream);
+	fclose(state->audioStream);
 
 	/* free frames */
 	av_frame_free(&state->videoFrame);

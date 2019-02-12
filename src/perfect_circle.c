@@ -80,7 +80,7 @@ OsuIntegerVectorArray	getCirclePoints(OsuIntegerVectorArray points, OsuIntegerVe
 
 	//Create the arc
 	for (size_t i = 0; i < newArray.length; i++) {
-		double	angle = ((goClockwise ? angles[2] : angles[0]) + (arcAngle * percent)) * M_PI / 180;
+		double	angle = ((goClockwise ? angles[2] : angles[0]) + (arcAngle * (goClockwise ? 1 - percent : percent))) * M_PI / 180;
 
 		newArray.content[i].x = lround(-cos(angle) * radius + center.x);
 		newArray.content[i].y = lround(sin(angle) * radius + center.y);

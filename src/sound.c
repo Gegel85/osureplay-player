@@ -12,7 +12,7 @@ void	playSound(replayPlayerState *state, char *index, double pitch, double speed
 
 	if (!elem)
 		return;
-	if (!state->stream) {
+	if (!state->videoStream) {
 		sfSoundBuffer *buffer = elem;
 		static sfSound *sounds[nbOfSound];
 		static int current = 0;
@@ -44,6 +44,7 @@ void	playSound(replayPlayerState *state, char *index, double pitch, double speed
 	}
 	memset(best, 0, sizeof(*best));
 	best->sound = elem;
+	best->speed = speed;
 	best->pitch = pitch;
 }
 
@@ -51,23 +52,24 @@ void	encodePlayingSounds(replayPlayerState *state)
 {
 	PlayingSound	*sounds = state->playingSounds;
 	static double	total = 0;
-	static FILE	*stream = NULL;
 
-	if (!stream)
-		stream = fopen("test.mp2", "wb");
-	memset(state->audioFrame->data[0], 0, state->audioFrame->nb_samples * 2);
-	total += state->audioCodecContext->sample_rate / 60.;
-	for (int i = 0; i < state->audioFrame->nb_samples; i++) {
+	//total += state->audioCodecContext->frame_size - state->audioCodecContext->sample_rate / 60.;
+	//if (total )
+	/* encode a single tone sound */
+	if (av_frame_make_writable(state->audioFrame) < 0)
+		display_error("Frame is not writable");
+	memset(state->audioFrame->data[0], 0, state->audioCodecContext->frame_size * 4);
+	for (int i = 0; i < state->audioCodecContext->frame_size; i++) {
 		for (int j = 0; sounds[j].sound; j++) {
 			if (sounds[j].sound->length < sounds[j].pos * 2) {
-				((short *)state->audioFrame->data[0])[i] += sounds[j].sound->data[(int)sounds[j].pos * 2] * sounds[j].pitch;
-				((short *)state->audioFrame->data[1])[i] += sounds[j].sound->data[(int)sounds[j].pos * 2 + 1] * sounds[j].pitch;
+				((short *)state->audioFrame->data[0])[i * 2] +=
+					sounds[j].sound->data[(int)sounds[j].pos * 2] * sounds[j].pitch;
+				((short *)state->audioFrame->data[0])[i * 2 + 1] +=
+					sounds[j].sound->data[(int)sounds[j].pos * 2 + 1] * sounds[j].pitch;
 				sounds[j].pos += sounds[j].speed;
 			}
 		}
 	}
 
-	state->audioFrame->pts = state->frameNb;
-
-	encodeAudioFrame(state->audioCodecContext, state->audioFrame, state->audioPacket, stream);
+	encodeAudioFrame(state->audioCodecContext, state->audioFrame, state->audioPacket, state->audioStream);
 }

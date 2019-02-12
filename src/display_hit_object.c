@@ -7,6 +7,7 @@
 #include <SFML/Graphics.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include "globals.h"
 #include "defines.h"
 #include "utils.h"
@@ -109,10 +110,29 @@ void	displaySpinner(FrameBuffer *frame_buffer, OsuMap_hitObject *object, unsigne
 	);
 }
 
-void	displaySlider(FrameBuffer *frame_buffer, OsuMap_hitObject *object, unsigned long totalTicks, unsigned char alpha, Dict *images, unsigned combo, OsuMap_color color, double circleSize)
+void	displaySlider(FrameBuffer *frame_buffer, OsuMap_hitObject *object, unsigned long totalTicks, unsigned char alpha, Dict *images, unsigned combo, OsuMap_color color, double circleSize, OsuMap_timingPointEvent *timeingpt, OsuMap *beatmap)
 {
 	OsuIntegerVectorArray	*points = &sliderInfos(object->additionalInfos)->curvePoints;
 
+	//Display the body of the slider
+	for (unsigned j = 0; j < points->length; j++) {
+		FrameBuffer_drawFilledCircle(
+			frame_buffer,
+			(sfVector2i) {
+				points->content[j].x - (54.4f - 4.48f * circleSize) + padding.x,
+				points->content[j].y - (54.4f - 4.48f * circleSize) + padding.y
+			},
+			54.4f - 4.48f * circleSize,
+			(sfColor){
+				color.red * 0.5,
+				color.green * 0.5,
+				color.blue * 0.5,
+				alpha
+			}
+		);
+	}
+
+	//Display the end of the slider
 	FrameBuffer_drawImage(
 		frame_buffer,
 		(sfVector2i){
@@ -136,22 +156,8 @@ void	displaySlider(FrameBuffer *frame_buffer, OsuMap_hitObject *object, unsigned
 		true,
 		0
 	);
-	for (unsigned j = 0; j < points->length; j++) {
-		FrameBuffer_drawFilledCircle(
-			frame_buffer,
-			(sfVector2i) {
-				points->content[j].x - (54.4f - 4.48f * circleSize) + padding.x,
-				points->content[j].y - (54.4f - 4.48f * circleSize) + padding.y
-			},
-			54.4f - 4.48f * circleSize,
-			(sfColor){
-				color.red * 0.5,
-				color.green * 0.5,
-				color.blue * 0.5,
-				alpha
-			}
-		);
-	}
+
+	//Display the start od the slider
 	FrameBuffer_drawImage(
 		frame_buffer,
 		(sfVector2i){
@@ -193,14 +199,72 @@ void	displaySlider(FrameBuffer *frame_buffer, OsuMap_hitObject *object, unsigned
 		true,
 		0
 	);
-	displayApproachCircle(
-		frame_buffer,
-		(sfColor){color.red, color.green, color.blue, alpha},
-		object,
-		circleSize,
-		totalTicks,
-		images
-	);
+
+	//Display the follow circle if needed
+	if (object->timeToAppear < totalTicks) {
+		double	ptId = (
+			points->length * fmod(
+				totalTicks - object->timeToAppear,
+				sliderInfos(
+					object->additionalInfos
+				)->pixelLength / (
+					100 * beatmap->difficulty.sliderMultiplayer
+				) * timeingpt->millisecondsPerBeat
+			) / (
+				sliderInfos(
+					object->additionalInfos
+				)->pixelLength / (
+					100 * beatmap->difficulty.sliderMultiplayer
+				) * timeingpt->millisecondsPerBeat
+			)
+		);
+		sfVector2i	currentPoint =  {
+			points->content[(int)ptId].x + padding.x,
+			points->content[(int)ptId].y + padding.y
+		};
+
+		FrameBuffer_drawImage(
+			frame_buffer,
+			currentPoint,
+			Dict_getElement(
+				images,
+				"sliderb0"
+			),
+			(sfVector2i) {
+				(54.4f - 4.48f * (float) circleSize) * 2,
+				(54.4f - 4.48f * (float) circleSize) * 2
+			},
+			(sfColor) {255, 255, 255, 255},
+			true,
+			0
+		);
+
+		FrameBuffer_drawImage(
+			frame_buffer,
+			currentPoint,
+			Dict_getElement(
+				images,
+				"sliderfollowcircle"
+			),
+			(sfVector2i) {
+				(54.4f - 4.48f * (float) circleSize) * 4,
+				(54.4f - 4.48f * (float) circleSize) * 4
+			},
+			(sfColor) {255, 255, 255, 255},
+			true,
+			0
+		);
+	//Else, display the approach circle
+	} else
+		displayApproachCircle(
+			frame_buffer,
+			(sfColor){color.red, color.green, color.blue, alpha},
+			object,
+			circleSize,
+			totalTicks,
+			images
+		);
+	//Display the combo number on top of the start circle
 	displayCombo(
 		frame_buffer,
 		combo,
@@ -274,10 +338,36 @@ void	displayHitObjects(replayPlayerState *state, OsuMap *beatmap)
 		}
 
 		if (beatmap->hitObjects.content[i].type & HITOBJ_SPINNER)
-			displaySpinner(&state->frame_buffer, &beatmap->hitObjects.content[i], state->totalTicks, alpha, state->images);
+			displaySpinner(
+				&state->frame_buffer,
+				&beatmap->hitObjects.content[i],
+				state->totalTicks,
+				alpha,
+				state->images
+			);
 		else if (beatmap->hitObjects.content[i].type & HITOBJ_SLIDER)
-			displaySlider(&state->frame_buffer, &beatmap->hitObjects.content[i], state->totalTicks, alpha, state->images, combo, beatmap->colors.content[color], beatmap->difficulty.circleSize);
+			displaySlider(
+				&state->frame_buffer,
+				&beatmap->hitObjects.content[i],
+				state->totalTicks,
+				alpha,
+				state->images,
+				combo,
+				beatmap->colors.content[color],
+				beatmap->difficulty.circleSize,
+				&beatmap->timingPoints.content[state->currentTimingPoint],
+				beatmap
+			);
 		else
-			displayHitCircle(&state->frame_buffer, &beatmap->hitObjects.content[i], state->totalTicks, alpha, state->images, combo, beatmap->colors.content[color], beatmap->difficulty.circleSize);
+			displayHitCircle(
+				&state->frame_buffer,
+				&beatmap->hitObjects.content[i],
+				state->totalTicks,
+				alpha,
+				state->images,
+				combo,
+				beatmap->colors.content[color],
+				beatmap->difficulty.circleSize
+			);
 	}
 }
