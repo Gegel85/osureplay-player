@@ -16,6 +16,8 @@ SRC =	main.c					\
 		encode_audio.c			\
 		perfect_circle.c		\
 		decode_audio_file.c		\
+		wav_parser.c				\
+		audio_parsers.c			\
 
 OBJ =	$(SRC:%.c=src/%.o)
 

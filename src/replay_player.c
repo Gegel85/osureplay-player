@@ -55,10 +55,8 @@ AVCodecContext *initAudioCodec()
 
 	/* find the MP2 encoder */
 	codec = avcodec_find_encoder(AV_CODEC_ID_MP2);
-	if (!codec) {
-		fprintf(stderr, "codec not found\n");
-		exit(1);
-	}
+	if (!codec)
+		display_error("codec not found\n");
 	codecContext = avcodec_alloc_context3(codec);
 
 	/* put sample parameters */
@@ -109,7 +107,7 @@ AVFrame	*initAudioFrames(AVCodecContext *context)
 
 	/* allocate the data buffers */
 	if (av_frame_get_buffer(frame, 0) < 0)
-		display_error("could not allocate audio data buffers\n");
+		display_error("could not allocate audio data buffers: %s\n", strerror(AVUNERROR(av_frame_get_buffer(frame, 0))));
 	return frame;
 }
 
@@ -136,7 +134,7 @@ void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *bea
 	char	videoPath[strlen(path) + 5];
 
 	/* Get paths*/
-	sprintf(audioPath, "%s.mp2", path);
+	sprintf(audioPath, "%s.wav", path);
 	sprintf(videoPath, "%s.mp4", path);
 
 	/* register all codecs */
@@ -271,7 +269,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 					if ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE))
 						sfMusic_setPitch(music, 1.5);
 				} else
-					playSound(&state, beatmap->generalInfos.audioFileName, 1, 1);
+					playSound(&state, beatmap->generalInfos.audioFileName, (replay->mods & MODE_NIGHTCORE) ? 1.5 : 1, (replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE) ? 1.5 : 1);
 				state.musicStarted = true;
 			}
 		}

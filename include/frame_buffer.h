@@ -17,7 +17,7 @@
 {\
 	fprintf(stderr, "%s: line %u in function %s: ", __FILE__, __LINE__, __FUNCTION__);\
 	fprintf(stderr, msg, ##__VA_ARGS__);\
-	exit(EXIT_FAILURE);\
+	abort();\
 }
 #else
 #define display_warning(msg, ...)\
@@ -30,7 +30,7 @@
 {\
 	fprintf(stderr, "%s: line %u in function %s: ", __FILE__, __LINE__, __FUNCTION__);\
 	fprintf(stderr, msg, __VA_ARGS__);\
-	exit(EXIT_FAILURE);\
+	abort();\
 }
 #endif
 

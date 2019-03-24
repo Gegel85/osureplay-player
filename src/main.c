@@ -48,9 +48,9 @@ void	createLoader(Dict *loaders, bool debug)
 		Dict_addElement(loaders, "ogg", createPair((void *(*)(const char *))sfSoundBuffer_createFromFile, (void (*)(void *))sfSoundBuffer_destroy, SOUND), free);
 		Dict_addElement(loaders, "wav", createPair((void *(*)(const char *))sfSoundBuffer_createFromFile, (void (*)(void *))sfSoundBuffer_destroy, SOUND), free);
 	} else  {
-		Dict_addElement(loaders, "ogg", createPair((void *(*)(const char *))loadOggFile, (void (*)(void *))destroySound, SOUND), free);
-		Dict_addElement(loaders, "wav", createPair((void *(*)(const char *))loadWavFile, (void (*)(void *))destroySound, SOUND), free);
-		Dict_addElement(loaders, "mp3", createPair((void *(*)(const char *))loadMp3File, (void (*)(void *))destroySound, SOUND), free);
+		Dict_addElement(loaders, "ogg", createPair((void *(*)(const char *))loadSoundFile, (void (*)(void *))destroySound, SOUND), free);
+		Dict_addElement(loaders, "wav", createPair((void *(*)(const char *))loadSoundFile, (void (*)(void *))destroySound, SOUND), free);
+		Dict_addElement(loaders, "mp3", createPair((void *(*)(const char *))loadSoundFile, (void (*)(void *))destroySound, SOUND), free);
 	}
 	Dict_addElement(loaders, "png", createPair((void *(*)(const char *))sfImage_createFromFile, (void (*)(void *))sfImage_destroy, IMAGE), free);
 	Dict_addElement(loaders, "jpg", createPair((void *(*)(const char *))sfImage_createFromFile, (void (*)(void *))sfImage_destroy, IMAGE), free);

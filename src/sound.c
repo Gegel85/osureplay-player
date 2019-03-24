@@ -30,7 +30,10 @@ void	playSound(replayPlayerState *state, char *index, double pitch, double speed
 		return;
 	}
 	for (; state->playingSounds[i].sound; i++) {
-		if (state->playingSounds[i].sound->length < state->playingSounds[i].pos * 2) {
+		size_t len = 0;
+
+		for (unsigned k = 0; k < state->playingSounds[i].sound->nbChannels; len = len < state->playingSounds[i].sound->length[k++] ? state->playingSounds[i].sound->length[k - 1] : len);
+		if (len < state->playingSounds[i].pos * 2) {
 			best = &state->playingSounds[i];
 			break;
 		}
@@ -48,24 +51,40 @@ void	playSound(replayPlayerState *state, char *index, double pitch, double speed
 	best->pitch = pitch;
 }
 
+#define data1b ((char **)sounds[j].sound->data)
+#define data2b ((short **)sounds[j].sound->data)
+#define data4b ((int **)sounds[j].sound->data)
+#define MIN_SHORT ~((unsigned short)-1 / 2)
+#define MAX_SHORT ((unsigned short)-1 / 2)
+#define cap(value, max, min) (value > max ? max : (value < min ? min : value))
+
 void	encodePlayingSounds(replayPlayerState *state)
 {
 	PlayingSound	*sounds = state->playingSounds;
-	static double	total = 0;
+	short		*frameSampleBuffer = (short *)state->audioFrame->data[0];
 
-	//total += state->audioCodecContext->frame_size - state->audioCodecContext->sample_rate / 60.;
-	//if (total )
-	/* encode a single tone sound */
 	if (av_frame_make_writable(state->audioFrame) < 0)
 		display_error("Frame is not writable");
 	memset(state->audioFrame->data[0], 0, state->audioCodecContext->frame_size * 4);
 	for (int i = 0; i < state->audioCodecContext->frame_size; i++) {
 		for (int j = 0; sounds[j].sound; j++) {
-			if (sounds[j].sound->length < sounds[j].pos * 2) {
-				((short *)state->audioFrame->data[0])[i * 2] +=
-					sounds[j].sound->data[(int)sounds[j].pos * 2] * sounds[j].pitch;
-				((short *)state->audioFrame->data[0])[i * 2 + 1] +=
-					sounds[j].sound->data[(int)sounds[j].pos * 2 + 1] * sounds[j].pitch;
+			if (sounds[j].sound->length[0] > sounds[j].pos) {
+				switch (sounds[j].sound->bitsPerSample) {
+				case 8:
+					frameSampleBuffer[i * 2]     = cap(frameSampleBuffer[i * 2]     + data1b[0][(int)sounds[j].pos] * sounds[j].pitch, MIN_SHORT, MAX_SHORT);
+					if (sounds[j].sound->nbChannels > 1)
+						frameSampleBuffer[i * 2 + 1] = cap(frameSampleBuffer[i * 2 + 1] + data1b[1][(int)sounds[j].pos] * sounds[j].pitch, MIN_SHORT, MAX_SHORT);
+					break;
+				case 16:
+					frameSampleBuffer[i * 2]     = cap(frameSampleBuffer[i * 2]     + data2b[0][(int)sounds[j].pos] * sounds[j].pitch, MIN_SHORT, MAX_SHORT);
+					if (sounds[j].sound->nbChannels > 1)
+						frameSampleBuffer[i * 2 + 1] = cap(frameSampleBuffer[i * 2 + 1] + data2b[1][(int)sounds[j].pos] * sounds[j].pitch, MIN_SHORT, MAX_SHORT);
+					break;
+				case 32:
+					frameSampleBuffer[i * 2]     = cap(frameSampleBuffer[i * 2]     + data4b[0][(int)sounds[j].pos] * sounds[j].pitch, MIN_SHORT, MAX_SHORT);
+					if (sounds[j].sound->nbChannels > 1)
+						frameSampleBuffer[i * 2 + 1] = cap(frameSampleBuffer[i * 2 + 1] + data4b[1][(int)sounds[j].pos] * sounds[j].pitch, MIN_SHORT, MAX_SHORT);
+				}
 				sounds[j].pos += sounds[j].speed;
 			}
 		}

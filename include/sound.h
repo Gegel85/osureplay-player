@@ -12,8 +12,12 @@
 #include <SFML/Audio.h>
 
 typedef struct Sound {
-	short	*data;
-	size_t	length;
+	void		**data;
+	size_t		*length;
+	unsigned	nbChannels;
+	unsigned	sampleRate;
+	unsigned	bitsPerSample;
+	void		(*destroyer)(struct Sound *);
 } Sound;
 
 typedef struct PlayingSound {
@@ -27,9 +31,7 @@ struct replayPlayerState;
 
 void	playSound(struct replayPlayerState *state, char *sound, double pitch, double speed);
 void	encodePlayingSounds(struct replayPlayerState *state);
-Sound	*loadWavFile(char *path);
-Sound	*loadMp3File(char *path);
-Sound	*loadOggFile(char *path);
+Sound	*loadSoundFile(char *path);
 void	destroySound(Sound *sound);
 
 
