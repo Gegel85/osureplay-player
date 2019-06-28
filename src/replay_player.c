@@ -54,7 +54,7 @@ AVCodecContext *initAudioCodec()
 	avcodec_register_all();
 
 	/* find the MP2 encoder */
-	codec = avcodec_find_encoder(AV_CODEC_ID_MP2);
+	codec = avcodec_find_encoder(AV_CODEC_ID_MP3);
 	if (!codec)
 		display_error("codec not found\n");
 	codecContext = avcodec_alloc_context3(codec);
@@ -64,9 +64,9 @@ AVCodecContext *initAudioCodec()
 	codecContext->sample_fmt = AV_SAMPLE_FMT_S16;
 
 	/* select other audio parameters supported by the encoder */
-	codecContext->sample_rate = 48000;
-	codecContext->channel_layout = AV_CH_LAYOUT_STEREO;
-	codecContext->channels = 2;
+	codecContext->sample_rate = SAMPLE_RATE;
+	codecContext->channel_layout = AV_CH_LAYOUT_MONO;
+	codecContext->channels = 1;
 
 	/* open it */
 	if (avcodec_open2(codecContext, codec, NULL) < 0)
@@ -133,8 +133,8 @@ void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *bea
 	char	audioPath[strlen(path) + 5];
 	char	videoPath[strlen(path) + 5];
 
-	/* Get paths*/
-	sprintf(audioPath, "%s.wav", path);
+	/* Get paths */
+	sprintf(audioPath, "%s.mp3", path);
 	sprintf(videoPath, "%s.mp4", path);
 
 	/* register all codecs */
@@ -183,10 +183,8 @@ void	finishReplaySession(replayPlayerState *state)
 	FrameBuffer_destroy(&state->frame_buffer);
 
 	/* flush the encoders */
-	encodeVideoFrame(state->videoCodecContext, NULL, state->videoPacket,
-			 state->videoStream);
-	encodeAudioFrame(state->audioCodecContext, NULL, state->audioPacket,
-			 state->videoStream);
+	encodeVideoFrame(state->videoCodecContext, NULL, state->videoPacket, state->videoStream);
+	encodeAudioFrame(state->audioCodecContext, NULL, state->audioPacket, state->videoStream);
 
 	/* add sequence end code to have a real MPEG file */
 	fwrite(endcode, 1, sizeof(endcode), state->videoStream);

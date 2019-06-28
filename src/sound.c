@@ -1,6 +1,7 @@
 #include <SFML/Audio.h>
 #include <stdbool.h>
 #include <string.h>
+#include <assert.h>
 #include "replay_player.h"
 #include "defines.h"
 
@@ -54,8 +55,6 @@ void	playSound(replayPlayerState *state, char *index, double pitch, double speed
 #define data1b ((char **)sounds[j].sound->data)
 #define data2b ((short **)sounds[j].sound->data)
 #define data4b ((int **)sounds[j].sound->data)
-#define MIN_SHORT ~((unsigned short)-1 / 2)
-#define MAX_SHORT ((unsigned short)-1 / 2)
 #define cap(value, max, min) (value > max ? max : (value < min ? min : value))
 
 void	encodePlayingSounds(replayPlayerState *state)
@@ -65,25 +64,19 @@ void	encodePlayingSounds(replayPlayerState *state)
 
 	if (av_frame_make_writable(state->audioFrame) < 0)
 		display_error("Frame is not writable");
-	memset(state->audioFrame->data[0], 0, state->audioCodecContext->frame_size * 4);
+	memset(frameSampleBuffer, 0, state->audioCodecContext->frame_size * sizeof(*frameSampleBuffer));
 	for (int i = 0; i < state->audioCodecContext->frame_size; i++) {
 		for (int j = 0; sounds[j].sound; j++) {
 			if (sounds[j].sound->length[0] > sounds[j].pos) {
 				switch (sounds[j].sound->bitsPerSample) {
 				case 8:
-					frameSampleBuffer[i * 2]     = cap(frameSampleBuffer[i * 2]     + data1b[0][(int)sounds[j].pos] * sounds[j].pitch, MIN_SHORT, MAX_SHORT);
-					if (sounds[j].sound->nbChannels > 1)
-						frameSampleBuffer[i * 2 + 1] = cap(frameSampleBuffer[i * 2 + 1] + data1b[1][(int)sounds[j].pos] * sounds[j].pitch, MIN_SHORT, MAX_SHORT);
+					frameSampleBuffer[i] = cap(frameSampleBuffer[i] + data1b[0][(int)sounds[j].pos] * sounds[j].pitch, INT16_MIN, INT16_MAX);
 					break;
 				case 16:
-					frameSampleBuffer[i * 2]     = cap(frameSampleBuffer[i * 2]     + data2b[0][(int)sounds[j].pos] * sounds[j].pitch, MIN_SHORT, MAX_SHORT);
-					if (sounds[j].sound->nbChannels > 1)
-						frameSampleBuffer[i * 2 + 1] = cap(frameSampleBuffer[i * 2 + 1] + data2b[1][(int)sounds[j].pos] * sounds[j].pitch, MIN_SHORT, MAX_SHORT);
+					frameSampleBuffer[i] = cap(frameSampleBuffer[i] + data2b[0][(int)sounds[j].pos] * sounds[j].pitch, INT16_MIN, INT16_MAX);
 					break;
 				case 32:
-					frameSampleBuffer[i * 2]     = cap(frameSampleBuffer[i * 2]     + data4b[0][(int)sounds[j].pos] * sounds[j].pitch, MIN_SHORT, MAX_SHORT);
-					if (sounds[j].sound->nbChannels > 1)
-						frameSampleBuffer[i * 2 + 1] = cap(frameSampleBuffer[i * 2 + 1] + data4b[1][(int)sounds[j].pos] * sounds[j].pitch, MIN_SHORT, MAX_SHORT);
+					frameSampleBuffer[i] = cap(frameSampleBuffer[i] + data4b[0][(int)sounds[j].pos] * sounds[j].pitch, INT16_MIN, INT16_MAX);
 				}
 				sounds[j].pos += sounds[j].speed;
 			}

@@ -65,8 +65,8 @@ int	main(int argc, char **args)
 	Dict		loaders = {NULL, NULL, NULL, NULL};
 	OsuSkin		skin;
 
-	if (argc != 4) {
-		fprintf(stdout, "Usage: %s <map.osu> <replay.osr> <output file>\n", args[0]);
+	if (argc != 4 && argc != 3) {
+		fprintf(stdout, "Usage: %s <map.osu> <replay.osr> [<output file>]\n", args[0]);
 		return EXIT_FAILURE;
 	}
 
@@ -82,7 +82,7 @@ int	main(int argc, char **args)
 		return EXIT_FAILURE;
 	}
 
-	createLoader(&loaders, strcmp(args[3], "debug") == 0);
+	createLoader(&loaders, argc == 3);
 	if (!loadSkin("assets", &images, &sounds, &loaders))
 		display_error("Default skin is invalid or corrupted\n");
 	loadBeatmapAssets(&beatmap, args[1], &images, &sounds, &loaders);
@@ -91,7 +91,7 @@ int	main(int argc, char **args)
 	for (unsigned i = 0; i < beatmap.hitObjects.length; i++)
 		if (beatmap.hitObjects.content[i].type & HITOBJ_SLIDER)
 			getRealPointsSliders(&beatmap.hitObjects.content[i]);
-	playReplay(&replay, &beatmap, (sfVector2u){640, 480}, &sounds, &images, strcmp(args[3], "debug") == 0 ? NULL : args[3]);
+	playReplay(&replay, &beatmap, (sfVector2u){640, 480}, &sounds, &images, args[3]);
 
 	Dict_destroy(&images, true);
 	Dict_destroy(&sounds, true);

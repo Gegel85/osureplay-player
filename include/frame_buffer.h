@@ -5,34 +5,11 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 
-#ifdef __GNUC_VA_LIST
-#define display_warning(msg, ...)\
-{\
-	fprintf(stderr, "Function %s: ", __FUNCTION__);\
-	fprintf(stderr, msg, ##__VA_ARGS__);\
-}
+#define display_warning(msg, ...) fprintf(stderr, "%s() %s:%u: "msg, __PRETTY_FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__)
 
-#define display_error(msg, ...)\
-{\
-	fprintf(stderr, "%s: line %u in function %s: ", __FILE__, __LINE__, __FUNCTION__);\
-	fprintf(stderr, msg, ##__VA_ARGS__);\
-	abort();\
-}
-#else
-#define display_warning(msg, ...)\
-{\
-	fprintf(stderr, "In %s: ", __FUNCTION__);\
-	fprintf(stderr, msg, __VA_ARGS__);\
-}
-
-#define display_error(msg, ...)\
-{\
-	fprintf(stderr, "%s: line %u in function %s: ", __FILE__, __LINE__, __FUNCTION__);\
-	fprintf(stderr, msg, __VA_ARGS__);\
-	abort();\
-}
-#endif
+#define display_error(msg, ...) display_warning(msg, ##__VA_ARGS__), abort()
 
 typedef struct FrameBuffer {
 	sfColor		**content;

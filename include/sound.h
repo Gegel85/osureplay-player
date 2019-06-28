@@ -11,8 +11,10 @@
 
 #include <SFML/Audio.h>
 
+#define SAMPLE_RATE 44100
+
 typedef struct Sound {
-	void		**data;
+	short		**data;
 	size_t		*length;
 	unsigned	nbChannels;
 	unsigned	sampleRate;

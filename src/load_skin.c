@@ -2,11 +2,11 @@
 #include <dirent.h>
 #include <unistd.h>
 #include <string.h>
-#include <errno.h>
 #include <malloc.h>
 #include <concatf.h>
 #include <skin.h>
 #include <ctype.h>
+#include "frame_buffer.h"
 #include "dict.h"
 
 char	*getFileName(char *path)
@@ -21,11 +21,6 @@ char	*getFileName(char *path)
 			return &path[i];
 	}
 	return path;
-}
-
-void	write_stderr(const char *msg)
-{
-	write(2, msg, strlen(msg));
 }
 
 const char	*getFileExtension(const char *path)
@@ -50,11 +45,7 @@ bool	loadSkin(const char *folder, Dict *images, Dict *sounds, Dict *loaders)
 	LoadingPair	*pair;
 
 	if (!dirstream) {
-		write_stderr("Cannot open '");
-		write_stderr(folder);
-		write_stderr("': ");
-		write_stderr(strerror(errno));
-		write_stderr("\n");
+		display_warning("Cannot open '%s': %m\n", folder);
 		return false;
 	}
 	for (struct dirent *entry = readdir(dirstream); entry; entry = readdir(dirstream)) {
@@ -66,6 +57,8 @@ bool	loadSkin(const char *folder, Dict *images, Dict *sounds, Dict *loaders)
 			Dict_addElement(images, strToLower(getFileName(entry->d_name)), pair->creator(path), pair->destroyer);
 		else if (pair && pair->type == SOUND)
 			Dict_addElement(sounds, strToLower(getFileName(entry->d_name)), pair->creator(path), pair->destroyer);
+		else
+			display_warning("Unsupported file %s couldn't be loaded\n", path);
 		free(path);
 	}
 	closedir(dirstream);

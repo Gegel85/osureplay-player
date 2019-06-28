@@ -16,8 +16,6 @@ SRC =	main.c					\
 		encode_audio.c			\
 		perfect_circle.c		\
 		decode_audio_file.c		\
-		wav_parser.c				\
-		audio_parsers.c			\
 
 OBJ =	$(SRC:%.c=src/%.o)
 
@@ -42,13 +40,9 @@ LDFLAGS =							\
 	-losumapparser					\
 	-L lib/osureplay-parser			\
 	-losureplayparser				\
-	-L lib/libav-12.3/libavcodec/	\
 	-lavcodec						\
-	-L lib/libav-12.3/libavformat/	\
 	-lavformat						\
-	-L lib/libav-12.3/libavresample/\
-	-lavresample					\
-	-L lib/libav-12.3/libavutil/	\
+	-lswresample					\
 	-lavutil						\
 	-lm								\
 	-lz
@@ -63,7 +57,6 @@ CC =	gcc
 RULE =	all
 
 LIBS =	lib/osureplay-parser/libosureplayparser.a	\
-		lib/libav-12.3/libavcodec/libavcodec.a		\
 		lib/osumap-parser/libosumapparser.a			\
 		lib/concatf/libconcatf.a					\
 
@@ -82,10 +75,6 @@ lib/osumap-parser/libosumapparser.a:
 
 lib/concatf/libconcatf.a:
 	$(MAKE) -C lib/concatf $(RULE)
-
-lib/libav-12.3/libavcodec/libavcodec.a:
-	chmod +x lib/libav-12.3/configure
-	cd lib/libav-12.3 && ./configure && make
 
 $(NAME):$(OBJ)
 	$(CC) -o $(NAME) $(OBJ) $(LDFLAGS) $(CSFML) $(RES)
