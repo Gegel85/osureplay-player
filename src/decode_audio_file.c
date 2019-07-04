@@ -25,7 +25,7 @@ int decodeAudioFile(const char *path, const int sample_rate, Sound *sound)
 	sound->bitsPerSample = 16;
 
 	// Find the index of the first audio stream
-	for (int stream_index = 0; stream_index < format->nb_streams; stream_index++) {
+	for (size_t stream_index = 0; stream_index < format->nb_streams; stream_index++) {
 		if (format->streams[stream_index]->codec->codec_type == AVMEDIA_TYPE_AUDIO) {
 			sound->data = realloc(sound->data, (sound->nbChannels + 1) * sizeof(*sound->data));
 			sound->length = realloc(sound->length, sizeof(*sound->length) * (sound->nbChannels + 1));
@@ -43,7 +43,7 @@ int decodeAudioFile(const char *path, const int sample_rate, Sound *sound)
 			// find & open codec
 			AVCodecContext *codec = stream->codec;
 			if (avcodec_open2(codec, avcodec_find_decoder(codec->codec_id), NULL) < 0) {
-				display_warning("Failed to open decoder for stream #%u in file '%s'\n", stream_index, path);
+				display_warning("Failed to open decoder for stream #%lu in file '%s'\n", stream_index, path);
 				return -1;
 			}
 
@@ -125,7 +125,7 @@ Sound	*loadSoundFile(char *path)
 void	defaultSoundDestroyer(Sound *sound)
 {
 	if (sound->data)
-		for (int i = 0; i < sound->nbChannels; i++)
+		for (size_t i = 0; i < sound->nbChannels; i++)
 			free(sound->data[i]);
 	free(sound->data);
 }

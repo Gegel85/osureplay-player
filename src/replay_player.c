@@ -12,196 +12,194 @@
 #include "globals.h"
 #include "replay_player.h"
 
-AVCodecContext *initVideoCodec(sfVector2u size)
+AVStream *createVideoStream(AVFormatContext *fmtContext, sfVector2u size)
 {
-	const AVCodec	*codec;
+	AVCodec		*codec;
+	AVCPBProperties	*properties;
+	AVStream	*stream = avformat_new_stream(fmtContext, NULL);
 	AVCodecContext	*codecContext;
 
-	/* find the video encoder */
-	codec = avcodec_find_encoder(AV_CODEC_ID_MPEG1VIDEO);
-	if (!codec)
-		display_error("MPEG1VIDEO codec not found\n");
-	codecContext = avcodec_alloc_context3(codec);
+	if (!stream)
+		display_error("Couldn't alloc video stream\n");
 
-	/* put sample parameters */
-	codecContext->bit_rate = 4000000;
+	codecContext = stream->codec;
+	codecContext->codec_id = fmtContext->oformat->video_codec;
+	codecContext->codec_type = AVMEDIA_TYPE_VIDEO;
 
-	/* resolution must be a multiple of two */
+	/* Put sample parameters */
+	codecContext->bit_rate = 400000;
+
+	/* Resolution must be a multiple of two */
 	codecContext->width = size.x;
 	codecContext->height = size.y;
 
-	/* frames per second */
+	/* Frames per second */
 	codecContext->time_base = (AVRational){1, 60};
 	codecContext->framerate = (AVRational){60, 1};
 
-	codecContext->gop_size = 10; /* emit one intra frame every ten frames */
-	codecContext->max_b_frames = 1;
 	codecContext->pix_fmt = AV_PIX_FMT_YUV420P;
 
-	/* open it */
-	if (avcodec_open2(codecContext, codec, NULL) < 0)
-		display_error("Couldn't open video codec\n");
+	/* Emit one intra frame every 12 frames at most */
+	codecContext->gop_size = 12;
+	if (codecContext->codec_id == AV_CODEC_ID_MPEG1VIDEO)
+		codecContext->mb_decision = 2;
 
-	return codecContext;
+	if (fmtContext->oformat->flags & AVFMT_GLOBALHEADER)
+		codecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+
+	/* Find the codec */
+	codec = avcodec_find_encoder(codecContext->codec_id);
+	if (!codec)
+		display_error("Cannot find codec\n");
+
+	/* Open it */
+	if (avcodec_open2(codecContext, codec, NULL) < 0)
+		display_error("Cannot open codec\n");
+
+	properties = (AVCPBProperties *)av_stream_new_side_data(stream, AV_PKT_DATA_CPB_PROPERTIES, sizeof(*properties));
+
+	properties->avg_bitrate = 900;
+	properties->max_bitrate = 1000;
+	properties->min_bitrate = 0;
+	properties->buffer_size = 2 * 1024 * 1024;
+	properties->vbv_delay = UINT64_MAX;
+	return stream;
 }
 
-AVCodecContext *initAudioCodec()
+AVStream *createAudioStream(AVFormatContext *fmtContext)
 {
-	const AVCodec	*codec;
+	AVCodec		*codec;
+	AVStream	*stream = avformat_new_stream(fmtContext, NULL);
 	AVCodecContext	*codecContext;
 
-	/* register all the codecs */
-	avcodec_register_all();
+	if (!stream)
+		display_error("Couldn't alloc audio stream\n");
 
-	/* find the MP2 encoder */
-	codec = avcodec_find_encoder(AV_CODEC_ID_MP3);
-	if (!codec)
-		display_error("codec not found\n");
-	codecContext = avcodec_alloc_context3(codec);
+	codecContext = stream->codec;
+	codecContext->codec_id = fmtContext->oformat->audio_codec;
+	codecContext->codec_type = AVMEDIA_TYPE_AUDIO;
 
-	/* put sample parameters */
+	/* Put sample parameters */
 	codecContext->bit_rate = 64000;
 	codecContext->sample_fmt = AV_SAMPLE_FMT_S16;
-
-	/* select other audio parameters supported by the encoder */
-	codecContext->sample_rate = SAMPLE_RATE;
-	codecContext->channel_layout = AV_CH_LAYOUT_MONO;
 	codecContext->channels = 1;
+	codecContext->channel_layout = AV_CH_LAYOUT_MONO;
+	codecContext->sample_rate = SAMPLE_RATE;
 
-	/* open it */
+	if (fmtContext->oformat->flags & AVFMT_GLOBALHEADER)
+		codecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+
+	/* Find the codec */
+	codec = avcodec_find_encoder(codecContext->codec_id);
+	if (!codec)
+		display_error("Cannot find codec\n");
+
+	/* Open it */
 	if (avcodec_open2(codecContext, codec, NULL) < 0)
-		display_error("could not open codec\n");
+		display_error("Cannot open codec\n");
 
-	printf("%i\n", codecContext->frame_size);
-	return codecContext;
+	return stream;
 }
 
-AVFrame	*initVideoFrame(AVCodecContext *context)
+AVFrame	*createVideoFrame(AVCodecContext *context)
 {
 	AVFrame	*frame;
 
 	frame = av_frame_alloc();
 	if (!frame)
-		display_error("could not allocate video frame\n");
+		display_error("Cannot allocate video frame\n");
 	frame->format = context->pix_fmt;
 	frame->width = context->width;
 	frame->height = context->height;
 	frame->quality = 1;
 
 	if (av_frame_get_buffer(frame, 32) < 0)
-		display_error("could not allocate video data buffers\n");
+		display_error("Cannot allocate video data buffers\n");
 	return frame;
 }
 
-AVFrame	*initAudioFrames(AVCodecContext *context)
-{
-	AVFrame	*frame;
-
-	/* frame containing input raw audio */
-	frame = av_frame_alloc();
-	if (!frame)
-		display_error("could not allocate audio frame\n");
-	frame->nb_samples = context->frame_size;
-	frame->format = context->sample_fmt;
-	frame->channel_layout = context->channel_layout;
-
-	/* allocate the data buffers */
-	if (av_frame_get_buffer(frame, 0) < 0)
-		display_error("could not allocate audio data buffers: %s\n", strerror(AVUNERROR(av_frame_get_buffer(frame, 0))));
-	return frame;
-}
-
-void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *beatmap, sfVector2u size)
+void	startReplaySession(replayPlayerState *state, const char *path, OsuMap *beatmap, sfVector2u size)
 {
 	/* Put base values */
 	memset(state, 0, sizeof(*state));
 	state->life = 1;
 	state->beginCombo = 1;
-	state->played = malloc(sizeof(*state->played) * beatmap->hitObjects.length);
+	state->played = calloc(beatmap->hitObjects.length, sizeof(*state->played));
 	if (!state->played)
 		display_error("Memory allocation error (%luB)\n", sizeof(*state->played) * beatmap->hitObjects.length);
-	memset(state->played, 0, sizeof(*state->played) * beatmap->hitObjects.length);
-	state->videoStream = NULL;
 
-	/* init framebuffer */
-	FrameBuffer_init(&state->frame_buffer, size);
+	/* Init framebuffer */
+	FrameBuffer_init(&state->frameBuffer, size);
 
 	/* Debug mode -> don't create audio/video contexts */
 	if (!path)
 		return;
 
-	char	audioPath[strlen(path) + 5];
-	char	videoPath[strlen(path) + 5];
+	/* Register all codecs */
+	av_register_all();
 
-	/* Get paths */
-	sprintf(audioPath, "%s.mp3", path);
-	sprintf(videoPath, "%s.mp4", path);
+	//Create format context
+	avformat_alloc_output_context2(&state->formatContext, NULL, NULL, path);
 
-	/* register all codecs */
-	avcodec_register_all();
+	if (!state->formatContext)
+		display_error("Cannot open format corresponding to this file or cannot deduce format from file name\n");
 
-	/* init codecs */
-	state->videoCodecContext = initVideoCodec(size);
-	state->audioCodecContext = initAudioCodec();
+	/* Init codecs */
+	state->videoAvStream = createVideoStream(state->formatContext, size);
+	state->audioAvStream = createAudioStream(state->formatContext);
 
-	/* init video frame */
-	state->videoFrame = initVideoFrame(state->videoCodecContext);
-	state->videoPacket = av_packet_alloc();
-	if (!state->videoPacket)
-		display_error("Memory allocation error\n");
-
-	/* init audio frames */
-	state->audioFrame = initAudioFrames(state->audioCodecContext);
-	state->audioPacket = av_packet_alloc();
-	if (!state->audioPacket)
-		display_error("Memory allocation error\n");
+	/* Init video frame */
+	state->videoFrame = createVideoFrame(state->videoAvStream->codec);
 
 	state->frameNb = 1;
-
-	/* open files */
-	state->videoStream = fopen(videoPath, "wb");
-	if (!state->videoStream)
-		display_error("Cannot open %s: %s\n", path, strerror(errno));
-	state->audioStream = fopen(audioPath, "wb");
-	if (!state->audioStream)
-		display_error("Cannot open %s: %s\n", path, strerror(errno));
 
 	state->playingSounds = malloc(sizeof(*state->playingSounds));
 	if (!state->playingSounds)
 		display_error("Memory allocation error (%lu)\n", sizeof(*state->playingSounds));
 	memset(state->playingSounds, 0, sizeof(*state->playingSounds));
+
+	if (!(state->formatContext->oformat->flags & AVFMT_NOFILE) && avio_open(&state->formatContext->pb, path, AVIO_FLAG_WRITE) < 0)
+		display_error("Cannot open file '%s'\n", path);
+	/* Write file header */
+	if (avformat_write_header(state->formatContext, NULL) < 0)
+		display_error("Cannot write header");
+
+	av_dump_format(state->formatContext, 0, path, 1);
 }
 
 void	finishReplaySession(replayPlayerState *state)
 {
-	uint8_t endcode[] = {0, 0, 1, 0xb7};
-
-	if (!state->videoStream)
+	if (!state->formatContext)
 		return;
 
-	/* destroy framebuffer */
-	FrameBuffer_destroy(&state->frame_buffer);
+	/* Write file trailer */
+	av_write_trailer(state->formatContext);
 
-	/* flush the encoders */
-	encodeVideoFrame(state->videoCodecContext, NULL, state->videoPacket, state->videoStream);
-	encodeAudioFrame(state->audioCodecContext, NULL, state->audioPacket, state->videoStream);
+	/* Destroy framebuffer */
+	FrameBuffer_destroy(&state->frameBuffer);
 
-	/* add sequence end code to have a real MPEG file */
-	fwrite(endcode, 1, sizeof(endcode), state->videoStream);
-	fclose(state->videoStream);
-	fclose(state->audioStream);
+	/* Flush the encoders */
+	encodeVideoFrame(state->formatContext, state->videoAvStream, NULL);
+	//encodeAudioFrame(state->audioCodecContext, NULL, state->audioPacket, state->videoStream);
 
 	/* free frames */
 	av_frame_free(&state->videoFrame);
-	av_frame_free(&state->audioFrame);
 
-	/* free packets */
-	av_packet_free(&state->videoPacket);
-	av_packet_free(&state->audioPacket);
+	/* free packets*/
+	/*av_packet_free(&state->videoPacket);
+	av_packet_free(&state->audioPacket);*/
 
 	/* free codec contexts */
-	avcodec_free_context(&state->videoCodecContext);
-	avcodec_free_context(&state->audioCodecContext);
+	/*avcodec_free_context(&state->videoCodecContext);
+	avcodec_free_context(&state->audioCodecContext);*/
+
+	avcodec_close(state->audioAvStream->codec);
+	avcodec_close(state->videoAvStream->codec);
+
+	if (!(state->formatContext->oformat->flags & AVFMT_NOFILE))
+		avio_close(state->formatContext->pb);
+
+	av_free(state->formatContext);
 }
 
 void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sounds, Dict *images, char *path)
@@ -211,7 +209,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 	sfClock			*clock = NULL;
 	replayPlayerState	state;
 
-	startResplaySession(&state, path, beatmap, size);
+	startReplaySession(&state, path, beatmap, size);
 
 	if (!path) {
 		window = sfRenderWindow_create(mode, "Osu Replay Player", sfDefaultStyle, NULL);
@@ -249,9 +247,9 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 		} else
 			state.totalTicks += ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE) ? 1500 : 1000) / 60.;
 
-		FrameBuffer_clear(&state.frame_buffer, (sfColor){0, 0, 0, 255});
+		FrameBuffer_clear(&state.frameBuffer, (sfColor){0, 0, 0, 255});
 		FrameBuffer_drawImage(
-			&state.frame_buffer,
+			&state.frameBuffer,
 			(sfVector2i){0, 0},
 			Dict_getElement(images, beatmap->backgroundPath),
 			(sfVector2i){size.x, size.y},
@@ -327,16 +325,16 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 
 		displayHitObjects(&state, beatmap);
 
-		FrameBuffer_drawFilledRectangle(&state.frame_buffer, (sfVector2i){10, 10}, (sfVector2u){300 * state.life, 20}, (sfColor){255, 255, 255, 255});
-		FrameBuffer_drawImage(&state.frame_buffer, (sfVector2i){state.cursorPos.x, state.cursorPos.y}, Dict_getElement(images, "cursor"), (sfVector2i){-1, -1}, (sfColor){255, 255, 255, 255}, true, 0);
+		FrameBuffer_drawFilledRectangle(&state.frameBuffer, (sfVector2i){10, 10}, (sfVector2u){300 * state.life, 20}, (sfColor){255, 255, 255, 255});
+		FrameBuffer_drawImage(&state.frameBuffer, (sfVector2i){state.cursorPos.x, state.cursorPos.y}, Dict_getElement(images, "cursor"), (sfVector2i){-1, -1}, (sfColor){255, 255, 255, 255}, true, 0);
 
 		if (!path) {
-			FrameBuffer_draw(&state.frame_buffer, window);
+			FrameBuffer_draw(&state.frameBuffer, window);
 			sfRenderWindow_display(window);
 			if (!clock)
 				clock = sfClock_create();
 		} else {
-			FrameBuffer_encode(&state.frame_buffer, &state);
+			FrameBuffer_encode(&state.frameBuffer, &state);
 			encodePlayingSounds(&state);
 			state.frameNb++;
 		}

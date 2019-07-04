@@ -9,11 +9,11 @@
 
 #define display_warning(msg, ...) fprintf(stderr, "%s() %s:%u: "msg, __PRETTY_FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__)
 
-#define display_error(msg, ...) display_warning(msg, ##__VA_ARGS__), abort()
+#define display_error(msg, ...) display_warning("Fatal error: "msg, ##__VA_ARGS__), abort()
 
 typedef struct FrameBuffer {
-	sfColor		**content;
-	sfVector2u	size;
+	sfColor			**content;
+	sfVector2u		size;
 } FrameBuffer;
 
 struct replayPlayerState;
