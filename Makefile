@@ -51,6 +51,7 @@ CFLAGS= $(INC)	\
 	-W			\
 	-Wall		\
 	-Wextra		\
+	-Wno-deprecated-declarations
 
 CC =	gcc
 
