@@ -196,7 +196,7 @@ void	FrameBuffer_encode(FrameBuffer *buffer, replayPlayerState *state)
 		}
 	}
 
-	state->videoFrame->pts = state->frameNb;
+	state->videoFrame->pts = state->frameNb * 1000 / 60;
 
 	/* encode the image */
 	encodeVideoFrame(state->formatContext, state->videoAvStream, state->videoFrame);
