@@ -3,24 +3,29 @@
 #include <string.h>
 #include "dict.h"
 
+#include <stdio.h>
 bool	Dict_addElement(Dict *dict, const char *index, void *data, void (*destroy)(void *))
 {
 	if (!index || !dict)
 		return false;
 	for (; dict->next && dict->index && strcmp(index, dict->index) != 0; dict = dict->next);
-	if (dict->index && strcmp(index, dict->index) != 0) {
-		dict->next = malloc(sizeof(*dict->next));
-		dict = dict->next;
-		if (!dict)
+	if (dict->index && strcmp(index, dict->index) == 0) {
+		if (dict->destroy)
+			dict->destroy(dict->data);
+	} else {
+		if (dict->index) {
+			dict->next = malloc(sizeof(*dict->next));
+			if (!dict->next)
+				return false;
+			dict = dict->next;
+			memset(dict, 0, sizeof(*dict));
+		}
+		dict->index = strdup(index);
+		if (!dict->index)
 			return false;
-	} else if (dict->index && strcmp(index, dict->index) == 0 && dict->destroy)
-		dict->destroy(dict->data);
-	dict->index = strdup(index);
-	if (!dict->index)
-		return false;
-	dict->destroy = destroy;
+	}
 	dict->data = data;
-	dict->next = NULL;
+	dict->destroy = destroy;
 	return true;
 }
 

@@ -10,10 +10,8 @@
 #include "skin.h"
 #include "replay_player.h"
 
-void	loadBeatmapAssets(OsuMap *beatmap, char *path, Dict *images, Dict *sounds, Dict *loaders)
+void	loadBeatmapAssets(char *path, Dict *images, Dict *sounds, Dict *loaders)
 {
-	char		*buffer;
-
 	for (int i = strlen(path) - 1; i >= 0; i--) {
 		if (i == 0) {
 			path = ".";
@@ -24,10 +22,7 @@ void	loadBeatmapAssets(OsuMap *beatmap, char *path, Dict *images, Dict *sounds, 
 			break;
 		}
 	}
-	buffer = concatf("%s/%s", path, beatmap->generalInfos.audioFileName);
-	music = sfMusic_createFromFile(buffer);
 	loadSkin(path, images, sounds, loaders);
-	free(buffer);
 }
 
 LoadingPair	*createPair(void *(*creator)(const char *), void (*destroyer)(void *), enum filetype type)
@@ -85,7 +80,10 @@ int	main(int argc, char **args)
 	createLoader(&loaders, argc == 3);
 	if (!loadSkin("assets", &images, &sounds, &loaders))
 		display_error("Default skin is invalid or corrupted\n");
-	loadBeatmapAssets(&beatmap, args[1], &images, &sounds, &loaders);
+	loadBeatmapAssets(args[1], &images, &sounds, &loaders);
+
+	if (!args[3])
+		music = sfMusic_createFromFile(concatf("%s/%s", args[1], beatmap.generalInfos.audioFileName));
 
 	Dict_destroy(&loaders, true);
 	for (unsigned i = 0; i < beatmap.hitObjects.length; i++)
@@ -93,6 +91,8 @@ int	main(int argc, char **args)
 			getRealPointsSliders(&beatmap.hitObjects.content[i]);
 	playReplay(&replay, &beatmap, (sfVector2u){640, 480}, &sounds, &images, args[3]);
 
+	if (!args[3])
+		sfMusic_destroy(music);
 	Dict_destroy(&images, true);
 	Dict_destroy(&sounds, true);
 	return EXIT_SUCCESS;

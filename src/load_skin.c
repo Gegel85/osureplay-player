@@ -51,14 +51,28 @@ bool	loadSkin(const char *folder, Dict *images, Dict *sounds, Dict *loaders)
 	for (struct dirent *entry = readdir(dirstream); entry; entry = readdir(dirstream)) {
 		if (*entry->d_name == '.')
 			continue;
-		path = concatf("%s/%s", folder, entry->d_name);
+
 		pair = Dict_getElement(loaders, getFileExtension(entry->d_name));
-		if (pair && pair->type == IMAGE)
-			Dict_addElement(images, strToLower(getFileName(entry->d_name)), pair->creator(path), pair->destroyer);
-		else if (pair && pair->type == SOUND)
-			Dict_addElement(sounds, strToLower(getFileName(entry->d_name)), pair->creator(path), pair->destroyer);
-		else
-			display_warning("Unsupported file %s couldn't be loaded\n", path);
+		if (!pair)
+			continue;
+
+		path = concatf("%s/%s", folder, entry->d_name);
+		if (!path)
+			display_error("Out of memory");
+
+		char *index = strToLower(getFileName(entry->d_name));
+		void *data = pair->creator(path);
+
+		if (!data)
+			continue;
+
+		if (pair->type == IMAGE) {
+			if (!Dict_addElement(images, index, data, pair->destroyer))
+				display_error("Out of memory");
+		} else if (pair->type == SOUND) {
+			if (!Dict_addElement(sounds, index, data, pair->destroyer))
+				display_error("Out of memory");
+		}
 		free(path);
 	}
 	closedir(dirstream);

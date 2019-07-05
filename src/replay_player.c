@@ -146,7 +146,7 @@ void	startReplaySession(replayPlayerState *state, const char *path, OsuMap *beat
 
 	/* Init codecs */
 	state->videoAvStream = createVideoStream(state->formatContext, size);
-	state->audioAvStream = createAudioStream(state->formatContext);
+	//state->audioAvStream = createAudioStream(state->formatContext);
 
 	/* Init video frame */
 	state->videoFrame = createVideoFrame(state->videoAvStream->codec);
@@ -258,9 +258,9 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 			0
 		);
 
-		if ((unsigned)beatmap->generalInfos.audioLeadIn <= state.totalTicks && music && sfMusic_getStatus(music) != sfPlaying) {
+		if ((unsigned)beatmap->generalInfos.audioLeadIn <= state.totalTicks && !state.musicStarted) {
 			if (!state.musicStarted) {
-				if (!path) {
+				if (!path && music) {
 					sfMusic_play(music);
 					if ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE))
 						sfMusic_setPitch(music, 1.5);
