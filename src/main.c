@@ -35,7 +35,7 @@ LoadingPair	*createPair(void *(*creator)(const char *), void (*destroyer)(void *
 	LoadingPair	*buffer = malloc(sizeof(*buffer));
 
 	if (!buffer)
-		display_error("Memory allocation error (%luB)\n", sizeof(*buffer));
+		display_error("Memory allocation error (%luB)\n", (unsigned long)sizeof(*buffer));
 	buffer->type = type;
 	buffer->creator = creator;
 	buffer->destroyer = destroyer;

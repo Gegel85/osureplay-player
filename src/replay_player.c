@@ -126,7 +126,7 @@ void	startReplaySession(replayPlayerState *state, const char *path, OsuMap *beat
 	state->beginCombo = 1;
 	state->played = calloc(beatmap->hitObjects.length, sizeof(*state->played));
 	if (!state->played)
-		display_error("Memory allocation error (%luB)\n", sizeof(*state->played) * beatmap->hitObjects.length);
+		display_error("Memory allocation error (%luB)\n", (unsigned long)sizeof(*state->played) * (unsigned long)beatmap->hitObjects.length);
 
 	/* Init framebuffer */
 	FrameBuffer_init(&state->frameBuffer, size);
@@ -155,7 +155,7 @@ void	startReplaySession(replayPlayerState *state, const char *path, OsuMap *beat
 
 	state->playingSounds = malloc(sizeof(*state->playingSounds));
 	if (!state->playingSounds)
-		display_error("Memory allocation error (%lu)\n", sizeof(*state->playingSounds));
+		display_error("Memory allocation error (%lu)\n", (unsigned long)sizeof(*state->playingSounds));
 	memset(state->playingSounds, 0, sizeof(*state->playingSounds));
 
 	if (!(state->formatContext->oformat->flags & AVFMT_NOFILE) && avio_open(&state->formatContext->pb, path, AVIO_FLAG_WRITE) < 0)
@@ -309,7 +309,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 					sliderLength(beatmap, state.currentGameHitObject, beatmap->timingPoints.content[state.currentTimingPoint]) <= state.totalTicks
 				) || (
 					beatmap->hitObjects.content[state.currentGameHitObject].type & HITOBJ_SPINNER &&
-					(unsigned long)*(long *)beatmap->hitObjects.content[state.currentGameHitObject].additionalInfos <= state.totalTicks
+					*(unsigned long *)beatmap->hitObjects.content[state.currentGameHitObject].additionalInfos <= state.totalTicks
 				)
 			)
 		) {

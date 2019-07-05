@@ -45,7 +45,7 @@ bool	loadSkin(const char *folder, Dict *images, Dict *sounds, Dict *loaders)
 	LoadingPair	*pair;
 
 	if (!dirstream) {
-		display_warning("Cannot open '%s': %m\n", folder);
+		display_warning("Cannot open '%s': %s\n", folder, strerror(errno));
 		return false;
 	}
 	for (struct dirent *entry = readdir(dirstream); entry; entry = readdir(dirstream)) {

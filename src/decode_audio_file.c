@@ -43,7 +43,7 @@ int decodeAudioFile(const char *path, const int sample_rate, Sound *sound)
 			// find & open codec
 			AVCodecContext *codec = stream->codec;
 			if (avcodec_open2(codec, avcodec_find_decoder(codec->codec_id), NULL) < 0) {
-				display_warning("Failed to open decoder for stream #%lu in file '%s'\n", stream_index, path);
+				display_warning("Failed to open decoder for stream #%lu in file '%s'\n", (unsigned long)stream_index, path);
 				return -1;
 			}
 

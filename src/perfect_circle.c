@@ -32,7 +32,7 @@ OsuIntegerVectorArray	getCirclePoints(OsuIntegerVectorArray points, OsuIntegerVe
 	double			arcAngle;
 
 	if (points.length != 2)
-		display_error("Invalid number of points provided for a perfect circle slider. (3 expected but %lu found)\n", points.length + 1);
+		display_error("Invalid number of points provided for a perfect circle slider. (3 expected but %lu found)\n", (unsigned long)points.length + 1);
 
 	//Don't ask please
 	center.y =
@@ -76,7 +76,7 @@ OsuIntegerVectorArray	getCirclePoints(OsuIntegerVectorArray points, OsuIntegerVe
 	//Alloc memory to hold the points
 	newArray.content = malloc(newArray.length * sizeof(*newArray.content));
 	if (!newArray.content)
-		display_error("memory allocation error (%luB)\n", newArray.length * sizeof(*newArray.content));
+		display_error("memory allocation error (%luB)\n", (unsigned long)(newArray.length * sizeof(*newArray.content)));
 
 	//Create the arc
 	for (size_t i = 0; i < newArray.length; i++) {

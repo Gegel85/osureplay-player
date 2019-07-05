@@ -42,7 +42,7 @@ void	playSound(replayPlayerState *state, char *index, double pitch, double speed
 	if (!best) {
 		state->playingSounds = realloc(state->playingSounds, sizeof(*state->playingSounds) * (i + 2));
 		if (!state->playingSounds)
-			display_error("Memory allocation error (%lu)\n", sizeof(*state->playingSounds) * (i + 2));
+			display_error("Memory allocation error (%lu)\n", (unsigned long)sizeof(*state->playingSounds) * (i + 2));
 		memset(&state->playingSounds[i + 1], 0, sizeof(*state->playingSounds));
 		best = &state->playingSounds[i];
 	}
