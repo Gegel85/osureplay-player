@@ -3,7 +3,6 @@
 #include <string.h>
 #include "dict.h"
 
-#include <stdio.h>
 bool	Dict_addElement(Dict *dict, const char *index, void *data, void (*destroy)(void *))
 {
 	if (!index || !dict)
@@ -14,11 +13,10 @@ bool	Dict_addElement(Dict *dict, const char *index, void *data, void (*destroy)(
 			dict->destroy(dict->data);
 	} else {
 		if (dict->index) {
-			dict->next = malloc(sizeof(*dict->next));
+			dict->next = calloc(1, sizeof(*dict->next));
 			if (!dict->next)
 				return false;
 			dict = dict->next;
-			memset(dict, 0, sizeof(*dict));
 		}
 		dict->index = strdup(index);
 		if (!dict->index)

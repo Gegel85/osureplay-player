@@ -24,10 +24,9 @@ void	FrameBuffer_init(FrameBuffer *buffer, sfVector2u size)
 	buffer->content = malloc(size.y * sizeof(*buffer->content));
 	if (!buffer->content)
 		display_error("Memory allocation error (%luB)\n", size.y * (unsigned long)sizeof(*buffer->content));
-	*buffer->content = malloc(size.y * size.x * sizeof(**buffer->content));
+	*buffer->content = calloc(size.y * size.x, sizeof(**buffer->content));
 	if (!*buffer->content)
 		display_error("Memory allocation error (%luB)\n", size.y * size.x * (unsigned long)sizeof(**buffer->content));
-	memset(*buffer->content, 0, size.y * size.x * sizeof(**buffer->content));
 	for (unsigned i = 0; i < size.y; i++)
 		buffer->content[i] = &(*buffer->content)[i * size.x];
 }

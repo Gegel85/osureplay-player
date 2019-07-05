@@ -111,11 +111,10 @@ int decodeAudioFile(const char *path, const int sample_rate, Sound *sound)
 
 Sound	*loadSoundFile(char *path)
 {
-	Sound	*result = malloc(sizeof(*result));
+	Sound	*result = calloc(1, sizeof(*result));
 
 	if (!result)
 		display_error("Memory allocation error (%luB)\n", (unsigned long)sizeof(*result));
-	memset(result, 0, sizeof(*result));
 	if (decodeAudioFile(path, SAMPLE_RATE, result) == 0)
 		return result;
 	free(result);

@@ -153,10 +153,9 @@ void	startReplaySession(replayPlayerState *state, const char *path, OsuMap *beat
 
 	state->frameNb = 1;
 
-	state->playingSounds = malloc(sizeof(*state->playingSounds));
+	state->playingSounds = calloc(1, sizeof(*state->playingSounds));
 	if (!state->playingSounds)
 		display_error("Memory allocation error (%lu)\n", (unsigned long)sizeof(*state->playingSounds));
-	memset(state->playingSounds, 0, sizeof(*state->playingSounds));
 
 	if (!(state->formatContext->oformat->flags & AVFMT_NOFILE) && avio_open(&state->formatContext->pb, path, AVIO_FLAG_WRITE) < 0)
 		display_error("Cannot open file '%s'\n", path);
