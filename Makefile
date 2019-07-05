@@ -40,12 +40,25 @@ LDFLAGS =							\
 	-losumapparser					\
 	-L lib/osureplay-parser			\
 	-losureplayparser				\
-	-lavcodec						\
+	-lavdevice						\
 	-lavformat						\
+	-lavfilter						\
+	-lavcodec						\
 	-lswresample					\
+	-lswscale						\
 	-lavutil						\
 	-lm								\
 	-lz
+
+ifeq ($(OS),Windows_NT)
+
+LDFLAGS +=  -liconv					\
+	-lbcrypt						\
+	-lws2_32						\
+	-lole32							\
+	-lsecur32
+
+endif
 
 CFLAGS= $(INC)	\
 	-W			\
