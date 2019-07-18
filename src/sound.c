@@ -13,7 +13,7 @@ void	playSound(replayPlayerState *state, char *index, double pitch, double speed
 
 	if (!elem)
 		return;
-	if (!state->videoAvStream) {
+	if (!state->videoStream) {
 		sfSoundBuffer *buffer = elem;
 		static sfSound *sounds[nbOfSound];
 		static int current = 0;
@@ -59,7 +59,7 @@ void	playSound(replayPlayerState *state, char *index, double pitch, double speed
 
 void	encodePlayingSounds(replayPlayerState *state)
 {
-/*	PlayingSound	*sounds = state->playingSounds;
+	PlayingSound	*sounds = state->playingSounds;
 	short		*frameSampleBuffer = (short *)state->audioFrame->data[0];
 
 	if (av_frame_make_writable(state->audioFrame) < 0)
@@ -83,5 +83,5 @@ void	encodePlayingSounds(replayPlayerState *state)
 		}
 	}
 
-	encodeAudioFrame(state->audioCodecContext, state->audioFrame, state->audioPacket, state->audioStream);*/
+	encodeAudioFrame(state->audioCodecContext, state->audioFrame, state->audioPacket, state->audioStream);
 }

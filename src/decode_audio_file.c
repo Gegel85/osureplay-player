@@ -25,7 +25,7 @@ int decodeAudioFile(const char *path, const int sample_rate, Sound *sound)
 	sound->bitsPerSample = 16;
 
 	// Find the index of the first audio stream
-	for (size_t stream_index = 0; stream_index < format->nb_streams; stream_index++) {
+	for (int stream_index = 0; stream_index < format->nb_streams; stream_index++) {
 		if (format->streams[stream_index]->codec->codec_type == AVMEDIA_TYPE_AUDIO) {
 			sound->data = realloc(sound->data, (sound->nbChannels + 1) * sizeof(*sound->data));
 			sound->length = realloc(sound->length, sizeof(*sound->length) * (sound->nbChannels + 1));
@@ -124,7 +124,7 @@ Sound	*loadSoundFile(char *path)
 void	defaultSoundDestroyer(Sound *sound)
 {
 	if (sound->data)
-		for (size_t i = 0; i < sound->nbChannels; i++)
+		for (int i = 0; i < sound->nbChannels; i++)
 			free(sound->data[i]);
 	free(sound->data);
 }

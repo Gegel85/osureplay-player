@@ -20,6 +20,8 @@ void	FrameBuffer_clear(FrameBuffer *buffer, sfColor color)
 
 void	FrameBuffer_init(FrameBuffer *buffer, sfVector2u size)
 {
+	if (!buffer)
+		return;
 	buffer->size = size;
 	buffer->content = malloc(size.y * sizeof(*buffer->content));
 	if (!buffer->content)
@@ -108,12 +110,12 @@ void	FrameBuffer_drawImage(FrameBuffer *buffer, sfVector2i pos, sfImage *image, 
 
 	for (unsigned x = 0; x < size.x * scale.x; x++)
 		for (unsigned y = 0; y < size.y * scale.y; y++) {
-			col = ((int)(y / scale.y) * size.x + (int)(x / scale.x) < size.x * size.y) ? (sfColor) {
+			col = (sfColor) {
 				array[(int)(y / scale.y) * size.x + (int)(x / scale.x)].r * (tint.r / 255.),
 				array[(int)(y / scale.y) * size.x + (int)(x / scale.x)].g * (tint.g / 255.),
 				array[(int)(y / scale.y) * size.x + (int)(x / scale.x)].b * (tint.b / 255.),
 				array[(int)(y / scale.y) * size.x + (int)(x / scale.x)].a * (tint.a / 255.),
-			} : (sfColor){0, 0, 0, 255};
+			};
 			if (rotation == 0) {
 				FrameBuffer_drawPoint(buffer, (sfVector2f) {
 					pos.x + x,
@@ -164,8 +166,7 @@ void	FrameBuffer_draw(FrameBuffer *buffer, sfRenderWindow *window)
 
 void	FrameBuffer_encode(FrameBuffer *buffer, replayPlayerState *state)
 {
-	if (!state->videoAvStream)
-		return;
+	fflush(stdout);
 
 	/* make sure the frame data is writable */
 	if (av_frame_make_writable(state->videoFrame) < 0)
@@ -173,8 +174,8 @@ void	FrameBuffer_encode(FrameBuffer *buffer, replayPlayerState *state)
 
 	/* prepare the frame */
 	/* Y */
-	for (size_t y = 0; y < buffer->size.y; y++) {
-		for (size_t x = 0; x < buffer->size.x; x++) {
+	for (int y = 0; y < state->videoCodecContext->height; y++) {
+		for (int x = 0; x < state->videoCodecContext->width; x++) {
 			state->videoFrame->data[0][y * state->videoFrame->linesize[0] + x] =
 				0.299 * buffer->content[y][x].r +
 				0.587 * buffer->content[y][x].g +
@@ -183,8 +184,8 @@ void	FrameBuffer_encode(FrameBuffer *buffer, replayPlayerState *state)
 	}
 
 	/*Cb Cr*/
-	for (size_t y = 0; y < buffer->size.y / 2; y++) {
-		for (size_t x = 0; x < buffer->size.x / 2; x++) {
+	for (int y = 0; y < state->videoCodecContext->height / 2; y++) {
+		for (int x = 0; x < state->videoCodecContext->width / 2; x++) {
 			state->videoFrame->data[1][y * state->videoFrame->linesize[1] + x] =
 				-0.1687 * buffer->content[y * 2][x * 2].r +
 				-0.3313 * buffer->content[y * 2][x * 2].g +
@@ -199,7 +200,7 @@ void	FrameBuffer_encode(FrameBuffer *buffer, replayPlayerState *state)
 	state->videoFrame->pts = state->frameNb;
 
 	/* encode the image */
-	encodeVideoFrame(state->formatContext, state->videoAvStream, state->videoFrame);
+	encodeVideoFrame(state->videoCodecContext, state->videoFrame, state->videoPacket, state->videoStream);
 
 	printf("Sent frame %5i/%5li\n", state->frameNb, state->totalFrames);
 }

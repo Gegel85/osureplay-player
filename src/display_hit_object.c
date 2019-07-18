@@ -339,7 +339,7 @@ void	displayHitObjects(replayPlayerState *state, OsuMap *beatmap)
 
 		if (beatmap->hitObjects.content[i].type & HITOBJ_SPINNER)
 			displaySpinner(
-				&state->frameBuffer,
+				&state->frame_buffer,
 				&beatmap->hitObjects.content[i],
 				state->totalTicks,
 				alpha,
@@ -347,7 +347,7 @@ void	displayHitObjects(replayPlayerState *state, OsuMap *beatmap)
 			);
 		else if (beatmap->hitObjects.content[i].type & HITOBJ_SLIDER)
 			displaySlider(
-				&state->frameBuffer,
+				&state->frame_buffer,
 				&beatmap->hitObjects.content[i],
 				state->totalTicks,
 				alpha,
@@ -360,7 +360,7 @@ void	displayHitObjects(replayPlayerState *state, OsuMap *beatmap)
 			);
 		else
 			displayHitCircle(
-				&state->frameBuffer,
+				&state->frame_buffer,
 				&beatmap->hitObjects.content[i],
 				state->totalTicks,
 				alpha,

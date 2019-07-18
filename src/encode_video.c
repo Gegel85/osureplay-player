@@ -7,30 +7,26 @@
 
 #include <libavcodec/avcodec.h>
 #include <libavutil/imgutils.h>
-#include <libavformat/avformat.h>
 
 #include "frame_buffer.h"
 
-void	encodeVideoFrame(AVFormatContext *fmtContext, AVStream *stream, AVFrame *frame)
+void	encodeVideoFrame(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfile)
 {
 	int ret;
-	AVPacket *pkt = av_packet_alloc();
 
-	if (!pkt)
-		display_error("Cannot alloc packet");
 	/* send the frame to the encoder */
-	ret = avcodec_send_frame(stream->codec, frame);
+	ret = avcodec_send_frame(enc_ctx, frame);
 	if (ret < 0)
-		display_error("Error sending a frame for encoding\n");
+		display_error("error sending a frame for encoding\n");
 
 	while (ret >= 0) {
-		ret = avcodec_receive_packet(stream->codec, pkt);
+		ret = avcodec_receive_packet(enc_ctx, pkt);
 		if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
 			return;
 		else if (ret < 0)
-			display_error("Error during encoding\n");
-		if (av_interleaved_write_frame(fmtContext, pkt))
+			display_error("error during encoding\n");
+		if (fwrite(pkt->data, 1, pkt->size, outfile) != (size_t)pkt->size)
 			display_error("Cannot write in file\n");
+		av_packet_unref(pkt);
 	}
-	av_packet_free(&pkt);
 }
