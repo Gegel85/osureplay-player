@@ -12,7 +12,7 @@
 #include "globals.h"
 #include "replay_player.h"
 
-AVStream *createVideoStream(AVFormatContext *fmtContext, sfVector2u size, int64_t bitrate)
+AVStream *createVideoStream(AVFormatContext *fmtContext, sfVector2u size)
 {
 	AVCodec		*codec;
 	AVCPBProperties	*properties;
@@ -27,15 +27,15 @@ AVStream *createVideoStream(AVFormatContext *fmtContext, sfVector2u size, int64_
 	codecContext->codec_type = AVMEDIA_TYPE_VIDEO;
 
 	/* Put sample parameters */
-	codecContext->bit_rate = bitrate;
+	codecContext->bit_rate = 400000;
 
 	/* Resolution must be a multiple of two */
 	codecContext->width = size.x;
 	codecContext->height = size.y;
 
 	/* Frames per second */
-	codecContext->time_base = (AVRational){1, 1000};
-	codecContext->framerate = (AVRational){1000, 1};
+	codecContext->time_base = (AVRational){1, 60};
+	codecContext->framerate = (AVRational){60, 1};
 
 	codecContext->pix_fmt = AV_PIX_FMT_YUV420P;
 
@@ -58,8 +58,8 @@ AVStream *createVideoStream(AVFormatContext *fmtContext, sfVector2u size, int64_
 
 	properties = (AVCPBProperties *)av_stream_new_side_data(stream, AV_PKT_DATA_CPB_PROPERTIES, sizeof(*properties));
 
-	properties->avg_bitrate = 0;
-	properties->max_bitrate = 0;
+	properties->avg_bitrate = 900;
+	properties->max_bitrate = 1000;
 	properties->min_bitrate = 0;
 	properties->buffer_size = 2 * 1024 * 1024;
 	properties->vbv_delay = UINT64_MAX;
@@ -145,7 +145,7 @@ void	startReplaySession(replayPlayerState *state, const char *path, OsuMap *beat
 		display_error("Cannot open format corresponding to this file or cannot deduce format from file name\n");
 
 	/* Init codecs */
-	state->videoAvStream = createVideoStream(state->formatContext, size, 4000000);
+	state->videoAvStream = createVideoStream(state->formatContext, size);
 	//state->audioAvStream = createAudioStream(state->formatContext);
 
 	/* Init video frame */
@@ -192,7 +192,7 @@ void	finishReplaySession(replayPlayerState *state)
 	/*avcodec_free_context(&state->videoCodecContext);
 	avcodec_free_context(&state->audioCodecContext);*/
 
-	//avcodec_close(state->audioAvStream->codec);
+	avcodec_close(state->audioAvStream->codec);
 	avcodec_close(state->videoAvStream->codec);
 
 	if (!(state->formatContext->oformat->flags & AVFMT_NOFILE))
