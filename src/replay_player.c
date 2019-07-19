@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <libavutil/channel_layout.h>
 #include <osu_replay_parser.h>
 #include <osu_map_parser.h>
@@ -24,7 +25,7 @@ AVCodecContext *initVideoCodec(sfVector2u size)
 	codecContext = avcodec_alloc_context3(codec);
 
 	/* put sample parameters */
-	codecContext->bit_rate = 4000000;
+	codecContext->bit_rate = 400000;
 
 	/* resolution must be a multiple of two */
 	codecContext->width = size.x;
@@ -54,9 +55,9 @@ AVCodecContext *initAudioCodec()
 	avcodec_register_all();
 
 	/* find the MP2 encoder */
-	codec = avcodec_find_encoder(AV_CODEC_ID_MP3);
+	codec = avcodec_find_encoder(AV_CODEC_ID_MP2);
 	if (!codec)
-		display_error("codec not found\n");
+		display_error("MP2 codec not found\n");
 	codecContext = avcodec_alloc_context3(codec);
 
 	/* put sample parameters */
@@ -128,11 +129,14 @@ void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *bea
 	if (!path)
 		return;
 
+	if (strstr(path, "'"))
+		display_error("Invalid filename provided: Name cannot contain \"'\"'");
+
 	char	audioPath[strlen(path) + 5];
 	char	videoPath[strlen(path) + 5];
 
 	/* Get paths */
-	sprintf(audioPath, "%s.mp3", path);
+	sprintf(audioPath, "%s.mp2", path);
 	sprintf(videoPath, "%s.mp4", path);
 
 	/* register all codecs */
@@ -166,11 +170,11 @@ void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *bea
 
 	state->playingSounds = malloc(sizeof(*state->playingSounds));
 	if (!state->playingSounds)
-		display_error("Memory allocation error (%lu)\n", sizeof(*state->playingSounds));
+		display_error("Memory allocation error (%lu)\n", (unsigned long)sizeof(*state->playingSounds));
 	memset(state->playingSounds, 0, sizeof(*state->playingSounds));
 }
 
-void	finishReplaySession(replayPlayerState *state)
+void	finishReplaySession(replayPlayerState *state, const char *path)
 {
 	uint8_t endcode[] = {0, 0, 1, 0xb7};
 
@@ -200,6 +204,35 @@ void	finishReplaySession(replayPlayerState *state)
 	/* free codec contexts */
 	avcodec_free_context(&state->videoCodecContext);
 	avcodec_free_context(&state->audioCodecContext);
+
+	char	cwd[PATH_MAX];
+
+	getcwd(cwd, sizeof(cwd));
+
+	char	commandBuffer[strlen(cwd) + strlen(path) * 3 + 35];
+
+	/* Mix created files */
+#ifdef _WIN32
+	sprintf(commandBuffer, "cd %s\r\nffmpeg -i '%s.mp2' -i '%s.mp4' '%s'", cwd, path, path, path);
+#else
+	sprintf(commandBuffer, "cd %s; ffmpeg -i '%s.mp2' -i '%s.mp4' '%s'", cwd, path, path, path);
+#endif
+	printf("Executing command: %s\n", commandBuffer);
+	int code = system(commandBuffer);
+
+	if (code)
+		display_error("Command \"%s\" failed with error code %i", commandBuffer, code);
+
+	char	audioPath[strlen(path) + 5];
+	char	videoPath[strlen(path) + 5];
+
+	/* Get paths */
+	sprintf(audioPath, "%s.mp2", path);
+	sprintf(videoPath, "%s.mp4", path);
+
+	/* Delete temp files */
+	remove(audioPath);
+	remove(videoPath);
 }
 
 void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sounds, Dict *images, char *path)
@@ -339,5 +372,5 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 			state.frameNb++;
 		}
 	}
-	finishReplaySession(&state);
+	finishReplaySession(&state, path);
 }
