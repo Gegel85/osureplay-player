@@ -200,7 +200,7 @@ void	FrameBuffer_encode(FrameBuffer *buffer, replayPlayerState *state)
 
 	state->videoFrame->pts = state->frameNb;
 
-	printf("Rendering frame % *i / %li\n", getNbrLen(state->totalFrames, 10), state->frameNb, state->totalFrames);
+	printf("Rendering frame% *i / %li\n", getNbrLen(state->totalFrames, 10) + 1, state->frameNb, state->totalFrames);
 
 	/* encode the image */
 	encodeVideoFrame(state->videoCodecContext, state->videoFrame, state->videoPacket, state->videoStream);
