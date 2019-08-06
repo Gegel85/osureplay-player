@@ -6,6 +6,7 @@
 #include <concatf.h>
 #include <skin.h>
 #include <ctype.h>
+#include <errno.h>
 #include "frame_buffer.h"
 #include "dict.h"
 

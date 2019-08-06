@@ -101,6 +101,6 @@ int	main(int argc, char **args)
 		sfMusic_destroy(music);
 	Dict_destroy(&images, true);
 	Dict_destroy(&sounds, true);
-	printf("Goodbye !");
+	printf("Goodbye !\n");
 	return EXIT_SUCCESS;
 }
