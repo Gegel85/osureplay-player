@@ -58,6 +58,8 @@ LDFLAGS +=  -liconv					\
 	-lole32							\
 	-lsecur32
 
+NAME =	osuReplayPlayer.exe
+
 endif
 
 CFLAGS= $(INC)	\
@@ -101,7 +103,7 @@ clean:
 	$(RM) icon.res
 
 fclean:	clean
-	$(RM) $(NAME) $(NAME).exe
+	$(RM) $(NAME)
 
 ffclean:fclean
 	$(MAKE) -C lib/osureplay-parser fclean

@@ -8,6 +8,7 @@
 #define sliderLength(beatmap, elem, timeingpt)	sliderInfos(beatmap->hitObjects.content[elem].additionalInfos)->pixelLength / (100 * beatmap->difficulty.sliderMultiplayer) * timeingpt.millisecondsPerBeat
 
 #define BASE_OBJ_ALPHA		255
+#define VERSION			"0.1"
 #define nbOfSound		8
 #define bgAlpha			120
 

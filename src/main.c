@@ -60,26 +60,32 @@ int	main(int argc, char **args)
 	Dict		loaders = {NULL, NULL, NULL, NULL};
 	OsuSkin		skin;
 
+	printf("Replay player version "VERSION"\n");
 	if (argc != 4 && argc != 3) {
 		fprintf(stdout, "Usage: %s <map.osu> <replay.osr> [<output file>]\n", args[0]);
 		return EXIT_FAILURE;
 	}
 
+	printf("Loading replay file %s\n", args[2]);
 	replay = OsuReplay_parseReplayFile(args[2]);
 	if (replay.error) {
 		fprintf(stderr, "\nParsing for replay file '%s' failed:\n%s\n", args[2], replay.error);
 		return EXIT_FAILURE;
 	}
 
+	printf("Loading beatmap file %s\n", args[1]);
 	beatmap = OsuMap_parseMapFile(args[1]);
 	if (beatmap.error) {
 		fprintf(stderr, "\nParsing for beatmap file '%s' failed:\n%s", args[1], beatmap.error);
 		return EXIT_FAILURE;
 	}
 
+	printf("Loading skin assets\n");
 	createLoader(&loaders, argc == 3);
 	if (!loadSkin("assets", &images, &sounds, &loaders))
 		display_error("Default skin is invalid or corrupted\n");
+
+	printf("Loading beatmap skin assets\n");
 	loadBeatmapAssets(args[1], &images, &sounds, &loaders);
 
 	if (!args[3])
@@ -95,5 +101,6 @@ int	main(int argc, char **args)
 		sfMusic_destroy(music);
 	Dict_destroy(&images, true);
 	Dict_destroy(&sounds, true);
+	printf("Goodbye !");
 	return EXIT_SUCCESS;
 }

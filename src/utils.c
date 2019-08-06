@@ -26,3 +26,14 @@ unsigned char	calcAlpha(OsuMap_hitObject obj, unsigned long totalTicks)
 		return BASE_OBJ_ALPHA;
 	return (unsigned char)((long)(obj.timeToAppear - totalTicks - 400) * -BASE_OBJ_ALPHA / 400 + BASE_OBJ_ALPHA);
 }
+
+unsigned getNbrLen(unsigned long nbr, unsigned base)
+{
+	unsigned len = 0;
+
+	do {
+		len++;
+		nbr /= base;
+	} while (nbr);
+	return len;
+}

@@ -40,7 +40,7 @@ typedef struct replayPlayerState {
 	AVPacket	*audioPacket;		//Packet used for audio
 	unsigned int	pressedKey1;		//The number of times the key1 was pressed
 	unsigned int	pressedKey2;		//The number of times the key2 was pressed
-	int		frameNb;		//Current frame number
+	unsigned int	frameNb;		//Current frame number
 	unsigned long	totalFrames;		//Total number of frames
 	Dict		*sounds;		//All the loaded sounds
 	Dict		*images;		//All the loaded sprites

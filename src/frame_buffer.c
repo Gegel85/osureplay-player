@@ -6,6 +6,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <libavutil/imgutils.h>
+#include <utils.h>
 #include "frame_buffer.h"
 #include "replay_player.h"
 
@@ -183,7 +184,7 @@ void	FrameBuffer_encode(FrameBuffer *buffer, replayPlayerState *state)
 		}
 	}
 
-	/*Cb Cr*/
+	/* Cb Cr */
 	for (int y = 0; y < state->videoCodecContext->height / 2; y++) {
 		for (int x = 0; x < state->videoCodecContext->width / 2; x++) {
 			state->videoFrame->data[1][y * state->videoFrame->linesize[1] + x] =
@@ -199,8 +200,8 @@ void	FrameBuffer_encode(FrameBuffer *buffer, replayPlayerState *state)
 
 	state->videoFrame->pts = state->frameNb;
 
+	printf("Rendering frame % *i / %li\n", getNbrLen(state->totalFrames, 10), state->frameNb, state->totalFrames);
+
 	/* encode the image */
 	encodeVideoFrame(state->videoCodecContext, state->videoFrame, state->videoPacket, state->videoStream);
-
-	printf("Sent frame %5i/%5li\n", state->frameNb, state->totalFrames);
 }

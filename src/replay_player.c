@@ -6,6 +6,7 @@
 #include <osu_map_parser.h>
 #include <SFML/Graphics.h>
 #include <concatf.h>
+#include <utils.h>
 #include "sound.h"
 #include "display.h"
 #include "skin.h"
@@ -13,7 +14,7 @@
 #include "globals.h"
 #include "replay_player.h"
 
-AVCodecContext *initVideoCodec(sfVector2u size)
+AVCodecContext *initVideoCodec(sfVector2u size, unsigned frameRate, uint64_t bitRate)
 {
 	const AVCodec	*codec;
 	AVCodecContext	*codecContext;
@@ -25,15 +26,15 @@ AVCodecContext *initVideoCodec(sfVector2u size)
 	codecContext = avcodec_alloc_context3(codec);
 
 	/* put sample parameters */
-	codecContext->bit_rate = 400000;
+	codecContext->bit_rate = bitRate;
 
 	/* resolution must be a multiple of two */
 	codecContext->width = size.x;
 	codecContext->height = size.y;
 
 	/* frames per second */
-	codecContext->time_base = (AVRational){1, 60};
-	codecContext->framerate = (AVRational){60, 1};
+	codecContext->time_base = (AVRational){1, frameRate};
+	codecContext->framerate = (AVRational){frameRate, 1};
 
 	codecContext->gop_size = 10; /* emit one intra frame every ten frames */
 	codecContext->max_b_frames = 1;
@@ -73,7 +74,6 @@ AVCodecContext *initAudioCodec()
 	if (avcodec_open2(codecContext, codec, NULL) < 0)
 		display_error("could not open codec\n");
 
-	printf("%i\n", codecContext->frame_size);
 	return codecContext;
 }
 
@@ -112,8 +112,10 @@ AVFrame	*initAudioFrames(AVCodecContext *context)
 	return frame;
 }
 
-void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *beatmap, sfVector2u size)
+void	startReplaySession(replayPlayerState *state, const char *path, OsuMap *beatmap, sfVector2u size)
 {
+	printf("Starting replay session...\n");
+
 	/* Put base values */
 	memset(state, 0, sizeof(*state));
 	state->life = 1;
@@ -130,7 +132,10 @@ void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *bea
 		return;
 
 	if (strstr(path, "'"))
-		display_error("Invalid filename provided: Name cannot contain \"'\"'");
+		display_error("Invalid filename provided: Name cannot contain \"'\"");
+
+	if (strstr(path, "\""))
+		display_error("Invalid filename provided: Name cannot contain \"\"\"");
 
 	char	audioPath[strlen(path) + 5];
 	char	videoPath[strlen(path) + 5];
@@ -143,7 +148,7 @@ void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *bea
 	avcodec_register_all();
 
 	/* init codecs */
-	state->videoCodecContext = initVideoCodec(size);
+	state->videoCodecContext = initVideoCodec(size, 60, 40000000);
 	state->audioCodecContext = initAudioCodec();
 
 	/* init video frame */
@@ -168,10 +173,9 @@ void	startResplaySession(replayPlayerState *state, const char *path, OsuMap *bea
 	if (!state->audioStream)
 		display_error("Cannot open %s: %s\n", path, strerror(errno));
 
-	state->playingSounds = malloc(sizeof(*state->playingSounds));
+	state->playingSounds = calloc(1, sizeof(*state->playingSounds));
 	if (!state->playingSounds)
 		display_error("Memory allocation error (%lu)\n", (unsigned long)sizeof(*state->playingSounds));
-	memset(state->playingSounds, 0, sizeof(*state->playingSounds));
 }
 
 void	finishReplaySession(replayPlayerState *state, const char *path)
@@ -184,12 +188,19 @@ void	finishReplaySession(replayPlayerState *state, const char *path)
 	/* destroy framebuffer */
 	FrameBuffer_destroy(&state->frame_buffer);
 
+	printf("Finishing replay...\n");
+
+	/* flush audio */
+	encodePlayingSounds(state, true);
+
 	/* flush the encoders */
 	encodeVideoFrame(state->videoCodecContext, NULL, state->videoPacket, state->videoStream);
 	encodeAudioFrame(state->audioCodecContext, NULL, state->audioPacket, state->videoStream);
 
 	/* add sequence end code to have a real MPEG file */
 	fwrite(endcode, 1, sizeof(endcode), state->videoStream);
+
+	/* close files */
 	fclose(state->videoStream);
 	fclose(state->audioStream);
 
@@ -205,23 +216,30 @@ void	finishReplaySession(replayPlayerState *state, const char *path)
 	avcodec_free_context(&state->videoCodecContext);
 	avcodec_free_context(&state->audioCodecContext);
 
+	free(state->playingSounds);
+
 	char	cwd[PATH_MAX];
 
 	getcwd(cwd, sizeof(cwd));
 
-	char	commandBuffer[strlen(cwd) + strlen(path) * 3 + 35];
-
 	/* Mix created files */
 #ifdef _WIN32
-	sprintf(commandBuffer, "cd %s\r\nffmpeg -i '%s.mp2' -i '%s.mp4' '%s'", cwd, path, path, path);
+	char	commandBuffer[42 + getNbrLen(40000000UL, 10) + strlen(cwd) * 3 + strlen(path) * 3];
+
+	sprintf(commandBuffer, "ffmpeg -y -i \"%s\\%s.mp2\" -i \"%s\\%s.mp4\" -b:v %lu \"%s\\%s\"", cwd, path, cwd, path, 40000000UL, cwd, path);
 #else
-	sprintf(commandBuffer, "cd %s; ffmpeg -i '%s.mp2' -i '%s.mp4' '%s'", cwd, path, path, path);
+	char	commandBuffer[38 + getNbrLen(40000000UL, 10) + strlen(cwd) + strlen(path) * 3];
+
+	sprintf(commandBuffer, "cd %s && ffmpeg -y -i '%s.mp2' -i '%s.mp4' -b:v %lu '%s'", cwd, path, path, 40000000UL, path);
 #endif
+
 	printf("Executing command: %s\n", commandBuffer);
 	int code = system(commandBuffer);
 
 	if (code)
-		display_error("Command \"%s\" failed with error code %i", commandBuffer, code);
+		display_error("Command \"%s\" failed with error code %i\nYou can find %s.mp4 %s.mp2 which are the generated audio and video.", commandBuffer, code, path, path);
+
+	printf("Cleaning up\n");
 
 	char	audioPath[strlen(path) + 5];
 	char	videoPath[strlen(path) + 5];
@@ -242,7 +260,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 	sfClock			*clock = NULL;
 	replayPlayerState	state;
 
-	startResplaySession(&state, path, beatmap, size);
+	startReplaySession(&state, path, beatmap, size);
 
 	if (!path) {
 		window = sfRenderWindow_create(mode, "Osu Replay Player", sfDefaultStyle, NULL);
@@ -254,7 +272,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 	state.sounds = sounds;
 	state.images = images;
 	state.totalFrames = replay->replayLength * 60 / ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE) ? 1500 : 1000) + 1;
-	printf("Replay length: %lums, %lu video frame(s), %lu audio frames\n", replay->replayLength, state.totalFrames, state.totalFrames * 44100);
+	printf("Replay length: %lums, %lu frame%s\n", replay->replayLength, state.totalFrames, state.totalFrames ? "" : "s");
 	padding = (sfVector2u){64, 48};
 
 	beatmap->backgroundPath = beatmap->backgroundPath ? strToLower(getFileName(beatmap->backgroundPath)) : NULL;
@@ -368,7 +386,7 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 				clock = sfClock_create();
 		} else {
 			FrameBuffer_encode(&state.frame_buffer, &state);
-			encodePlayingSounds(&state);
+			encodePlayingSounds(&state, false);
 			state.frameNb++;
 		}
 	}

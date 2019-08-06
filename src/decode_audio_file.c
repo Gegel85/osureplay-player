@@ -22,7 +22,6 @@ int decodeAudioFile(const char *path, const int sample_rate, Sound *sound)
 		return -1;
 	}
 	sound->sampleRate = sample_rate;
-	sound->bitsPerSample = 16;
 
 	// Find the index of the first audio stream
 	for (size_t stream_index = 0; stream_index < format->nb_streams; stream_index++) {
@@ -82,10 +81,12 @@ int decodeAudioFile(const char *path, const int sample_rate, Sound *sound)
 					break;
 				if (!gotFrame)
 					continue;
+
 				// resample frames
 				short *buffer;
 				av_samples_alloc((uint8_t**) &buffer, NULL, 1, frame->nb_samples, AV_SAMPLE_FMT_S16, 0);
 				int frame_count = swr_convert(swr, (uint8_t**) &buffer, frame->nb_samples, (const uint8_t**) frame->data, frame->nb_samples);
+
 				// append resampled frames to data
 				*data = realloc(*data, (*size + frame->nb_samples) * sizeof(**data));
 				memcpy(*data + *size, buffer, frame_count * sizeof(**data));
@@ -104,7 +105,6 @@ int decodeAudioFile(const char *path, const int sample_rate, Sound *sound)
 	}
 
 	avformat_free_context(format);
-	// success
 	return 0;
 
 }
