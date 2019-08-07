@@ -31,7 +31,7 @@ typedef struct PlayingSound {
 
 struct ReplayPlayerState;
 
-void	playSound(struct ReplayPlayerState *state, char *sound, double pitch, double speed);
+void	playSound(struct ReplayPlayerState *state, const char *sound, double pitch, double speed);
 void	encodePlayingSounds(struct ReplayPlayerState *state, bool last);
 Sound	*loadSoundFile(char *path);
 void	destroySound(Sound *sound);

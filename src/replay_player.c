@@ -256,7 +256,8 @@ void	finishReplaySession(ReplayPlayerState *state, const ReplayConfig *config)
 	sprintf(commandBuffer, "cd %s && ffmpeg -y -i '%s.mp2' -i '%s.mp4' -b:v %lu '%s' 1>&2", cwd, config->filePath, config->filePath, config->bitRate, config->filePath);
 #endif
 
-	printf("Executing command: %s\n", commandBuffer);
+	fprintf(stderr, "Executing command: %s\n", commandBuffer);
+	printf("Mixing audio and video files...\n");
 	int code = system(commandBuffer);
 
 	if (code)
@@ -310,6 +311,33 @@ void	drawBackground(ReplayPlayerState *state)
 	);
 }
 
+void playOsuSound(ReplayPlayerState *state, unsigned char sound)
+{
+	char buffer[32];
+
+	if (!sound) {
+		sprintf(buffer, "%s-hitnormal", state->beatmap->generalInfos.hitSoundsSampleSet);
+		strToLower(buffer);
+		playSound(state, buffer, 1, 1);
+		return;
+	}
+	if (sound & HIT_CLAP) {
+		sprintf(buffer, "%s-hitclap", state->beatmap->generalInfos.hitSoundsSampleSet);
+		strToLower(buffer);
+		playSound(state, buffer, 1, 1);
+	}
+	if (sound & HIT_WHISTLE) {
+		sprintf(buffer, "%s-hitwhistle", state->beatmap->generalInfos.hitSoundsSampleSet);
+		strToLower(buffer);
+		playSound(state, buffer, 1, 1);
+	}
+	if (sound & HIT_FINISH) {
+		sprintf(buffer, "%s-hitfinish", state->beatmap->generalInfos.hitSoundsSampleSet);
+		strToLower(buffer);
+		playSound(state, buffer, 1, 1);
+	}
+}
+
 void	makeFrame(ReplayPlayerState *state)
 {
 	FrameBuffer_clear(&state->frameBuffer, (sfColor){0, 0, 0, 255});
@@ -349,7 +377,7 @@ void	makeFrame(ReplayPlayerState *state)
 		state->beatmap->hitObjects.content[state->currentGameHitObject].timeToAppear <= state->totalTicks &&
 		state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SLIDER
 	) {
-		playSound(state, "drum-hitnormal", 1, 1);
+		playOsuSound(state, state->beatmap->hitObjects.content[state->currentGameHitObject].hitSound);
 		state->played[state->currentGameHitObject]++;
 	}
 	while (
@@ -367,8 +395,13 @@ void	makeFrame(ReplayPlayerState *state)
 				*(unsigned long *)state->beatmap->hitObjects.content[state->currentGameHitObject].additionalInfos <= state->totalTicks
 			)
 		)
-		) {
-		playSound(state, "drum-hitnormal", 1, 1);
+	) {
+		if (state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SLIDER) {
+			OsuMap_hitObjectSliderInfos *add = state->beatmap->hitObjects.content[state->currentGameHitObject].additionalInfos;
+
+			playOsuSound(state, add->edgeHitsounds ? add->edgeHitsounds[add->nbOfRepeats - 1] : 0);
+		} else
+			playOsuSound(state, state->beatmap->hitObjects.content[state->currentGameHitObject].hitSound);
 		state->played[state->currentGameHitObject] = true;
 		if (state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_NEW_COMBO) {
 			state->beginCombo = 0;
@@ -381,15 +414,16 @@ void	makeFrame(ReplayPlayerState *state)
 	displayHitObjects(state, state->beatmap);
 
 	FrameBuffer_drawFilledRectangle(&state->frameBuffer, (sfVector2i){10, 10}, (sfVector2u){300 * state->life, 20}, (sfColor){255, 255, 255, 255});
-	FrameBuffer_drawImage(
-		&state->frameBuffer,
-		(sfVector2i){state->cursorPos.x, state->cursorPos.y},
-		Dict_getElement(state->images, "cursor"),
-		(sfVector2i){-1, -1},
-		(sfColor){255, 255, 255, 255},
-		true,
-		0
-	);
+	if (state->cursorPos.x > padding.x && state->cursorPos.y > padding.y)
+		FrameBuffer_drawImage(
+			&state->frameBuffer,
+			(sfVector2i){state->cursorPos.x, state->cursorPos.y},
+			Dict_getElement(state->images, "cursor"),
+			(sfVector2i){-1, -1},
+			(sfColor){255, 255, 255, 255},
+			true,
+			0
+		);
 
 	state->isEnd = state->currentGameEvent >= state->replay->gameEvents.length && state->replay->gameEvents.content[state->currentGameEvent].timeToHappen <= (long)state->totalTicks;
 }

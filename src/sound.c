@@ -5,14 +5,16 @@
 #include "replay_player.h"
 #include "defines.h"
 
-void	playSound(ReplayPlayerState *state, char *index, double pitch, double speed)
+void	playSound(ReplayPlayerState *state, const char *index, double pitch, double speed)
 {
 	void	*elem = Dict_getElement(state->sounds, index);
 	int	i = 0;
 	PlayingSound	*best = NULL;
 
-	if (!elem)
+	if (!elem) {
+		display_warning("Cannot play sound %s\n", index);
 		return;
+	}
 	if (!state->videoStream) {
 		sfSoundBuffer *buffer = elem;
 		static sfSound *sounds[nbOfSound];
