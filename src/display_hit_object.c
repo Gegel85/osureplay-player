@@ -15,26 +15,26 @@
 #include "frame_buffer.h"
 #include "replay_player.h"
 
-unsigned	getLastObjToDisplay(unsigned currentGameHitObject, unsigned currentTimingPoint, OsuMap *beatmap, unsigned long totalTicks)
+unsigned	getLastObjToDisplay(unsigned currentGameHitObject, OsuMap *beatmap, unsigned long totalTicks)
 {
 	unsigned	end = currentGameHitObject;
 
 	while (true) {
 		if (end >= beatmap->hitObjects.length)
 			break;
-		if (beatmap->hitObjects.content[end].timeToAppear - 800 > totalTicks)
+		if (beatmap->hitObjects.content[end].timeToAppear >= 800 && beatmap->hitObjects.content[end].timeToAppear - 800 > totalTicks)
 			break;
 		end++;
 	}
 	return end;
 }
 
-void	displayApproachCircle(FrameBuffer *frame_buffer, sfColor color, OsuMap_hitObject *object, double circleSize, unsigned long ticks, Dict *images)
+void	displayApproachCircle(FrameBuffer *frameBuffer, sfColor color, OsuMap_hitObject *object, double circleSize, unsigned long ticks, Dict *images)
 {
 	if (object->timeToAppear < ticks)
 		return;
 	FrameBuffer_drawImage(
-		frame_buffer,
+		frameBuffer,
 		(sfVector2i){
 			object->position.x + padding.x,
 			object->position.y + padding.y
@@ -53,45 +53,14 @@ void	displayApproachCircle(FrameBuffer *frame_buffer, sfColor color, OsuMap_hitO
 	);
 }
 
-void	displayCombo(FrameBuffer *frame_buffer, unsigned combo, sfVector2i pos, Dict *images, unsigned char alpha)
-{
-	char		buffer[11];
-	char		buff[11];
-	char		image[10];
-	sfVector2f	size;
-
-	memset(buff, 0, sizeof(buff));
-	sprintf(buffer, "%u", combo);
-	size = getTextSize(buffer, 15);
-	for (int i = 0; buffer[i]; i++) {
-		buff[i] = buffer[i];
-		sprintf(image, "default-%c", buffer[i]);
-		FrameBuffer_drawImage(
-			frame_buffer,
-			(sfVector2i){
-				pos.x - size.x / 2 + getTextSize(buff, 15).x - 7.5,
-				pos.y - size.y / 2 + getTextSize(buff, 15).y - 7.5,
-			},
-			Dict_getElement(
-				images,
-				image
-			),
-			(sfVector2i){15, 15},
-			(sfColor){255, 255, 255, alpha},
-			true,
-			0
-		);
-	}
-}
-
-void	displaySpinner(FrameBuffer *frame_buffer, OsuMap_hitObject *object, unsigned long totalTicks, unsigned char alpha, Dict *images)
+void	displaySpinner(FrameBuffer *frameBuffer, OsuMap_hitObject *object, unsigned long totalTicks, unsigned char alpha, Dict *images)
 {
 	long	duration = *(long *)object->additionalInfos - object->timeToAppear;
 	long	remaining = *(long *)object->additionalInfos - totalTicks;
 	float	radius = object->timeToAppear >= totalTicks ? 400 : 4 * (100 - (duration - remaining) * 100.f / duration);
 
 	FrameBuffer_drawImage(
-		frame_buffer,
+		frameBuffer,
 		(sfVector2i){
 			320,
 			240
@@ -110,14 +79,14 @@ void	displaySpinner(FrameBuffer *frame_buffer, OsuMap_hitObject *object, unsigne
 	);
 }
 
-void	displaySlider(FrameBuffer *frame_buffer, OsuMap_hitObject *object, unsigned long totalTicks, unsigned char alpha, Dict *images, unsigned combo, OsuMap_color color, double circleSize, OsuMap_timingPointEvent *timeingpt, OsuMap *beatmap)
+void	displaySlider(FrameBuffer *frameBuffer, OsuMap_hitObject *object, unsigned long totalTicks, unsigned char alpha, Dict *images, unsigned combo, OsuMap_color color, double circleSize, OsuMap_timingPointEvent *timeingpt, OsuMap *beatmap)
 {
 	OsuIntegerVectorArray	*points = &sliderInfos(object->additionalInfos)->curvePoints;
 
 	//Display the body of the slider
 	for (unsigned j = 0; j < points->length; j++) {
 		FrameBuffer_drawFilledCircle(
-			frame_buffer,
+			frameBuffer,
 			(sfVector2i) {
 				points->content[j].x - (54.4f - 4.48f * circleSize) + padding.x,
 				points->content[j].y - (54.4f - 4.48f * circleSize) + padding.y
@@ -134,7 +103,7 @@ void	displaySlider(FrameBuffer *frame_buffer, OsuMap_hitObject *object, unsigned
 
 	//Display the end of the slider
 	FrameBuffer_drawImage(
-		frame_buffer,
+		frameBuffer,
 		(sfVector2i){
 			points->content[points->length - 1].x + padding.x,
 			points->content[points->length - 1].y + padding.y
@@ -159,7 +128,7 @@ void	displaySlider(FrameBuffer *frame_buffer, OsuMap_hitObject *object, unsigned
 
 	//Display the start od the slider
 	FrameBuffer_drawImage(
-		frame_buffer,
+		frameBuffer,
 		(sfVector2i){
 			object->position.x + padding.x,
 			object->position.y + padding.y
@@ -182,7 +151,7 @@ void	displaySlider(FrameBuffer *frame_buffer, OsuMap_hitObject *object, unsigned
 		0
 	);
 	FrameBuffer_drawImage(
-		frame_buffer,
+		frameBuffer,
 		(sfVector2i){
 			object->position.x + padding.x,
 			object->position.y + padding.y
@@ -224,7 +193,7 @@ void	displaySlider(FrameBuffer *frame_buffer, OsuMap_hitObject *object, unsigned
 		};
 
 		FrameBuffer_drawImage(
-			frame_buffer,
+			frameBuffer,
 			currentPoint,
 			Dict_getElement(
 				images,
@@ -240,7 +209,7 @@ void	displaySlider(FrameBuffer *frame_buffer, OsuMap_hitObject *object, unsigned
 		);
 
 		FrameBuffer_drawImage(
-			frame_buffer,
+			frameBuffer,
 			currentPoint,
 			Dict_getElement(
 				images,
@@ -257,7 +226,7 @@ void	displaySlider(FrameBuffer *frame_buffer, OsuMap_hitObject *object, unsigned
 	//Else, display the approach circle
 	} else
 		displayApproachCircle(
-			frame_buffer,
+			frameBuffer,
 			(sfColor){color.red, color.green, color.blue, alpha},
 			object,
 			circleSize,
@@ -265,22 +234,24 @@ void	displaySlider(FrameBuffer *frame_buffer, OsuMap_hitObject *object, unsigned
 			images
 		);
 	//Display the combo number on top of the start circle
-	displayCombo(
-		frame_buffer,
+	displayNumber(
+		frameBuffer,
 		combo,
-		(sfVector2i){
+		(sfVector2i) {
 			object->position.x + padding.x,
 			object->position.y + padding.y
 		},
 		images,
-		alpha
+		alpha,
+		15,
+		"default"
 	);
 }
 
-void	displayHitCircle(FrameBuffer *frame_buffer, OsuMap_hitObject *object, unsigned long totalTicks, unsigned char alpha, Dict *images, unsigned combo, OsuMap_color color, double circleSize)
+void	displayHitCircle(FrameBuffer *frameBuffer, OsuMap_hitObject *object, unsigned long totalTicks, unsigned char alpha, Dict *images, unsigned combo, OsuMap_color color, double circleSize)
 {
 	FrameBuffer_drawImage(
-		frame_buffer,
+		frameBuffer,
 		(sfVector2i){object->position.x + padding.x, object->position.y + padding.y},
 		Dict_getElement(images, "hitcircle"),
 		(sfVector2i){(54.4f - 4.48f * circleSize) * 2, (54.4f - 4.48f * circleSize) * 2},
@@ -289,7 +260,7 @@ void	displayHitCircle(FrameBuffer *frame_buffer, OsuMap_hitObject *object, unsig
 		0
 	);
 	FrameBuffer_drawImage(
-		frame_buffer,
+		frameBuffer,
 		(sfVector2i){object->position.x + padding.x, object->position.y + padding.y},
 		Dict_getElement(images, "hitcircleoverlay"),
 		(sfVector2i){(54.4f - 4.48f * circleSize) * 2, (54.4f - 4.48f * circleSize) * 2},
@@ -298,22 +269,24 @@ void	displayHitCircle(FrameBuffer *frame_buffer, OsuMap_hitObject *object, unsig
 		0
 	);
 	displayApproachCircle(
-		frame_buffer,
+		frameBuffer,
 		(sfColor){color.red, color.green, color.blue, alpha},
 		object,
 		circleSize,
 		totalTicks,
 		images
 	);
-	displayCombo(
-		frame_buffer,
+	displayNumber(
+		frameBuffer,
 		combo,
-		(sfVector2i){
+		(sfVector2i) {
 			object->position.x + padding.x,
 			object->position.y + padding.y
 		},
 		images,
-		alpha
+		alpha,
+		15,
+		"default"
 	);
 }
 
@@ -323,8 +296,8 @@ void	displayHitObjects(ReplayPlayerState *state, OsuMap *beatmap)
 	unsigned	combo;
 	unsigned	color;
 
-	end = getLastObjToDisplay(state->currentGameHitObject, state->currentTimingPoint, beatmap, state->totalTicks);
-	for (unsigned i = end - 1; i >= state->currentGameHitObject && (int)i >= 0; i--) {
+	end = getLastObjToDisplay(state->currentGameHitObject, beatmap, state->totalTicks);
+	for (int i = end - 1; (unsigned)i >= state->currentGameHitObject && i >= 0; i--) {
 		unsigned char	alpha = calcAlpha(beatmap->hitObjects.content[i], state->totalTicks);
 
 		combo = state->beginCombo;

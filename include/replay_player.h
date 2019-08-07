@@ -18,6 +18,13 @@
 #include "sound.h"
 #include "replay_config.h"
 
+typedef struct GameState {
+	float		*lifeGraph;
+	unsigned	graphSize;
+	unsigned long	score;
+	unsigned	combo;
+} GameState;
+
 typedef struct ReplayPlayerState {
 	double		totalTicks;		//Current time
 	unsigned long	currentTimingPoint;	//Currently active timing point
@@ -54,7 +61,8 @@ typedef struct ReplayPlayerState {
 	OsuReplay	*replay;		//The replay being played;
 	bool		isEnd;			//Whether the replay session has came to an end
 	unsigned char	bgAlpha;		//Current background alpha
-	unsigned char	minNbAlpha;		//The minimun alpha the background can get (user set setting)
+	unsigned char	minBgAlpha;		//The minimun alpha the background can get (user set setting)
+	GameState	gameState;		//Current game state
 } ReplayPlayerState;
 
 void	encodeAudioFrame(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *output);

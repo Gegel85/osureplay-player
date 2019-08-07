@@ -126,8 +126,9 @@ void	startReplaySession(ReplayPlayerState *state, const ReplayConfig *config)
 	state->sounds = config->sounds;
 	state->images = config->images;
 	state->bgAlpha = config->bgAlpha;
-	state->minNbAlpha = config->bgAlpha;
+	state->minBgAlpha = config->bgAlpha;
 	state->totalFrames = config->replay->replayLength * config->frameRate / ((config->replay->mods & MODE_DOUBLE_TIME) ? 1500 : 1000) + 1;
+	state->gameState.graphSize = state->totalFrames;
 
 	if (config->beatmap->backgroundPath)
 		state->backgroundPictureIndex = strToLower(getFileName(config->beatmap->backgroundPath));
@@ -142,6 +143,10 @@ void	startReplaySession(ReplayPlayerState *state, const ReplayConfig *config)
 	state->played = calloc(config->beatmap->hitObjects.length, sizeof(*state->played));
 	if (!state->played)
 		display_error("Memory allocation error (%luB)\n", (unsigned long)sizeof(*state->played) * (unsigned long)config->beatmap->hitObjects.length);
+
+	state->gameState.lifeGraph = calloc(state->gameState.graphSize, sizeof(*state->gameState.lifeGraph));
+	if (!state->gameState.lifeGraph)
+		display_error("Memory allocation error (%luB)\n", (unsigned long)sizeof(*state->gameState.lifeGraph) * state->gameState.graphSize);
 
 	/* init framebuffer */
 	FrameBuffer_init(&state->frameBuffer, config->resolution);
@@ -220,6 +225,8 @@ void	finishReplaySession(ReplayPlayerState *state, const ReplayConfig *config)
 
 	/* destroy framebuffer */
 	FrameBuffer_destroy(&state->frameBuffer);
+
+	free(state->gameState.lifeGraph);
 
 	printf("Finishing replay...\n");
 
@@ -311,7 +318,7 @@ void	drawBackground(ReplayPlayerState *state)
 	);
 }
 
-void playOsuSound(ReplayPlayerState *state, unsigned char sound)
+void	playOsuSound(ReplayPlayerState *state, unsigned char sound)
 {
 	char buffer[32];
 
@@ -335,6 +342,48 @@ void playOsuSound(ReplayPlayerState *state, unsigned char sound)
 		sprintf(buffer, "%s-hitfinish", state->beatmap->generalInfos.hitSoundsSampleSet);
 		strToLower(buffer);
 		playSound(state, buffer, 1, 1);
+	}
+}
+
+void	tickGame(ReplayPlayerState *state)
+{
+	if (
+		!state->played[state->currentGameHitObject] &&
+		state->beatmap->hitObjects.content[state->currentGameHitObject].timeToAppear <= state->totalTicks &&
+		state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SLIDER
+		) {
+		playOsuSound(state, state->beatmap->hitObjects.content[state->currentGameHitObject].hitSound);
+		state->played[state->currentGameHitObject]++;
+	}
+	while (
+		state->currentGameHitObject < state->beatmap->hitObjects.length && (
+			(
+				!(state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SLIDER) &&
+				!(state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SPINNER) &&
+				state->beatmap->hitObjects.content[state->currentGameHitObject].timeToAppear + 20 <= state->totalTicks
+			) || (
+				state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SLIDER &&
+				state->beatmap->hitObjects.content[state->currentGameHitObject].timeToAppear +
+				sliderLength(state->beatmap, state->currentGameHitObject, state->beatmap->timingPoints.content[state->currentTimingPoint]) <= state->totalTicks
+			) || (
+				state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SPINNER &&
+				*(unsigned long *)state->beatmap->hitObjects.content[state->currentGameHitObject].additionalInfos <= state->totalTicks
+			)
+		)
+		) {
+		if (state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SLIDER) {
+			OsuMap_hitObjectSliderInfos *add = state->beatmap->hitObjects.content[state->currentGameHitObject].additionalInfos;
+
+			playOsuSound(state, add->edgeHitsounds ? add->edgeHitsounds[add->nbOfRepeats - 1] : 0);
+		} else
+			playOsuSound(state, state->beatmap->hitObjects.content[state->currentGameHitObject].hitSound);
+		state->played[state->currentGameHitObject] = true;
+		if (state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_NEW_COMBO) {
+			state->beginCombo = 0;
+			state->currentComboColor = (state->currentComboColor + 1) % state->beatmap->colors.length;
+		}
+		state->beginCombo++;
+		state->currentGameHitObject++;
 	}
 }
 
@@ -372,45 +421,7 @@ void	makeFrame(ReplayPlayerState *state)
 		state->currentGameEvent++;
 	}
 
-	if (
-		!state->played[state->currentGameHitObject] &&
-		state->beatmap->hitObjects.content[state->currentGameHitObject].timeToAppear <= state->totalTicks &&
-		state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SLIDER
-	) {
-		playOsuSound(state, state->beatmap->hitObjects.content[state->currentGameHitObject].hitSound);
-		state->played[state->currentGameHitObject]++;
-	}
-	while (
-		state->currentGameHitObject < state->beatmap->hitObjects.length && (
-			(
-				!(state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SLIDER) &&
-				!(state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SPINNER) &&
-				state->beatmap->hitObjects.content[state->currentGameHitObject].timeToAppear + 20 <= state->totalTicks
-			) || (
-				state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SLIDER &&
-				state->beatmap->hitObjects.content[state->currentGameHitObject].timeToAppear +
-				sliderLength(state->beatmap, state->currentGameHitObject, state->beatmap->timingPoints.content[state->currentTimingPoint]) <= state->totalTicks
-			) || (
-				state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SPINNER &&
-				*(unsigned long *)state->beatmap->hitObjects.content[state->currentGameHitObject].additionalInfos <= state->totalTicks
-			)
-		)
-	) {
-		if (state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SLIDER) {
-			OsuMap_hitObjectSliderInfos *add = state->beatmap->hitObjects.content[state->currentGameHitObject].additionalInfos;
-
-			playOsuSound(state, add->edgeHitsounds ? add->edgeHitsounds[add->nbOfRepeats - 1] : 0);
-		} else
-			playOsuSound(state, state->beatmap->hitObjects.content[state->currentGameHitObject].hitSound);
-		state->played[state->currentGameHitObject] = true;
-		if (state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_NEW_COMBO) {
-			state->beginCombo = 0;
-			state->currentComboColor = (state->currentComboColor + 1) % state->beatmap->colors.length;
-		}
-		state->beginCombo++;
-		state->currentGameHitObject++;
-	}
-
+	tickGame(state);
 	displayHitObjects(state, state->beatmap);
 
 	FrameBuffer_drawFilledRectangle(&state->frameBuffer, (sfVector2i){10, 10}, (sfVector2u){300 * state->life, 20}, (sfColor){255, 255, 255, 255});
