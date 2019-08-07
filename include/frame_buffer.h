@@ -14,7 +14,6 @@
 typedef struct FrameBuffer {
 	sfColor		**content;
 	sfVector2u	size;
-	sfVector2f	scale;
 } FrameBuffer;
 
 struct ReplayPlayerState;

@@ -145,8 +145,6 @@ void	startReplaySession(ReplayPlayerState *state, const ReplayConfig *config)
 
 	/* init framebuffer */
 	FrameBuffer_init(&state->frameBuffer, config->resolution);
-	state->frameBuffer.scale.x = config->resolution.x / 640.;
-	state->frameBuffer.scale.y = config->resolution.y / 480.;
 
 	/* Debug mode -> don't create audio/video contexts */
 	if (!config->filePath)
@@ -255,7 +253,7 @@ void	finishReplaySession(ReplayPlayerState *state, const ReplayConfig *config)
 #else
 	char	commandBuffer[43 + getNbrLen(config->bitRate, 10) + strlen(cwd) + strlen(config->filePath) * 3];
 
-	sprintf(commandBuffer, "cd %s && ffmpeg -y -i '%s.mp2' -i '%s.mp4' -b:v %lu '%s' 1>&2", config->filePath, config->filePath, config->filePath, config->bitRate, config->filePath);
+	sprintf(commandBuffer, "cd %s && ffmpeg -y -i '%s.mp2' -i '%s.mp4' -b:v %lu '%s' 1>&2", cwd, config->filePath, config->filePath, config->bitRate, config->filePath);
 #endif
 
 	printf("Executing command: %s\n", commandBuffer);
@@ -282,7 +280,6 @@ void	finishReplaySession(ReplayPlayerState *state, const ReplayConfig *config)
 
 void	drawBackground(ReplayPlayerState *state)
 {
-	sfVector2f	scale = state->frameBuffer.scale;
 	sfVector2i	size;
 	sfVector2i	pos;
 	sfVector2u	imgSize;
@@ -302,7 +299,6 @@ void	drawBackground(ReplayPlayerState *state)
 	pos.x = (state->frameBuffer.size.x - imgSize.x / ratio) / 2;
 	pos.y = (state->frameBuffer.size.y - imgSize.y / ratio) / 2;
 
-	state->frameBuffer.scale = (sfVector2f){1, 1};
 	FrameBuffer_drawImage(
 		&state->frameBuffer,
 		pos,
@@ -312,7 +308,6 @@ void	drawBackground(ReplayPlayerState *state)
 		false,
 		0
 	);
-	state->frameBuffer.scale = scale;
 }
 
 void	makeFrame(ReplayPlayerState *state)

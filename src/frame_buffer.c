@@ -25,7 +25,6 @@ void	FrameBuffer_init(FrameBuffer *this, sfVector2u size)
 		return;
 
 	this->size = size;
-	this->scale = (sfVector2f){1, 1};
 	this->content = malloc(size.y * sizeof(*this->content));
 	if (!this->content)
 		display_error("Memory allocation error (%luB)\n", size.y * (unsigned long)sizeof(*this->content));
@@ -56,8 +55,6 @@ void	FrameBuffer_drawPixel(FrameBuffer *this, sfVector2i pos, sfColor color)
 
 void	FrameBuffer_drawPoint(FrameBuffer *this, sfVector2f pos, sfColor color)
 {
-	pos.x *= this->scale.x;
-	pos.y *= this->scale.y;
 	if (pos.x < 0 || pos.y < 0 || pos.x >= (int)this->size.x || pos.y >= (int)this->size.y)
 		return;
 	FrameBuffer_drawPixel(this, (sfVector2i){pos.x, pos.y}, color);
@@ -71,13 +68,6 @@ void	FrameBuffer_drawPoint(FrameBuffer *this, sfVector2f pos, sfColor color)
 
 void	FrameBuffer_drawRectangle(FrameBuffer *this, sfVector2i pos, sfVector2u size, sfColor color)
 {
-	sfVector2f scale = this->scale;
-
-	pos.x *= scale.x;
-	pos.y *= scale.y;
-	size.x *= scale.x;
-	size.y *= scale.y;
-	this->scale = (sfVector2f){1, 1};
 	for (unsigned x = 0; x < size.x; x++)
 		FrameBuffer_drawPoint(this, (sfVector2f){x + pos.x, pos.y}, color);
 	for (unsigned x = 0; x < size.x; x++)
@@ -86,32 +76,19 @@ void	FrameBuffer_drawRectangle(FrameBuffer *this, sfVector2i pos, sfVector2u siz
 		FrameBuffer_drawPoint(this, (sfVector2f){pos.x, pos.y + y}, color);
 	for (unsigned y = 0; y < size.x; y++)
 		FrameBuffer_drawPoint(this, (sfVector2f){pos.x + size.x - 1, pos.y + y}, color);
-	this->scale = scale;
 }
 
 void	FrameBuffer_drawFilledRectangle(FrameBuffer *this, sfVector2i pos, sfVector2u size, sfColor color)
 {
-	sfVector2f scale = this->scale;
-
-	pos.x *= scale.x;
-	pos.y *= scale.y;
-	size.x *= scale.x;
-	size.y *= scale.y;
-	this->scale = (sfVector2f){1, 1};
 	for (unsigned x = 0; x < size.x; x++)
 		for (unsigned y = 0; y < size.y; y++)
 			FrameBuffer_drawPoint(this, (sfVector2f){x + pos.x, y + pos.y}, color);
-	this->scale = scale;
 }
 
 void	FrameBuffer_drawImage(FrameBuffer *this, sfVector2i pos, sfImage *image, sfVector2i newSize, sfColor tint, bool centered, float rotation)
 {
 	if (!image)
 		return;
-
-	sfVector2f sscale = this->scale;
-
-	this->scale = (sfVector2f){1, 1};
 
 	const sfColor	*array = (const sfColor *)sfImage_getPixelsPtr(image);
 	sfVector2u	size = sfImage_getSize(image);
@@ -122,13 +99,6 @@ void	FrameBuffer_drawImage(FrameBuffer *this, sfVector2i pos, sfImage *image, sf
 	double	c;
 	double	s;
 	sfColor col;
-
-	pos.x *= sscale.x;
-	pos.y *= sscale.y;
-	size.x *= sscale.x;
-	size.y *= sscale.y;
-	scale.x *= sscale.x;
-	scale.y *= sscale.y;
 
 	rotation = rotation * M_PI / 180;
 	c = cos(rotation);
@@ -158,62 +128,32 @@ void	FrameBuffer_drawImage(FrameBuffer *this, sfVector2i pos, sfImage *image, sf
 				}, col);
 			}
 		}
-	this->scale = sscale;
 }
-
-/*void	FrameBuffer_drawFilledEllipse(FrameBuffer *this, sfVector2i pos, sfVector2f size, sfColor color)
-{
-	sfVector2f scale = this->scale;
-
-	pos.x *= scale.x;
-	pos.y *= scale.y;
-	this->scale = (sfVector2f){1, 1};
-
-	double rx2 = pow(size.x / 2, 2);
-	double ry2 = pow(size.y / 2, 2);
-
-	for (int x = 0; x < size.x; x++)
-		for (int y = 0; y < size.y; y++)
-			if (sqrt(pow(radius * scale.x - x, 2) + pow(radius * scale.y - y, 2)) <= radius)
-				FrameBuffer_drawPoint(this, (sfVector2f) {x + pos.x, y + pos.y}, color);
-	this->scale = scale;
-}*/
 
 void	FrameBuffer_drawFilledCircle(FrameBuffer *this, sfVector2i pos, int radius, sfColor color)
 {
-	sfVector2f scale = this->scale;
-
-	pos.x *= scale.x;
-	pos.y *= scale.y;
-	this->scale = (sfVector2f){1, 1};for (int x = 0; x < radius * 2; x++)
-	for (int y = 0; y < radius * 2; y++)
-		if (sqrt(pow(radius - x, 2) + pow(radius - y, 2)) <= radius)
-			FrameBuffer_drawPoint(this, (sfVector2f) {x + pos.x, y + pos.y}, color);
-	//FrameBuffer_drawFilledEllipse(this, pos, (sfVector2f){radius * scale.x * 2, radius * scale.y * 2}, color);
-	this->scale = scale;
+	for (int x = 0; x < radius * 2; x++)
+		for (int y = 0; y < radius * 2; y++)
+			if (sqrt(pow(radius - x, 2) + pow(radius - y, 2)) <= radius)
+				FrameBuffer_drawPoint(this, (sfVector2f) {x + pos.x, y + pos.y}, color);
 }
 
 void	FrameBuffer_drawCircle(FrameBuffer *this, unsigned thickness, sfVector2i pos, int radius, sfColor color)
 {
 	double	distance = 0;
-	sfVector2f scale = this->scale;
 
-	pos.x *= scale.x;
-	pos.y *= scale.y;
-	this->scale = (sfVector2f){1, 1};
-	for (int x = -thickness; x < (radius * 2 + thickness) * scale.x; x++)
-		for (int y = -thickness; y < (radius * 2 + thickness) * scale.y; y++) {
-			distance = sqrt(pow(x - radius * scale.x, 2) + pow(y - radius * scale.y, 2));
+	for (int x = -thickness; x < (radius * 2 + thickness); x++)
+		for (int y = -thickness; y < (radius * 2 + thickness); y++) {
+			distance = sqrt(pow(x - radius, 2) + pow(y - radius, 2));
 			if (distance >= radius && distance <= radius + thickness) {
 				FrameBuffer_drawPoint(this, (sfVector2f) {x + pos.x, y + pos.y}, color);
 			}
 		}
-	this->scale = scale;
 }
 
 void	FrameBuffer_draw(FrameBuffer *this, sfRenderWindow *window)
 {
-	sfImage		*image = sfImage_createFromPixels(this->size.x, this->size.y, (sfUint8 *)this->content);
+	sfImage		*image = sfImage_createFromPixels(this->size.x, this->size.y, (sfUint8 *)*this->content);
 	sfTexture	*texture = sfTexture_createFromImage(image, NULL);
 	sfSprite	*sprite = sfSprite_create();
 
