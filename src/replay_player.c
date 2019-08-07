@@ -253,7 +253,7 @@ void	finishReplaySession(ReplayPlayerState *state, const ReplayConfig *config)
 
 	sprintf(commandBuffer, "ffmpeg -y -i \"%s\\%s.mp2\" -i \"%s\\%s.mp4\" -b:v %lu \"%s\\%s\" 1>&2", cwd, config->filePath, cwd, config->filePath, config->bitRate, cwd, config->filePath);
 #else
-	char	commandBuffer[43 + getNbrLen(config->bitRate, 10) + strlen(cwd) + strlen(path) * 3];
+	char	commandBuffer[43 + getNbrLen(config->bitRate, 10) + strlen(cwd) + strlen(config->filePath) * 3];
 
 	sprintf(commandBuffer, "cd %s && ffmpeg -y -i '%s.mp2' -i '%s.mp4' -b:v %lu '%s' 1>&2", config->filePath, config->filePath, config->filePath, config->bitRate, config->filePath);
 #endif
