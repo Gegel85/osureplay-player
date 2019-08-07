@@ -16,8 +16,9 @@
 #include "dict.h"
 #include "frame_buffer.h"
 #include "sound.h"
+#include "replay_config.h"
 
-typedef struct replayPlayerState {
+typedef struct ReplayPlayerState {
 	double		totalTicks;		//Current time
 	unsigned long	currentTimingPoint;	//Currently active timing point
 	unsigned int	currentGameEvent;	//Current game event id
@@ -27,6 +28,7 @@ typedef struct replayPlayerState {
 	unsigned int	currentComboColor;	//Current color for objects
 	sfVector2f	cursorPos;		//Current cursor position
 	unsigned int	pressed;		//Currently pressed buttons
+	unsigned int	oldPressed;		//Buttons pressed last frame
 	float		life;			//Current player life
 	int		*played;		//Number of time the hit sound has been played for each game object
 	bool		musicStarted;		//Whether the music has started or not
@@ -44,13 +46,20 @@ typedef struct replayPlayerState {
 	unsigned long	totalFrames;		//Total number of frames
 	Dict		*sounds;		//All the loaded sounds
 	Dict		*images;		//All the loaded sprites
-	FrameBuffer	frame_buffer;		//The framebuffer
+	FrameBuffer	frameBuffer;		//The framebuffer
 	PlayingSound	*playingSounds;		//All the currently playing sounds
-} replayPlayerState;
+	const char	*backgroundPictureIndex;//The index of the background picture
+	const char	*musicIndex;		//The index of the music
+	OsuMap		*beatmap;		//The beatmap being played
+	OsuReplay	*replay;		//The replay being played;
+	bool		isEnd;			//Whether the replay session has came to an end
+	unsigned char	bgAlpha;		//Current background alpha
+	unsigned char	minNbAlpha;		//The minimun alpha the background can get (user set setting)
+} ReplayPlayerState;
 
 void	encodeAudioFrame(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *output);
 void	encodeVideoFrame(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfile);
-void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sounds, Dict *images, char *path);
+void	playReplay(const ReplayConfig *configs);
 
 
 #endif //OSUREPLAY_PLAYER_REPLAY_PLAYER_H

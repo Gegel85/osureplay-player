@@ -5,7 +5,7 @@
 #include "replay_player.h"
 #include "defines.h"
 
-void	playSound(replayPlayerState *state, char *index, double pitch, double speed)
+void	playSound(ReplayPlayerState *state, char *index, double pitch, double speed)
 {
 	void	*elem = Dict_getElement(state->sounds, index);
 	int	i = 0;
@@ -52,7 +52,7 @@ void	playSound(replayPlayerState *state, char *index, double pitch, double speed
 	best->pitch = pitch;
 }
 
-void	encodePlayingSounds(replayPlayerState *state, bool last)
+void	encodePlayingSounds(ReplayPlayerState *state, bool last)
 {
 	static unsigned	i = 0;
 	static int	index = 0;

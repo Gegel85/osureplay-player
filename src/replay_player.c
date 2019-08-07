@@ -112,43 +112,64 @@ AVFrame	*initAudioFrames(AVCodecContext *context)
 	return frame;
 }
 
-void	startReplaySession(replayPlayerState *state, const char *path, OsuMap *beatmap, sfVector2u size)
+void	startReplaySession(ReplayPlayerState *state, const ReplayConfig *config)
 {
 	printf("Starting replay session...\n");
 
-	/* Put base values */
 	memset(state, 0, sizeof(*state));
+
+	/* Put base values */
 	state->life = 1;
 	state->beginCombo = 1;
-	state->played = calloc(beatmap->hitObjects.length, sizeof(*state->played));
+	state->replay = config->replay;
+	state->beatmap = config->beatmap;
+	state->sounds = config->sounds;
+	state->images = config->images;
+	state->bgAlpha = config->bgAlpha;
+	state->minNbAlpha = config->bgAlpha;
+	state->totalFrames = config->replay->replayLength * config->frameRate / ((config->replay->mods & MODE_DOUBLE_TIME) ? 1500 : 1000) + 1;
+
+	if (config->beatmap->backgroundPath)
+		state->backgroundPictureIndex = strToLower(getFileName(config->beatmap->backgroundPath));
+	if (!state->backgroundPictureIndex || !Dict_getElement(state->images, state->backgroundPictureIndex))
+		display_warning("The beatmap is missing an background picture file");
+
+	if (config->beatmap->generalInfos.audioFileName)
+		state->musicIndex = strToLower(getFileName(config->beatmap->generalInfos.audioFileName));
+	if (!state->musicIndex || !Dict_getElement(state->sounds, state->musicIndex))
+		display_warning("The beatmap is missing an music file");
+
+	state->played = calloc(config->beatmap->hitObjects.length, sizeof(*state->played));
 	if (!state->played)
-		display_error("Memory allocation error (%luB)\n", (unsigned long)sizeof(*state->played) * (unsigned long)beatmap->hitObjects.length);
+		display_error("Memory allocation error (%luB)\n", (unsigned long)sizeof(*state->played) * (unsigned long)config->beatmap->hitObjects.length);
 
 	/* init framebuffer */
-	FrameBuffer_init(&state->frame_buffer, size);
+	FrameBuffer_init(&state->frameBuffer, config->resolution);
+	state->frameBuffer.scale.x = config->resolution.x / 640.;
+	state->frameBuffer.scale.y = config->resolution.y / 480.;
 
 	/* Debug mode -> don't create audio/video contexts */
-	if (!path)
+	if (!config->filePath)
 		return;
 
-	if (strstr(path, "'"))
+	if (strstr(config->filePath, "'"))
 		display_error("Invalid filename provided: Name cannot contain \"'\"");
 
-	if (strstr(path, "\""))
+	if (strstr(config->filePath, "\""))
 		display_error("Invalid filename provided: Name cannot contain \"\"\"");
 
-	char	audioPath[strlen(path) + 5];
-	char	videoPath[strlen(path) + 5];
+	char	audioPath[strlen(config->filePath) + 5];
+	char	videoPath[strlen(config->filePath) + 5];
 
 	/* Get paths */
-	sprintf(audioPath, "%s.mp2", path);
-	sprintf(videoPath, "%s.mp4", path);
+	sprintf(audioPath, "%s.mp2", config->filePath);
+	sprintf(videoPath, "%s.mp4", config->filePath);
 
 	/* register all codecs */
 	avcodec_register_all();
 
 	/* init codecs */
-	state->videoCodecContext = initVideoCodec(size, 60, 40000000);
+	state->videoCodecContext = initVideoCodec(config->resolution, config->frameRate, config->bitRate);
 	state->audioCodecContext = initAudioCodec();
 
 	/* init video frame */
@@ -164,21 +185,35 @@ void	startReplaySession(replayPlayerState *state, const char *path, OsuMap *beat
 		display_error("Memory allocation error\n");
 
 	state->frameNb = 1;
+	state->playingSounds = calloc(1, sizeof(*state->playingSounds));
+	if (!state->playingSounds)
+		display_error("Memory allocation error (%lu)\n", (unsigned long)sizeof(*state->playingSounds));
 
 	/* open files */
 	state->videoStream = fopen(videoPath, "wb");
 	if (!state->videoStream)
-		display_error("Cannot open %s: %s\n", path, strerror(errno));
+		display_error("Cannot open %s: %s\n", videoPath, strerror(errno));
 	state->audioStream = fopen(audioPath, "wb");
 	if (!state->audioStream)
-		display_error("Cannot open %s: %s\n", path, strerror(errno));
-
-	state->playingSounds = calloc(1, sizeof(*state->playingSounds));
-	if (!state->playingSounds)
-		display_error("Memory allocation error (%lu)\n", (unsigned long)sizeof(*state->playingSounds));
+		display_error("Cannot open %s: %s\n", audioPath, strerror(errno));
 }
 
-void	finishReplaySession(replayPlayerState *state, const char *path)
+void	destroyAVLibElements(ReplayPlayerState *state)
+{
+	/* free frames */
+	av_frame_free(&state->videoFrame);
+	av_frame_free(&state->audioFrame);
+
+	/* free packets */
+	av_packet_free(&state->videoPacket);
+	av_packet_free(&state->audioPacket);
+
+	/* free codec contexts */
+	avcodec_free_context(&state->videoCodecContext);
+	avcodec_free_context(&state->audioCodecContext);
+}
+
+void	finishReplaySession(ReplayPlayerState *state, const ReplayConfig *config)
 {
 	uint8_t endcode[] = {0, 0, 1, 0xb7};
 
@@ -186,7 +221,7 @@ void	finishReplaySession(replayPlayerState *state, const char *path)
 		return;
 
 	/* destroy framebuffer */
-	FrameBuffer_destroy(&state->frame_buffer);
+	FrameBuffer_destroy(&state->frameBuffer);
 
 	printf("Finishing replay...\n");
 
@@ -204,17 +239,7 @@ void	finishReplaySession(replayPlayerState *state, const char *path)
 	fclose(state->videoStream);
 	fclose(state->audioStream);
 
-	/* free frames */
-	av_frame_free(&state->videoFrame);
-	av_frame_free(&state->audioFrame);
-
-	/* free packets */
-	av_packet_free(&state->videoPacket);
-	av_packet_free(&state->audioPacket);
-
-	/* free codec contexts */
-	avcodec_free_context(&state->videoCodecContext);
-	avcodec_free_context(&state->audioCodecContext);
+	destroyAVLibElements(state);
 
 	free(state->playingSounds);
 
@@ -224,64 +249,177 @@ void	finishReplaySession(replayPlayerState *state, const char *path)
 
 	/* Mix created files */
 #ifdef _WIN32
-	char	commandBuffer[42 + getNbrLen(40000000UL, 10) + strlen(cwd) * 3 + strlen(path) * 3];
+	char	commandBuffer[47 + getNbrLen(config->bitRate, 10) + strlen(cwd) * 3 + strlen(config->filePath) * 3];
 
-	sprintf(commandBuffer, "ffmpeg -y -i \"%s\\%s.mp2\" -i \"%s\\%s.mp4\" -b:v %lu \"%s\\%s\"", cwd, path, cwd, path, 40000000UL, cwd, path);
+	sprintf(commandBuffer, "ffmpeg -y -i \"%s\\%s.mp2\" -i \"%s\\%s.mp4\" -b:v %lu \"%s\\%s\" 1>&2", cwd, config->filePath, cwd, config->filePath, config->bitRate, cwd, config->filePath);
 #else
-	char	commandBuffer[38 + getNbrLen(40000000UL, 10) + strlen(cwd) + strlen(path) * 3];
+	char	commandBuffer[43 + getNbrLen(config->bitRate, 10) + strlen(cwd) + strlen(path) * 3];
 
-	sprintf(commandBuffer, "cd %s && ffmpeg -y -i '%s.mp2' -i '%s.mp4' -b:v %lu '%s'", cwd, path, path, 40000000UL, path);
+	sprintf(commandBuffer, "cd %s && ffmpeg -y -i '%s.mp2' -i '%s.mp4' -b:v %lu '%s' 1>&2", config->filePath, config->filePath, config->filePath, config->bitRate, config->filePath);
 #endif
 
 	printf("Executing command: %s\n", commandBuffer);
 	int code = system(commandBuffer);
 
 	if (code)
-		display_error("Command \"%s\" failed with error code %i\nYou can find %s.mp4 %s.mp2 which are the generated audio and video.", commandBuffer, code, path, path);
+		display_error("Command \"%s\" failed with error code %i\nYou can find %s.mp4 %s.mp2 which are the generated audio and video.", commandBuffer, code, config->filePath, config->filePath);
 
-	printf("Cleaning up\n");
+	if (config->cleanUp) {
+		printf("Cleaning up\n");
 
-	char	audioPath[strlen(path) + 5];
-	char	videoPath[strlen(path) + 5];
+		char audioPath[strlen(config->filePath) + 5];
+		char videoPath[strlen(config->filePath) + 5];
 
-	/* Get paths */
-	sprintf(audioPath, "%s.mp2", path);
-	sprintf(videoPath, "%s.mp4", path);
+		/* Get paths */
+		sprintf(audioPath, "%s.mp2", config->filePath);
+		sprintf(videoPath, "%s.mp4", config->filePath);
 
-	/* Delete temp files */
-	remove(audioPath);
-	remove(videoPath);
+		/* Delete temp files */
+		remove(audioPath);
+		remove(videoPath);
+	}
 }
 
-void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sounds, Dict *images, char *path)
+void	drawBackground(ReplayPlayerState *state)
 {
-	sfVideoMode		mode = {size.x, size.y, 32};
+	sfVector2f	scale = state->frameBuffer.scale;
+	sfVector2i	size;
+	sfVector2i	pos;
+	sfVector2u	imgSize;
+	double		ratio;
+
+	if (!Dict_getElement(state->images, state->backgroundPictureIndex))
+		return;
+
+	imgSize = sfImage_getSize(Dict_getElement(state->images, state->backgroundPictureIndex));
+	if ((double)imgSize.x / state->frameBuffer.size.x > (double)imgSize.y / state->frameBuffer.size.y)
+		ratio = (double)imgSize.y / state->frameBuffer.size.y;
+	else
+		ratio = (double)imgSize.x / state->frameBuffer.size.x;
+
+	size.x = imgSize.x / ratio;
+	size.y = imgSize.y / ratio;
+	pos.x = (state->frameBuffer.size.x - imgSize.x / ratio) / 2;
+	pos.y = (state->frameBuffer.size.y - imgSize.y / ratio) / 2;
+
+	state->frameBuffer.scale = (sfVector2f){1, 1};
+	FrameBuffer_drawImage(
+		&state->frameBuffer,
+		pos,
+		Dict_getElement(state->images, state->backgroundPictureIndex),
+		size,
+		(sfColor){255, 255, 255, state->bgAlpha},
+		false,
+		0
+	);
+	state->frameBuffer.scale = scale;
+}
+
+void	makeFrame(ReplayPlayerState *state)
+{
+	FrameBuffer_clear(&state->frameBuffer, (sfColor){0, 0, 0, 255});
+	drawBackground(state);
+
+	if ((unsigned)state->beatmap->generalInfos.audioLeadIn <= state->totalTicks && !state->musicStarted) {
+		if (!state->videoStream && music) {
+			sfMusic_play(music);
+			if ((state->replay->mods & MODE_DOUBLE_TIME))
+				sfMusic_setPitch(music, 1.5);
+		} else
+			playSound(state, state->beatmap->generalInfos.audioFileName, (state->replay->mods & MODE_NIGHTCORE) ? 1.5 : 1, (state->replay->mods & MODE_DOUBLE_TIME) ? 1.5 : 1);
+		state->musicStarted = true;
+	}
+
+	while (
+		state->currentLifeEvent < state->replay->lifeBar.length &&
+		state->replay->lifeBar.content[state->currentLifeEvent].timeToHappen <= state->totalTicks
+	) {
+		state->life = state->replay->lifeBar.content[state->currentLifeEvent].newValue;
+		state->currentLifeEvent++;
+	}
+
+	while (
+		state->currentGameEvent < state->replay->gameEvents.length &&
+		state->replay->gameEvents.content[state->currentGameEvent].timeToHappen <= (int)state->totalTicks
+	) {
+		state->cursorPos = *(sfVector2f *)&state->replay->gameEvents.content[state->currentGameEvent].cursorPos;
+		state->cursorPos.x += padding.x;
+		state->cursorPos.y += padding.y;
+		state->pressed = state->replay->gameEvents.content[state->currentGameEvent].keysPressed;
+		state->currentGameEvent++;
+	}
+
+	if (
+		!state->played[state->currentGameHitObject] &&
+		state->beatmap->hitObjects.content[state->currentGameHitObject].timeToAppear <= state->totalTicks &&
+		state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SLIDER
+	) {
+		playSound(state, "drum-hitnormal", 1, 1);
+		state->played[state->currentGameHitObject]++;
+	}
+	while (
+		state->currentGameHitObject < state->beatmap->hitObjects.length && (
+			(
+				!(state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SLIDER) &&
+				!(state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SPINNER) &&
+				state->beatmap->hitObjects.content[state->currentGameHitObject].timeToAppear + 20 <= state->totalTicks
+			) || (
+				state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SLIDER &&
+				state->beatmap->hitObjects.content[state->currentGameHitObject].timeToAppear +
+				sliderLength(state->beatmap, state->currentGameHitObject, state->beatmap->timingPoints.content[state->currentTimingPoint]) <= state->totalTicks
+			) || (
+				state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SPINNER &&
+				*(unsigned long *)state->beatmap->hitObjects.content[state->currentGameHitObject].additionalInfos <= state->totalTicks
+			)
+		)
+		) {
+		playSound(state, "drum-hitnormal", 1, 1);
+		state->played[state->currentGameHitObject] = true;
+		if (state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_NEW_COMBO) {
+			state->beginCombo = 0;
+			state->currentComboColor = (state->currentComboColor + 1) % state->beatmap->colors.length;
+		}
+		state->beginCombo++;
+		state->currentGameHitObject++;
+	}
+
+	displayHitObjects(state, state->beatmap);
+
+	FrameBuffer_drawFilledRectangle(&state->frameBuffer, (sfVector2i){10, 10}, (sfVector2u){300 * state->life, 20}, (sfColor){255, 255, 255, 255});
+	FrameBuffer_drawImage(
+		&state->frameBuffer,
+		(sfVector2i){state->cursorPos.x, state->cursorPos.y},
+		Dict_getElement(state->images, "cursor"),
+		(sfVector2i){-1, -1},
+		(sfColor){255, 255, 255, 255},
+		true,
+		0
+	);
+
+	state->isEnd = state->currentGameEvent >= state->replay->gameEvents.length && state->replay->gameEvents.content[state->currentGameEvent].timeToHappen <= (long)state->totalTicks;
+}
+
+void	playReplay(const ReplayConfig *config)
+{
+	sfVideoMode		mode = {config->resolution.x, config->resolution.y, 32};
 	sfEvent			event;
 	sfClock			*clock = NULL;
-	replayPlayerState	state;
+	ReplayPlayerState	state;
 
-	startReplaySession(&state, path, beatmap, size);
+	startReplaySession(&state, config);
 
-	if (!path) {
+	if (!config->filePath) {
 		window = sfRenderWindow_create(mode, "Osu Replay Player", sfDefaultStyle, NULL);
 		if (!window)
 			exit(EXIT_FAILURE);
 		sfRenderWindow_setFramerateLimit(window, 60);
 	}
 
-	state.sounds = sounds;
-	state.images = images;
-	state.totalFrames = replay->replayLength * 60 / ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE) ? 1500 : 1000) + 1;
-	printf("Replay length: %lums, %lu frame%s\n", replay->replayLength, state.totalFrames, state.totalFrames ? "" : "s");
+	printf("Replay length: %lums, %lu frame%s\n", config->replay->replayLength, state.totalFrames, state.totalFrames ? "" : "s");
 	padding = (sfVector2u){64, 48};
 
-	beatmap->backgroundPath = beatmap->backgroundPath ? strToLower(getFileName(beatmap->backgroundPath)) : NULL;
-	beatmap->generalInfos.audioFileName = beatmap->generalInfos.audioFileName ? strToLower(getFileName(beatmap->generalInfos.audioFileName)) : NULL;
-	while (
-		state.currentGameEvent < replay->gameEvents.length ||
-		replay->gameEvents.content[state.currentGameEvent].timeToHappen > (long)state.totalTicks
-	) {
-		if (!path) {
+	while (!state.isEnd) {
+		if (!config->filePath) {
 			while (sfRenderWindow_pollEvent(window, &event)) {
 				if (event.type == sfEvtClosed) {
 					sfRenderWindow_close(window);
@@ -290,105 +428,26 @@ void	playReplay(OsuReplay *replay, OsuMap *beatmap, sfVector2u size, Dict *sound
 			}
 			sfRenderWindow_clear(window, (sfColor){0, 0, 0, 255});
 			if (clock) {
-				if ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE))
+				if ((config->replay->mods & MODE_DOUBLE_TIME) || (config->replay->mods & MODE_NIGHTCORE))
 					state.totalTicks = sfTime_asMilliseconds(sfClock_getElapsedTime(clock)) * 1.5;
 				else
 					state.totalTicks = sfTime_asMilliseconds(sfClock_getElapsedTime(clock));
 			}
 		} else
-			state.totalTicks += ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE) ? 1500 : 1000) / 60.;
+			state.totalTicks += ((config->replay->mods & MODE_DOUBLE_TIME) || (config->replay->mods & MODE_NIGHTCORE) ? 1500 : 1000) / 60.;
 
-		FrameBuffer_clear(&state.frame_buffer, (sfColor){0, 0, 0, 255});
-		FrameBuffer_drawImage(
-			&state.frame_buffer,
-			(sfVector2i){0, 0},
-			Dict_getElement(images, beatmap->backgroundPath),
-			(sfVector2i){size.x, size.y},
-			(sfColor){255, 255, 255, bgAlpha},
-			false,
-			0
-		);
+		makeFrame(&state);
 
-		if ((unsigned)beatmap->generalInfos.audioLeadIn <= state.totalTicks && !state.musicStarted) {
-			if (!state.musicStarted) {
-				if (!path && music) {
-					sfMusic_play(music);
-					if ((replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE))
-						sfMusic_setPitch(music, 1.5);
-				} else
-					playSound(&state, beatmap->generalInfos.audioFileName, (replay->mods & MODE_NIGHTCORE) ? 1.5 : 1, (replay->mods & MODE_DOUBLE_TIME) || (replay->mods & MODE_NIGHTCORE) ? 1.5 : 1);
-				state.musicStarted = true;
-			}
-		}
-
-		while (
-			state.currentLifeEvent < replay->lifeBar.length &&
-			replay->lifeBar.content[state.currentLifeEvent].timeToHappen <= state.totalTicks
-		) {
-			state.life = replay->lifeBar.content[state.currentLifeEvent].newValue;
-			state.currentLifeEvent++;
-		}
-
-		while (
-			state.currentGameEvent < replay->gameEvents.length &&
-			replay->gameEvents.content[state.currentGameEvent].timeToHappen <= (int)state.totalTicks
-		) {
-			state.cursorPos = *(sfVector2f *)&replay->gameEvents.content[state.currentGameEvent].cursorPos;
-			state.cursorPos.x += padding.x;
-			state.cursorPos.y += padding.y;
-			state.pressed = replay->gameEvents.content[state.currentGameEvent].keysPressed;
-			state.currentGameEvent++;
-		}
-
-		if (
-			!state.played[state.currentGameHitObject] &&
-			beatmap->hitObjects.content[state.currentGameHitObject].timeToAppear <= state.totalTicks &&
-			beatmap->hitObjects.content[state.currentGameHitObject].type & HITOBJ_SLIDER
-		) {
-			playSound(&state, "drum-hitnormal", 1, 1);
-			state.played[state.currentGameHitObject]++;
-		}
-		while (
-			state.currentGameHitObject < beatmap->hitObjects.length && (
-				(
-					!(beatmap->hitObjects.content[state.currentGameHitObject].type & HITOBJ_SLIDER) &&
-					!(beatmap->hitObjects.content[state.currentGameHitObject].type & HITOBJ_SPINNER) &&
-					beatmap->hitObjects.content[state.currentGameHitObject].timeToAppear + 20 <= state.totalTicks
-				) || (
-					beatmap->hitObjects.content[state.currentGameHitObject].type & HITOBJ_SLIDER &&
-					beatmap->hitObjects.content[state.currentGameHitObject].timeToAppear +
-					sliderLength(beatmap, state.currentGameHitObject, beatmap->timingPoints.content[state.currentTimingPoint]) <= state.totalTicks
-				) || (
-					beatmap->hitObjects.content[state.currentGameHitObject].type & HITOBJ_SPINNER &&
-					*(unsigned long *)beatmap->hitObjects.content[state.currentGameHitObject].additionalInfos <= state.totalTicks
-				)
-			)
-		) {
-			playSound(&state, "drum-hitnormal", 1, 1);
-			state.played[state.currentGameHitObject] = true;
-			if (beatmap->hitObjects.content[state.currentGameHitObject].type & HITOBJ_NEW_COMBO) {
-				state.beginCombo = 0;
-				state.currentComboColor = (state.currentComboColor + 1) % beatmap->colors.length;
-			}
-			state.beginCombo++;
-			state.currentGameHitObject++;
-		}
-
-		displayHitObjects(&state, beatmap);
-
-		FrameBuffer_drawFilledRectangle(&state.frame_buffer, (sfVector2i){10, 10}, (sfVector2u){300 * state.life, 20}, (sfColor){255, 255, 255, 255});
-		FrameBuffer_drawImage(&state.frame_buffer, (sfVector2i){state.cursorPos.x, state.cursorPos.y}, Dict_getElement(images, "cursor"), (sfVector2i){-1, -1}, (sfColor){255, 255, 255, 255}, true, 0);
-
-		if (!path) {
-			FrameBuffer_draw(&state.frame_buffer, window);
+		if (!config->filePath) {
+			FrameBuffer_draw(&state.frameBuffer, window);
 			sfRenderWindow_display(window);
 			if (!clock)
 				clock = sfClock_create();
 		} else {
-			FrameBuffer_encode(&state.frame_buffer, &state);
+			FrameBuffer_encode(&state.frameBuffer, &state);
 			encodePlayingSounds(&state, false);
 			state.frameNb++;
 		}
 	}
-	finishReplaySession(&state, path);
+	finishReplaySession(&state, config);
 }

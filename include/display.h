@@ -11,7 +11,7 @@
 #include "dict.h"
 #include "replay_player.h"
 
-void	displayHitObjects(replayPlayerState *state, OsuMap *beatmap);
+void	displayHitObjects(ReplayPlayerState *state, OsuMap *beatmap);
 
 
 #endif //OSUREPLAY_PLAYER_DISPLAY_H

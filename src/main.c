@@ -51,6 +51,15 @@ void	createLoader(Dict *loaders, bool debug)
 	Dict_addElement(loaders, "jpg", createPair((void *(*)(const char *))sfImage_createFromFile, (void (*)(void *))sfImage_destroy, IMAGE), free);
 }
 
+void	loadConfigs(ReplayConfig *config)
+{
+	config->cleanUp = true;
+	config->frameRate = 60;
+	config->resolution = (sfVector2u){640, 480};
+	config->bitRate = 4000000;
+	config->bgAlpha = 50;
+}
+
 int	main(int argc, char **args)
 {
 	OsuReplay	replay;
@@ -59,6 +68,7 @@ int	main(int argc, char **args)
 	Dict		sounds = {NULL, NULL, NULL, NULL};
 	Dict		loaders = {NULL, NULL, NULL, NULL};
 	OsuSkin		skin;
+	ReplayConfig	config;
 
 	printf("Replay player version "VERSION"\n");
 	if (argc != 4 && argc != 3) {
@@ -66,17 +76,18 @@ int	main(int argc, char **args)
 		return EXIT_FAILURE;
 	}
 
+	loadConfigs(&config);
 	printf("Loading replay file %s\n", args[2]);
 	replay = OsuReplay_parseReplayFile(args[2]);
 	if (replay.error) {
-		fprintf(stderr, "\nParsing for replay file '%s' failed:\n%s\n", args[2], replay.error);
+		fprintf(stderr, "Parsing for replay file '%s' failed:\n%s\n", args[2], replay.error);
 		return EXIT_FAILURE;
 	}
 
 	printf("Loading beatmap file %s\n", args[1]);
 	beatmap = OsuMap_parseMapFile(args[1]);
 	if (beatmap.error) {
-		fprintf(stderr, "\nParsing for beatmap file '%s' failed:\n%s", args[1], beatmap.error);
+		fprintf(stderr, "Parsing for beatmap file '%s' failed:\n%s", args[1], beatmap.error);
 		return EXIT_FAILURE;
 	}
 
@@ -95,7 +106,12 @@ int	main(int argc, char **args)
 	for (unsigned i = 0; i < beatmap.hitObjects.length; i++)
 		if (beatmap.hitObjects.content[i].type & HITOBJ_SLIDER)
 			getRealPointsSliders(&beatmap.hitObjects.content[i]);
-	playReplay(&replay, &beatmap, (sfVector2u){640, 480}, &sounds, &images, args[3]);
+	config.beatmap = &beatmap;
+	config.replay = &replay;
+	config.images = &images;
+	config.sounds = &sounds;
+	config.filePath = args[3];
+	playReplay(&config);
 
 	if (!args[3])
 		sfMusic_destroy(music);

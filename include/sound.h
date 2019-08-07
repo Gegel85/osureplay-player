@@ -29,10 +29,10 @@ typedef struct PlayingSound {
 	double	pos;
 } PlayingSound;
 
-struct replayPlayerState;
+struct ReplayPlayerState;
 
-void	playSound(struct replayPlayerState *state, char *sound, double pitch, double speed);
-void	encodePlayingSounds(struct replayPlayerState *state, bool last);
+void	playSound(struct ReplayPlayerState *state, char *sound, double pitch, double speed);
+void	encodePlayingSounds(struct ReplayPlayerState *state, bool last);
 Sound	*loadSoundFile(char *path);
 void	destroySound(Sound *sound);
 
