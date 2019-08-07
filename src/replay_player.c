@@ -132,12 +132,12 @@ void	startReplaySession(ReplayPlayerState *state, const ReplayConfig *config)
 	if (config->beatmap->backgroundPath)
 		state->backgroundPictureIndex = strToLower(getFileName(config->beatmap->backgroundPath));
 	if (!state->backgroundPictureIndex || !Dict_getElement(state->images, state->backgroundPictureIndex))
-		display_warning("The beatmap is missing an background picture file");
+		display_warning("The beatmap is missing an background picture file\n");
 
 	if (config->beatmap->generalInfos.audioFileName)
 		state->musicIndex = strToLower(getFileName(config->beatmap->generalInfos.audioFileName));
 	if (!state->musicIndex || !Dict_getElement(state->sounds, state->musicIndex))
-		display_warning("The beatmap is missing an music file");
+		display_warning("The beatmap is missing a music file\n");
 
 	state->played = calloc(config->beatmap->hitObjects.length, sizeof(*state->played));
 	if (!state->played)
