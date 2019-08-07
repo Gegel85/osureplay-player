@@ -4,6 +4,7 @@
 #include <osu_map_parser.h>
 #include <SFML/System.h>
 #include "dict.h"
+#include "frame_buffer.h"
 
 sfVector2f	getTextSize(const char *str, unsigned charSize);
 unsigned char	calcAlpha(OsuMap_hitObject obj, unsigned long totalTicks);

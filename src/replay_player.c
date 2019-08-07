@@ -286,6 +286,54 @@ void	finishReplaySession(ReplayPlayerState *state, const ReplayConfig *config)
 	}
 }
 
+void	addScoreParticle(ReplayPlayerState *state, const char *texture, sfVector2f pos)
+{
+	sfImage *img = Dict_getElement(state->images, texture);
+
+	if (!img)
+		return;
+
+	for (unsigned i = 0; i < state->particles.length; i++)
+		if (state->particles.content[i].timeRemaining == 0) {
+			state->particles.content[i] = (Particle){
+				img,
+				pos,
+				1000
+			};
+			return;
+		}
+	state->particles.length++;
+	state->particles.content = realloc(state->particles.content, state->particles.length * sizeof(*state->particles.content));
+	if (!state->particles.content)
+		display_error("Memory allocation error %luB\n", (unsigned long)(state->particles.length * sizeof(*state->particles.content)));
+	state->particles.content[state->particles.length - 1] = (Particle){
+		img,
+		pos,
+		1000
+	};
+}
+
+void	displayParticles(FrameBuffer *buffer, const ParticleArray *array, double dec)
+{
+	for (unsigned i = 0; i < array->length; i++) {
+		if (array->content[i].timeRemaining > 0) {
+			FrameBuffer_drawImage(
+				buffer,
+				(sfVector2i){
+					array->content[i].pos.x,
+					array->content[i].pos.y
+				},
+				array->content[i].image,
+				(sfVector2i){64, 64},
+				(sfColor){255, 255, 255, array->content[i].timeRemaining > 765 ? 255 : array->content[i].timeRemaining * 255 / 765},
+				true,
+				0
+			);
+			array->content[i].timeRemaining -= dec;
+		}
+	}
+}
+
 void	drawBackground(ReplayPlayerState *state)
 {
 	sfVector2i	size;
@@ -347,20 +395,13 @@ void	playOsuSound(ReplayPlayerState *state, unsigned char sound)
 
 void	tickGame(ReplayPlayerState *state)
 {
-	if (
-		!state->played[state->currentGameHitObject] &&
-		state->beatmap->hitObjects.content[state->currentGameHitObject].timeToAppear <= state->totalTicks &&
-		state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SLIDER
-		) {
-		playOsuSound(state, state->beatmap->hitObjects.content[state->currentGameHitObject].hitSound);
-		state->played[state->currentGameHitObject]++;
-	}
 	while (
 		state->currentGameHitObject < state->beatmap->hitObjects.length && (
 			(
 				!(state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SLIDER) &&
 				!(state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SPINNER) &&
-				state->beatmap->hitObjects.content[state->currentGameHitObject].timeToAppear + 20 <= state->totalTicks
+				state->beatmap->hitObjects.content[state->currentGameHitObject].timeToAppear +
+				150 + 50 * (5 - state->beatmap->difficulty.overallDifficulty) / 5 <= state->totalTicks
 			) || (
 				state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SLIDER &&
 				state->beatmap->hitObjects.content[state->currentGameHitObject].timeToAppear +
@@ -370,13 +411,16 @@ void	tickGame(ReplayPlayerState *state)
 				*(unsigned long *)state->beatmap->hitObjects.content[state->currentGameHitObject].additionalInfos <= state->totalTicks
 			)
 		)
-		) {
+	) {
 		if (state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_SLIDER) {
 			OsuMap_hitObjectSliderInfos *add = state->beatmap->hitObjects.content[state->currentGameHitObject].additionalInfos;
 
 			playOsuSound(state, add->edgeHitsounds ? add->edgeHitsounds[add->nbOfRepeats - 1] : 0);
 		} else
-			playOsuSound(state, state->beatmap->hitObjects.content[state->currentGameHitObject].hitSound);
+			addScoreParticle(state, "hit0", (sfVector2f){
+				state->beatmap->hitObjects.content[state->currentGameHitObject].position.x + padding.x,
+				state->beatmap->hitObjects.content[state->currentGameHitObject].position.y + padding.y
+			});
 		state->played[state->currentGameHitObject] = true;
 		if (state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_NEW_COMBO) {
 			state->beginCombo = 0;
@@ -387,7 +431,57 @@ void	tickGame(ReplayPlayerState *state)
 	}
 }
 
-void	makeFrame(ReplayPlayerState *state)
+void	miss(ReplayPlayerState *state)
+{
+	if (state->gameState.combo > 10)
+		playSound(state, Dict_getElement(state->sounds, "combobreak"), 1, 1);
+	state->gameState.combo = 0;
+}
+
+void	handleKeyPresses(ReplayPlayerState *state, long time)
+{
+	OsuMap_hitObject*obj = NULL;
+	double		radius = (54.4f - 4.48f * state->beatmap->difficulty.circleSize);
+
+	if (state->currentGameHitObject < state->beatmap->hitObjects.length)
+		obj = &state->beatmap->hitObjects.content[state->currentGameHitObject];
+
+	if (!obj || obj->type & HITOBJ_SPINNER)
+		return;
+	printf("(%f, %f) (%i, %i) -> %f : %f\n", state->cursorPos.x, state->cursorPos.y, obj->position.x, obj->position.y, sqrt(pow(state->cursorPos.x - obj->position.x - padding.x, 2) + pow(state->cursorPos.y - obj->position.y - padding.y, 2)), radius);
+	if (sqrt(pow(state->cursorPos.x - obj->position.x - padding.x, 2) + pow(state->cursorPos.y - obj->position.y - padding.y, 2)) <= radius) {
+		double diff = abs((long)obj->timeToAppear - time);
+
+		printf("Diff: %f\n", diff);
+		if (diff < 50 + 30 * (5 - state->beatmap->difficulty.overallDifficulty) / 5) {
+			addScoreParticle(state, "hit300-0", (sfVector2f){obj->position.x + padding.x, obj->position.y + padding.y});
+			playOsuSound(state, state->beatmap->hitObjects.content[state->currentGameHitObject].hitSound);
+			state->gameState.score += 300 * state->gameState.combo++;
+		} else if (diff < 100 + 40 * (5 - state->beatmap->difficulty.overallDifficulty) / 5) {
+			addScoreParticle(state, "hit100-0", (sfVector2f){obj->position.x + padding.x, obj->position.y + padding.y});
+			playOsuSound(state, state->beatmap->hitObjects.content[state->currentGameHitObject].hitSound);
+			state->gameState.score += 100 * state->gameState.combo++;
+		} else if (diff < 150 + 50 * (5 - state->beatmap->difficulty.overallDifficulty) / 5) {
+			addScoreParticle(state, "hit50-0", (sfVector2f){obj->position.x + padding.x, obj->position.y + padding.y});
+			playOsuSound(state, state->beatmap->hitObjects.content[state->currentGameHitObject].hitSound);
+			state->gameState.score += 50 * state->gameState.combo++;
+		} else {
+			addScoreParticle(state, "hit0", (sfVector2f){obj->position.x + padding.x, obj->position.y + padding.y});
+			miss(state);
+		}
+		if (!(obj->type & HITOBJ_SLIDER)) {
+			state->played[state->currentGameHitObject] = true;
+			if (state->beatmap->hitObjects.content[state->currentGameHitObject].type & HITOBJ_NEW_COMBO) {
+				state->beginCombo = 0;
+				state->currentComboColor = (state->currentComboColor + 1) % state->beatmap->colors.length;
+			}
+			state->beginCombo++;
+			state->currentGameHitObject++;
+		}
+	}
+}
+
+void	makeFrame(ReplayPlayerState *state, unsigned frameRate)
 {
 	FrameBuffer_clear(&state->frameBuffer, (sfColor){0, 0, 0, 255});
 	drawBackground(state);
@@ -403,26 +497,40 @@ void	makeFrame(ReplayPlayerState *state)
 	}
 
 	while (
-		state->currentLifeEvent < state->replay->lifeBar.length &&
-		state->replay->lifeBar.content[state->currentLifeEvent].timeToHappen <= state->totalTicks
+		state->currentLifeEvent < state->replay->lifeBar.length - 1 &&
+		state->replay->lifeBar.content[state->currentLifeEvent + 1].timeToHappen <= state->totalTicks
 	) {
 		state->life = state->replay->lifeBar.content[state->currentLifeEvent].newValue;
 		state->currentLifeEvent++;
 	}
 
 	while (
-		state->currentGameEvent < state->replay->gameEvents.length &&
-		state->replay->gameEvents.content[state->currentGameEvent].timeToHappen <= (int)state->totalTicks
+		state->currentGameEvent < state->replay->gameEvents.length - 1 &&
+		state->replay->gameEvents.content[state->currentGameEvent + 1].timeToHappen <= (int)state->totalTicks
 	) {
 		state->cursorPos = *(sfVector2f *)&state->replay->gameEvents.content[state->currentGameEvent].cursorPos;
 		state->cursorPos.x += padding.x;
 		state->cursorPos.y += padding.y;
+		state->oldPressed = state->pressed;
 		state->pressed = state->replay->gameEvents.content[state->currentGameEvent].keysPressed;
+		if (!(state->oldPressed & INPUT_KEY1) && (state->pressed & INPUT_KEY1))
+			state->pressedKey1++;
+		if (!(state->oldPressed & INPUT_KEY2) && (state->pressed & INPUT_KEY2))
+			state->pressedKey2++;
+		if ((!(state->oldPressed & INPUT_KEY1) && (state->pressed & INPUT_KEY1)) || (!(state->oldPressed & INPUT_KEY2) && (state->pressed & INPUT_KEY2)))
+			handleKeyPresses(state, state->replay->gameEvents.content[state->currentGameEvent + 1].timeToHappen);
 		state->currentGameEvent++;
 	}
 
+	while (
+		state->currentTimingPoint < state->beatmap->timingPoints.length &&
+		state->beatmap->timingPoints.content[state->currentTimingPoint + 1].timeToHappen < state->totalTicks
+	)
+		state->currentTimingPoint++;
+
 	tickGame(state);
 	displayHitObjects(state, state->beatmap);
+	displayParticles(&state->frameBuffer, &state->particles, 1000 / frameRate);
 
 	FrameBuffer_drawFilledRectangle(&state->frameBuffer, (sfVector2i){10, 10}, (sfVector2u){300 * state->life, 20}, (sfColor){255, 255, 255, 255});
 	if (state->cursorPos.x > padding.x && state->cursorPos.y > padding.y)
@@ -436,7 +544,7 @@ void	makeFrame(ReplayPlayerState *state)
 			0
 		);
 
-	state->isEnd = state->currentGameEvent >= state->replay->gameEvents.length && state->replay->gameEvents.content[state->currentGameEvent].timeToHappen <= (long)state->totalTicks;
+	state->isEnd = state->currentGameEvent == state->replay->gameEvents.length - 1 && state->replay->gameEvents.content[state->currentGameEvent].timeToHappen <= (long)state->totalTicks;
 }
 
 void	playReplay(const ReplayConfig *config)
@@ -476,7 +584,7 @@ void	playReplay(const ReplayConfig *config)
 		} else
 			state.totalTicks += ((config->replay->mods & MODE_DOUBLE_TIME) || (config->replay->mods & MODE_NIGHTCORE) ? 1500 : 1000) / 60.;
 
-		makeFrame(&state);
+		makeFrame(&state, config->frameRate);
 
 		if (!config->filePath) {
 			FrameBuffer_draw(&state.frameBuffer, window);

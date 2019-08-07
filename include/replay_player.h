@@ -25,6 +25,17 @@ typedef struct GameState {
 	unsigned	combo;
 } GameState;
 
+typedef struct Particle {
+	sfImage		*image;
+	sfVector2f	pos;
+	double		timeRemaining;
+} Particle;
+
+typedef struct ParticleArray {
+	Particle	*content;
+	unsigned long	length;
+} ParticleArray;
+
 typedef struct ReplayPlayerState {
 	double		totalTicks;		//Current time
 	unsigned long	currentTimingPoint;	//Currently active timing point
@@ -63,7 +74,8 @@ typedef struct ReplayPlayerState {
 	unsigned char	bgAlpha;		//Current background alpha
 	unsigned char	minBgAlpha;		//The minimun alpha the background can get (user set setting)
 	GameState	gameState;		//Current game state
-} ReplayPlayerState;
+	ParticleArray	particles;		//Particles displayed on screen
+}	ReplayPlayerState;
 
 void	encodeAudioFrame(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *output);
 void	encodeVideoFrame(AVCodecContext *enc_ctx, AVFrame *frame, AVPacket *pkt, FILE *outfile);
