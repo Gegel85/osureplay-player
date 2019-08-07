@@ -110,12 +110,15 @@ void	FrameBuffer_drawImage(FrameBuffer *this, sfVector2i pos, sfImage *image, sf
 
 	for (unsigned x = 0; x < size.x * scale.x; x++)
 		for (unsigned y = 0; y < size.y * scale.y; y++) {
-			col = (sfColor) {
-				array[(int)(y / scale.y) * size.x + (int)(x / scale.x)].r * (tint.r / 255.),
-				array[(int)(y / scale.y) * size.x + (int)(x / scale.x)].g * (tint.g / 255.),
-				array[(int)(y / scale.y) * size.x + (int)(x / scale.x)].b * (tint.b / 255.),
-				array[(int)(y / scale.y) * size.x + (int)(x / scale.x)].a * (tint.a / 255.),
-			};
+			if ((int)(y / scale.y) >= size.y || (int)(x / scale.x) >= size.x)
+				col = (sfColor){0, 0, 0, 0};
+			else
+				col = (sfColor) {
+					array[(int)(y / scale.y) * size.x + (int)(x / scale.x)].r * (tint.r / 255.),
+					array[(int)(y / scale.y) * size.x + (int)(x / scale.x)].g * (tint.g / 255.),
+					array[(int)(y / scale.y) * size.x + (int)(x / scale.x)].b * (tint.b / 255.),
+					array[(int)(y / scale.y) * size.x + (int)(x / scale.x)].a * (tint.a / 255.),
+				};
 			if (rotation == 0) {
 				FrameBuffer_drawPoint(this, (sfVector2f) {
 					pos.x + x,
