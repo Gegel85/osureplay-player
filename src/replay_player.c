@@ -448,11 +448,9 @@ void	handleKeyPresses(ReplayPlayerState *state, long time)
 
 	if (!obj || obj->type & HITOBJ_SPINNER)
 		return;
-	printf("(%f, %f) (%i, %i) -> %f : %f\n", state->cursorPos.x, state->cursorPos.y, obj->position.x, obj->position.y, sqrt(pow(state->cursorPos.x - obj->position.x - padding.x, 2) + pow(state->cursorPos.y - obj->position.y - padding.y, 2)), radius);
 	if (sqrt(pow(state->cursorPos.x - obj->position.x - padding.x, 2) + pow(state->cursorPos.y - obj->position.y - padding.y, 2)) <= radius) {
 		double diff = abs((long)obj->timeToAppear - time);
 
-		printf("Diff: %f\n", diff);
 		if (diff < 50 + 30 * (5 - state->beatmap->difficulty.overallDifficulty) / 5) {
 			addScoreParticle(state, "hit300-0", (sfVector2f){obj->position.x + padding.x, obj->position.y + padding.y});
 			playOsuSound(state, state->beatmap->hitObjects.content[state->currentGameHitObject].hitSound);
