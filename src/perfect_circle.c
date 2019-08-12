@@ -1,4 +1,5 @@
 #include <math.h>
+#include <slider_calcs.h>
 #include "frame_buffer.h"
 #include "osu_map_parser.h"
 
@@ -30,17 +31,42 @@ OsuIntegerVectorArray	getCirclePoints(OsuIntegerVectorArray points, OsuIntegerVe
 	bool			goClockwise;
 	double			angles[3];
 	double			arcAngle;
+	double			values[3];
 
 	if (points.length != 2)
 		display_error("Invalid number of points provided for a perfect circle slider. (3 expected but %lu found)\n", (unsigned long)points.length + 1);
 
+	values[0] = ((pt2.x - pt1.x) * (pt3.y - pt2.y) + (pt2.y - pt1.y) * (pt2.x - pt3.x));
+	if (!values[0]) {
+		double dists[3] = {
+			pow(pt1.x - pt2.x, 2) + pow(pt1.y - pt2.y, 2),
+			pow(pt2.x - pt3.x, 2) + pow(pt2.y - pt3.y, 2),
+			pow(pt1.x - pt3.x, 2) + pow(pt1.y - pt3.y, 2),
+		};
+		double best = fmax(fmax(dists[0], dists[1]), dists[2]);
+
+		points.length = 1;
+		if (best == dists[0])
+			return getLinePoints(points, pos);
+		if (best == dists[1]) {
+			pos = pt3;
+			return getLinePoints(points, pos);
+		}
+		if (best == dists[2]) {
+			points.content = &pt3;
+			return getLinePoints(points, pos);
+		}
+	}
+
+	values[1] = (pow(pt2.x, 2) + pow(pt2.y, 2) - pow(pt3.x, 2) - pow(pt3.y, 2));
+	values[2] = (pow(pt2.x, 2) + pow(pt2.y, 2) - pow(pt1.x, 2) - pow(pt1.y, 2));
 	//Don't ask please
 	center.y =
 	(
-		(pt2.x - pt3.x) * (pow(pt2.x, 2) + pow(pt2.y, 2) - pow(pt1.x, 2) - pow(pt1.y, 2)) -
-		(pt2.x - pt1.x) * (pow(pt2.x, 2) + pow(pt2.y, 2) - pow(pt3.x, 2) - pow(pt3.y, 2))
+		(pt2.x - pt3.x) * values[2] -
+		(pt2.x - pt1.x) * values[1]
 	) / (
-		((pt2.x - pt1.x) * (pt3.y - pt2.y) + (pt2.y - pt1.y) * (pt2.x - pt3.x)) * 2
+		values[0] * 2
 	);
 
 	/*
@@ -50,10 +76,10 @@ OsuIntegerVectorArray	getCirclePoints(OsuIntegerVectorArray points, OsuIntegerVe
 	*/
 	center.x =
 	(
-		(pt2.y - pt1.y) * (pow(pt2.x, 2) + pow(pt2.y, 2) - pow(pt3.x, 2) - pow(pt3.y, 2)) -
-		(pt2.y - pt3.y) * (pow(pt2.x, 2) + pow(pt2.y, 2) - pow(pt1.x, 2) - pow(pt1.y, 2))
+		(pt2.y - pt1.y) * values[1] -
+		(pt2.y - pt3.y) * values[2]
 	) / (
-		((pt2.x - pt1.x) * (pt3.y - pt2.y) + (pt2.y - pt1.y) * (pt2.x - pt3.x)) * 2
+		values[0] * 2
 	);
 
 	//Calc the radius (quick maths)
