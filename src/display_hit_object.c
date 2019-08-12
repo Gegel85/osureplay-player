@@ -82,9 +82,13 @@ void	displaySpinner(FrameBuffer *frameBuffer, OsuMap_hitObject *object, unsigned
 void	displaySlider(FrameBuffer *frameBuffer, OsuMap_hitObject *object, unsigned long totalTicks, unsigned char alpha, Dict *images, unsigned combo, OsuMap_color color, double circleSize, OsuMap_timingPointEvent *timeingpt, OsuMap *beatmap)
 {
 	OsuIntegerVectorArray	*points = &sliderInfos(object->additionalInfos)->curvePoints;
+	size_t length = points->length;
+
+	if (totalTicks < object->timeToAppear - 400)
+		length *= (400 - (object->timeToAppear - totalTicks - 400)) / 400.;
 
 	//Display the body of the slider
-	for (unsigned j = 0; j < points->length; j++) {
+	for (unsigned j = 0; j < length; j += 1) {
 		FrameBuffer_drawFilledCircle(
 			frameBuffer,
 			(sfVector2i) {
@@ -302,7 +306,7 @@ void	displayHitObjects(ReplayPlayerState *state, OsuMap *beatmap)
 
 		combo = state->beginCombo;
 		color = state->currentComboColor;
-		for (unsigned j = state->currentGameHitObject; j < i; j++) {
+		for (int j = state->currentGameHitObject; j < i; j++) {
 			if (beatmap->hitObjects.content[j].type & HITOBJ_NEW_COMBO) {
 				combo = 0;
 				color = (color + 1) % beatmap->colors.length;
