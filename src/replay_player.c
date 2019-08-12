@@ -521,7 +521,7 @@ void	makeFrame(ReplayPlayerState *state, unsigned frameRate)
 	}
 
 	while (
-		state->currentTimingPoint < state->beatmap->timingPoints.length &&
+		state->currentTimingPoint < state->beatmap->timingPoints.length - 1 &&
 		state->beatmap->timingPoints.content[state->currentTimingPoint + 1].timeToHappen < state->totalTicks
 	)
 		state->currentTimingPoint++;
