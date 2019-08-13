@@ -130,8 +130,8 @@ void	startReplaySession(ReplayPlayerState *state, const ReplayConfig *config)
 	state->totalFrames = config->replay->replayLength * config->frameRate / ((config->replay->mods & MODE_DOUBLE_TIME) ? 1500 : 1000) + 1;
 	state->gameState.graphSize = state->totalFrames;
 
-	if (config->beatmap->backgroundPath)
-		state->backgroundPictureIndex = strToLower(getFileName(config->beatmap->backgroundPath));
+	if (config->beatmap->storyBoard.backgroundPath)
+		state->backgroundPictureIndex = strToLower(getFileName(config->beatmap->storyBoard.backgroundPath));
 	if (!state->backgroundPictureIndex || !Dict_getElement(state->images, state->backgroundPictureIndex))
 		display_warning("The beatmap is missing an background picture file\n");
 
