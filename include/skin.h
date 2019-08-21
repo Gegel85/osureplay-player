@@ -15,7 +15,7 @@ typedef struct LoadingPair {
 } LoadingPair;
 
 typedef struct OsuSkin {
-
+	int i; //So MSVC stops crying
 } OsuSkin;
 
 char	*getFileName(char *path);

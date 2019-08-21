@@ -1,6 +1,14 @@
 #include <stdlib.h>
 #include <string.h>
+#ifdef _MSC_VER
+#include <io.h>
+#include <windows.h>
+#ifndef PATH_MAX
+#define PATH_MAX MAX_PATH
+#endif
+#else
 #include <unistd.h>
+#endif
 #include <libavutil/channel_layout.h>
 #include <osu_replay_parser.h>
 #include <osu_map_parser.h>
@@ -161,13 +169,6 @@ void	startReplaySession(ReplayPlayerState *state, const ReplayConfig *config)
 	if (strstr(config->filePath, "\""))
 		display_error("Invalid filename provided: Name cannot contain \"\"\"");
 
-	char	audioPath[strlen(config->filePath) + 5];
-	char	videoPath[strlen(config->filePath) + 5];
-
-	/* Get paths */
-	sprintf(audioPath, "%s.mp2", config->filePath);
-	sprintf(videoPath, "%s.mp4", config->filePath);
-
 	/* register all codecs */
 	avcodec_register_all();
 
@@ -192,13 +193,25 @@ void	startReplaySession(ReplayPlayerState *state, const ReplayConfig *config)
 	if (!state->playingSounds)
 		display_error("Memory allocation error (%lu)\n", (unsigned long)sizeof(*state->playingSounds));
 
-	/* open files */
-	state->videoStream = fopen(videoPath, "wb");
+
+	char	*buffer = malloc(strlen(config->filePath) + 5);
+
+	if (!buffer)
+		display_error("Memory allocation error (%u)\n", strlen(config->filePath) + 5);
+
+	/* Open video file */
+	sprintf(buffer, "%s.mp4", config->filePath);
+	state->videoStream = fopen(buffer, "wb");
 	if (!state->videoStream)
-		display_error("Cannot open %s: %s\n", videoPath, strerror(errno));
-	state->audioStream = fopen(audioPath, "wb");
+		display_error("Cannot open %s: %s\n", buffer, strerror(errno));
+
+	/* Open audio file */
+	sprintf(buffer, "%s.mp2", config->filePath);
+	state->audioStream = fopen(buffer, "wb");
 	if (!state->audioStream)
-		display_error("Cannot open %s: %s\n", audioPath, strerror(errno));
+		display_error("Cannot open %s: %s\n", buffer, strerror(errno));
+
+	free(buffer);
 }
 
 void	destroyAVLibElements(ReplayPlayerState *state)
@@ -254,11 +267,17 @@ void	finishReplaySession(ReplayPlayerState *state, const ReplayConfig *config)
 
 	/* Mix created files */
 #ifdef _WIN32
-	char	commandBuffer[47 + getNbrLen(config->bitRate, 10) + strlen(cwd) * 3 + strlen(config->filePath) * 3];
+	char	*commandBuffer = malloc(47 + getNbrLen(config->bitRate, 10) + strlen(cwd) * 3 + strlen(config->filePath) * 3);
+
+	if (!commandBuffer)
+		display_error("Memory allocation error (%uB)\n", 47 + getNbrLen(config->bitRate, 10) + strlen(cwd) * 3 + strlen(config->filePath) * 3);
 
 	sprintf(commandBuffer, "ffmpeg -y -i \"%s\\%s.mp2\" -i \"%s\\%s.mp4\" -b:v %lu \"%s\\%s\" 1>&2", cwd, config->filePath, cwd, config->filePath, config->bitRate, cwd, config->filePath);
 #else
-	char	commandBuffer[43 + getNbrLen(config->bitRate, 10) + strlen(cwd) + strlen(config->filePath) * 3];
+	char	*commandBuffer = malloc(43 + getNbrLen(config->bitRate, 10) + strlen(cwd) + strlen(config->filePath) * 3);
+
+	if (!commandBuffer)
+		display_error("Memory allocation error (%uB)\n", 43 + getNbrLen(config->bitRate, 10) + strlen(cwd) + strlen(config->filePath) * 3);
 
 	sprintf(commandBuffer, "cd %s && ffmpeg -y -i '%s.mp2' -i '%s.mp4' -b:v %lu '%s' 1>&2", cwd, config->filePath, config->filePath, config->bitRate, config->filePath);
 #endif
@@ -270,19 +289,21 @@ void	finishReplaySession(ReplayPlayerState *state, const ReplayConfig *config)
 	if (code)
 		display_error("Command \"%s\" failed with error code %i\nYou can find %s.mp4 %s.mp2 which are the generated audio and video.", commandBuffer, code, config->filePath, config->filePath);
 
+	free(commandBuffer);
 	if (config->cleanUp) {
 		printf("Cleaning up\n");
 
-		char audioPath[strlen(config->filePath) + 5];
-		char videoPath[strlen(config->filePath) + 5];
+		char *buffer = malloc(strlen(config->filePath) + 5);
 
-		/* Get paths */
-		sprintf(audioPath, "%s.mp2", config->filePath);
-		sprintf(videoPath, "%s.mp4", config->filePath);
+		if (!buffer)
+			display_error("Memory allocation error (%uB)\n", strlen(config->filePath) + 5);
 
 		/* Delete temp files */
-		remove(audioPath);
-		remove(videoPath);
+		sprintf(buffer, "%s.mp2", config->filePath);
+		remove(buffer);
+		sprintf(buffer, "%s.mp4", config->filePath);
+		remove(buffer);
+		free(buffer);
 	}
 }
 

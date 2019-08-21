@@ -7,7 +7,11 @@
 #include <stdio.h>
 #include <assert.h>
 
+#ifdef __PRETTY_FUNCTION__
 #define display_warning(msg, ...) fprintf(stderr, "%s() %s:%u: "msg, __PRETTY_FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__)
+#else
+#define display_warning(msg, ...) fprintf(stderr, "%s() %s:%u: "msg, __FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__)
+#endif
 
 #define display_error(msg, ...) display_warning(msg, ##__VA_ARGS__), abort()
 

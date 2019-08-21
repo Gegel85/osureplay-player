@@ -1,6 +1,10 @@
 #include <malloc.h>
 #include <stdlib.h>
+#ifdef _MSC_VER
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
 #include <string.h>
 #include <stdbool.h>
 #include <math.h>

@@ -94,25 +94,38 @@ add_executable(
 )
 
 if (WIN32)
-	target_link_libraries(
-		${PROJECT_NAME}
-		lzma
-		concatf
-		osumap-parser
-		osureplay-parser
-		${CSFML_LIBRARIES}
-		${libav_LIBRARIES}
-		iconv
-		bcrypt
-		ws2_32
-		ole32
-		secur32
-		z
-	)
+	if (MSVC)
+		target_link_libraries(
+			osureplay_player
+			concatf
+			osumap-parser
+			osureplay-parser
+			${CSFML_LIBRARIES}
+			${libav_LIBRARIES}
+			bcrypt
+			ws2_32
+			ole32
+			secur32
+		)
+	else (MSVC)
+		target_link_libraries(
+			osureplay_player
+			concatf
+			osumap-parser
+			osureplay-parser
+			${CSFML_LIBRARIES}
+			${libav_LIBRARIES}
+			iconv
+			bcrypt
+			ws2_32
+			ole32
+			secur32
+			z
+		)
+	endif (MSVC)
 else (WIN32)
 	target_link_libraries(
-		${PROJECT_NAME}
-		lzma
+		osureplay_player
 		pthread
 		concatf
 		osumap-parser
