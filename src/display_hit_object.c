@@ -109,8 +109,8 @@ void	displaySlider(FrameBuffer *frameBuffer, OsuMap_hitObject *object, unsigned 
 	FrameBuffer_drawImage(
 		frameBuffer,
 		(sfVector2i){
-			points->content[points->length - 1].x + padding.x,
-			points->content[points->length - 1].y + padding.y
+			points->content[length - 1].x + padding.x,
+			points->content[length - 1].y + padding.y
 		},
 		Dict_getElement(
 			images,
@@ -130,17 +130,14 @@ void	displaySlider(FrameBuffer *frameBuffer, OsuMap_hitObject *object, unsigned 
 		0
 	);
 
-	//Display the start od the slider
+	//Display the start of the slider
 	FrameBuffer_drawImage(
 		frameBuffer,
 		(sfVector2i){
 			object->position.x + padding.x,
 			object->position.y + padding.y
 		},
-		Dict_getElement(
-			images,
-			"sliderstartcircle"
-		),
+		Dict_getElement(images, "sliderstartcircle") ?: Dict_getElement(images, "hitcircle"),
 		(sfVector2i){
 			(54.4f - 4.48f * circleSize) * 2,
 			(54.4f - 4.48f * circleSize) * 2
@@ -160,10 +157,7 @@ void	displaySlider(FrameBuffer *frameBuffer, OsuMap_hitObject *object, unsigned 
 			object->position.x + padding.x,
 			object->position.y + padding.y
 		},
-		Dict_getElement(
-			images,
-			"sliderstartcircleoverlay"
-		),
+		Dict_getElement(images, "sliderstartcircleoverlay") ?: Dict_getElement(images, "hitcircleoverlay"),
 		(sfVector2i){
 			(54.4f - 4.48f * (float)circleSize) * 2,
 			(54.4f - 4.48f * (float)circleSize) * 2
