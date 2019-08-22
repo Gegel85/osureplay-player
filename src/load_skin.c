@@ -48,11 +48,18 @@ char	*strToLower(char *str)
 
 bool	loadSkin(const char *folder, Dict *images, Dict *sounds, Dict *loaders)
 {
+	WIN32_FIND_DATA	entry;
 	HANDLE		*hFind = INVALID_HANDLE_VALUE;
+	char		realPath[MAX_PATH + 1];
 	char		*path;
 	LoadingPair	*pair;
-	WIN32_FIND_DATA entry;
 
+	if (strlen(folder) > MAX_PATH - 2) {
+		display_warning("Skin path is too long\n");
+		return false;
+	}
+	sprintf(realPath, "%s\\*", folder);
+	hFind = FindFirstFile(realPath, &entry);
 	if (hFind == INVALID_HANDLE_VALUE) {
 		wchar_t *s = NULL;
 
@@ -99,7 +106,7 @@ bool	loadSkin(const char *folder, Dict *images, Dict *sounds, Dict *loaders)
 		free(path);
 	} while (FindNextFile(hFind, &entry));
 
-	if (GetLastError() == ERROR_NO_MORE_FILES) {
+	if (GetLastError() != ERROR_NO_MORE_FILES) {
 		wchar_t *s = NULL;
 
 		FormatMessageW(

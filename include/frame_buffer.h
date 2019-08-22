@@ -13,7 +13,7 @@
 #define display_warning(msg, ...) fprintf(stderr, "%s() %s:%u: "msg, __FUNCTION__, __FILE__, __LINE__, ##__VA_ARGS__)
 #endif
 
-#define display_error(msg, ...) display_warning(msg, ##__VA_ARGS__), abort()
+#define display_error(msg, ...) display_warning(msg, ##__VA_ARGS__), exit(2)
 
 typedef struct FrameBuffer {
 	sfColor		**content;
