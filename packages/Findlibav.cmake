@@ -37,6 +37,7 @@ IF (NOT libav_INCLUDE_DIRS OR NOT libav_LIBRARIES)
             /usr/local/lib/               # Some more Linux library path
             /usr/local/lib64/             # Some more Linux library path
             ${libav_DIR}/libavdevice/     # libav root directory (if provided)
+            ${libav_DIR}/lib/             # libav root directory (if provided)
             ${libav_DIR}                  # libav root directory (if provided)
             ${CMAKE_MODULE_PATH}/lib/     # Expected to contain the path to this file for Windows10
     )
@@ -50,6 +51,7 @@ IF (NOT libav_INCLUDE_DIRS OR NOT libav_LIBRARIES)
             /usr/local/lib/               # Some more Linux library path
             /usr/local/lib64/             # Some more Linux library path
             ${libav_DIR}/libavformat/     # libav root directory (if provided)
+            ${libav_DIR}/lib/             # libav root directory (if provided)
             ${libav_DIR}                  # libav root directory (if provided)
             ${CMAKE_MODULE_PATH}/lib/     # Expected to contain the path to this file for Windows10
     )
@@ -63,6 +65,7 @@ IF (NOT libav_INCLUDE_DIRS OR NOT libav_LIBRARIES)
             /usr/local/lib/               # Some more Linux library path
             /usr/local/lib64/             # Some more Linux library path
             ${libav_DIR}/libavfilter/     # libav root directory (if provided)
+            ${libav_DIR}/lib/             # libav root directory (if provided)
             ${libav_DIR}                  # libav root directory (if provided)
             ${CMAKE_MODULE_PATH}/lib/     # Expected to contain the path to this file for Windows10
     )
@@ -76,6 +79,7 @@ IF (NOT libav_INCLUDE_DIRS OR NOT libav_LIBRARIES)
             /usr/local/lib/               # Some more Linux library path
             /usr/local/lib64/             # Some more Linux library path
             ${libav_DIR}/libavcodec/      # libav root directory (if provided)
+            ${libav_DIR}/lib/             # libav root directory (if provided)
             ${libav_DIR}                  # libav root directory (if provided)
             ${CMAKE_MODULE_PATH}/lib/     # Expected to contain the path to this file for Windows10
     )
@@ -89,6 +93,7 @@ IF (NOT libav_INCLUDE_DIRS OR NOT libav_LIBRARIES)
             /usr/local/lib/               # Some more Linux library path
             /usr/local/lib64/             # Some more Linux library path
             ${libav_DIR}/libswresample/   # libav root directory (if provided)
+            ${libav_DIR}/lib/             # libav root directory (if provided)
             ${libav_DIR}                  # libav root directory (if provided)
             ${CMAKE_MODULE_PATH}/lib/     # Expected to contain the path to this file for Windows10
     )
@@ -102,6 +107,7 @@ IF (NOT libav_INCLUDE_DIRS OR NOT libav_LIBRARIES)
             /usr/local/lib/               # Some more Linux library path
             /usr/local/lib64/             # Some more Linux library path
             ${libav_DIR}/libswscale/      # libav root directory (if provided)
+            ${libav_DIR}/lib/             # libav root directory (if provided)
             ${libav_DIR}                  # libav root directory (if provided)
             ${CMAKE_MODULE_PATH}/lib/     # Expected to contain the path to this file for Windows10
     )
@@ -115,6 +121,7 @@ IF (NOT libav_INCLUDE_DIRS OR NOT libav_LIBRARIES)
             /usr/local/lib/               # Some more Linux library path
             /usr/local/lib64/             # Some more Linux library path
             ${libav_DIR}/libavutil/       # libav root directory (if provided)
+            ${libav_DIR}/lib/             # libav root directory (if provided)
             ${libav_DIR}                  # libav root directory (if provided)
             ${CMAKE_MODULE_PATH}/lib/     # Expected to contain the path to this file for Windows10
     )
