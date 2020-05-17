@@ -53,6 +53,7 @@ add_library(
 add_executable(
 	osureplay_player
 	src/main.cpp
+	src/version.hpp
 )
 
 if (WIN32)
