@@ -57,6 +57,12 @@ add_executable(
 	src/ReplayPlayer.cpp
 	src/ReplayPlayer.hpp
 	src/Exceptions.hpp
+	src/OsuSkin.cpp
+	src/OsuSkin.hpp
+	src/Sound.cpp
+	src/Sound.hpp
+	src/libav.hpp
+	src/libav.cpp
 )
 
 if (WIN32)
@@ -85,6 +91,8 @@ if (WIN32)
 			ole32
 			secur32
 			z
+			lzma
+			bz2
 		)
 	endif (MSVC)
 else (WIN32)

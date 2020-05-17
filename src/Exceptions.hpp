@@ -8,6 +8,7 @@
 
 #include <exception>
 #include <string>
+#include "libav.hpp"
 
 namespace OsuReplayPlayer
 {
@@ -28,6 +29,20 @@ namespace OsuReplayPlayer
 	class InvalidReplayException : public BaseException {
 	public:
 		InvalidReplayException(const std::string &msg) : BaseException(msg) {};
+	};
+
+	class NoAudioStreamException : public BaseException {
+	public:
+		NoAudioStreamException(const std::string &msg) : BaseException(msg) {};
+	};
+
+	class AvErrorException : public BaseException {
+	public:
+		AvErrorException(const std::string &msg) :
+			BaseException(msg) {};
+		AvErrorException(const std::string &msg, int averror) :
+			BaseException(msg + ": " + getAvErrorCode(averror))
+		{};
 	};
 }
 

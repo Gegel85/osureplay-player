@@ -135,14 +135,6 @@ IF (NOT libav_INCLUDE_DIRS OR NOT libav_LIBRARIES)
 	${libav_SWSCALE}
 	${libav_AVUTIL}
     )
-	message(
-		${libav_AVDEVICE}
-		${libav_AVFORMAT}
-		${libav_AVFILTER}
-		${libav_AVCODEC}
-		${libav_SWRESAMPLE}
-		${libav_SWSCALE}
-		${libav_AVUTIL})
 ENDIF (NOT libav_INCLUDE_DIRS OR NOT libav_LIBRARIES)
 
 IF (libav_INCLUDE_DIRS AND libav_LIBRARIES)
