@@ -29,7 +29,7 @@ IF (NOT libav_INCLUDE_DIRS OR NOT libav_LIBRARIES)
 
     FIND_LIBRARY(libav_AVDEVICE
         NAMES
-		avdevice
+	    avdevice
         PATHS
             /usr/lib64/                   # Default Fedora28 library path
             /usr/lib/                     # Some more Linux library path
@@ -43,7 +43,7 @@ IF (NOT libav_INCLUDE_DIRS OR NOT libav_LIBRARIES)
     )
     FIND_LIBRARY(libav_AVFORMAT
         NAMES
-		avformat
+	    avformat
         PATHS
             /usr/lib64/                   # Default Fedora28 library path
             /usr/lib/                     # Some more Linux library path
@@ -57,7 +57,7 @@ IF (NOT libav_INCLUDE_DIRS OR NOT libav_LIBRARIES)
     )
     FIND_LIBRARY(libav_AVFILTER
         NAMES
-		avfilter
+	    avfilter
         PATHS
             /usr/lib64/                   # Default Fedora28 library path
             /usr/lib/                     # Some more Linux library path
@@ -71,7 +71,7 @@ IF (NOT libav_INCLUDE_DIRS OR NOT libav_LIBRARIES)
     )
     FIND_LIBRARY(libav_AVCODEC
         NAMES
-		avcodec
+	    avcodec
         PATHS
             /usr/lib64/                   # Default Fedora28 library path
             /usr/lib/                     # Some more Linux library path
@@ -85,7 +85,7 @@ IF (NOT libav_INCLUDE_DIRS OR NOT libav_LIBRARIES)
     )
     FIND_LIBRARY(libav_SWRESAMPLE
         NAMES
-		swresample
+	    swresample
         PATHS
             /usr/lib64/                   # Default Fedora28 library path
             /usr/lib/                     # Some more Linux library path
@@ -99,7 +99,7 @@ IF (NOT libav_INCLUDE_DIRS OR NOT libav_LIBRARIES)
     )
     FIND_LIBRARY(libav_SWSCALE
         NAMES
-		swscale
+	    swscale
         PATHS
             /usr/lib64/                   # Default Fedora28 library path
             /usr/lib/                     # Some more Linux library path
@@ -113,7 +113,7 @@ IF (NOT libav_INCLUDE_DIRS OR NOT libav_LIBRARIES)
     )
     FIND_LIBRARY(libav_AVUTIL
         NAMES
-		avutil
+	    avutil
         PATHS
             /usr/lib64/                   # Default Fedora28 library path
             /usr/lib/                     # Some more Linux library path
@@ -135,6 +135,14 @@ IF (NOT libav_INCLUDE_DIRS OR NOT libav_LIBRARIES)
 	${libav_SWSCALE}
 	${libav_AVUTIL}
     )
+	message(
+		${libav_AVDEVICE}
+		${libav_AVFORMAT}
+		${libav_AVFILTER}
+		${libav_AVCODEC}
+		${libav_SWRESAMPLE}
+		${libav_SWSCALE}
+		${libav_AVUTIL})
 ENDIF (NOT libav_INCLUDE_DIRS OR NOT libav_LIBRARIES)
 
 IF (libav_INCLUDE_DIRS AND libav_LIBRARIES)
