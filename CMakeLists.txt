@@ -54,6 +54,9 @@ add_executable(
 	osureplay_player
 	src/main.cpp
 	src/version.hpp
+	src/ReplayPlayer.cpp
+	src/ReplayPlayer.hpp
+	src/Exceptions.hpp
 )
 
 if (WIN32)
