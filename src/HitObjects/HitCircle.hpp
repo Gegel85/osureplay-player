@@ -12,7 +12,7 @@ namespace OsuReplayPlayer::HitObjects
 {
 	class HitCircle : public HitObject {
 	public:
-		HitCircle(const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode);
+		HitCircle(const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode, unsigned &lastComboNbr);
 
 		void draw(RenderTarget &target) override;
 	};

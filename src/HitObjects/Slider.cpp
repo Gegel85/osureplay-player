@@ -6,8 +6,8 @@
 
 namespace OsuReplayPlayer::HitObjects
 {
-	Slider::Slider(const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode) :
-		HitObject(skin, obj, gameMode)
+	Slider::Slider(const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode, unsigned &lastComboNbr) :
+		HitObject(skin, obj, gameMode, lastComboNbr)
 	{
 
 	}

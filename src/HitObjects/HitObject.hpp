@@ -35,9 +35,10 @@ namespace OsuReplayPlayer
 	protected:
 		OsuGameMode _gameMode;
 		const OsuSkin &_skin;
+		unsigned _comboNbr;
 
 	public:
-		HitObject(const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode);
+		HitObject(const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode, unsigned &lastComboNbr);
 
 		bool isNewCombo() const;
 		HitObjectType getType() const;

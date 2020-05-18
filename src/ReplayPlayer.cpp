@@ -160,9 +160,11 @@ namespace OsuReplayPlayer
 
 	void ReplayPlayer::_buildHitObjects()
 	{
+		unsigned lastComboNbr = 1;
+
 		this->_objs.clear();
 		for (unsigned i = 0; i < this->_beatmap.hitObjects.length; i++)
-			this->_objs.push_back(HitObjectFactory::build(this->_skin, this->_beatmap.hitObjects.content[i], this->_replay.mode));
+			this->_objs.push_back(HitObjectFactory::build(this->_skin, this->_beatmap.hitObjects.content[i], this->_replay.mode, lastComboNbr));
 	}
 
 	void ReplayPlayer::run()

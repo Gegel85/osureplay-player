@@ -17,7 +17,7 @@ namespace OsuReplayPlayer
 		return HIT_OBJECT_CIRCLE;
 	}
 
-	HitObject::HitObject(const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode) :
+	HitObject::HitObject(const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode, unsigned &lastComboNbr) :
 		_newCombo(obj.type & HITOBJ_NEW_COMBO),
 		_type(getObjectTypeFromMapValue(obj.type)),
 		_hitSound(obj.hitSound),
@@ -26,7 +26,8 @@ namespace OsuReplayPlayer
 		_position(obj.position),
 		_extra(obj.extra),
 		_gameMode(gameMode),
-		_skin(skin)
+		_skin(skin),
+		_comboNbr(this->_newCombo ? (lastComboNbr = 1) : (++lastComboNbr))
 	{
 
 	}
