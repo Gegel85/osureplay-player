@@ -7,6 +7,7 @@
 #include <iomanip>
 #include "ReplayPlayer.hpp"
 #include "Exceptions.hpp"
+#include "HitObjects/HitObjectFactory.hpp"
 
 namespace OsuReplayPlayer
 {
@@ -22,6 +23,7 @@ namespace OsuReplayPlayer
 			std::cerr << "Beatmap file (" << beatmapPath << ") is not valid: " << this->_beatmap.error << std::endl;
 			throw InvalidBeatmapException(this->_beatmap.error);
 		}
+		this->_buildHitObjects();
 	}
 
 	ReplayPlayer::~ReplayPlayer()
@@ -152,5 +154,12 @@ namespace OsuReplayPlayer
 	OsuSkin &ReplayPlayer::getSkin()
 	{
 		return this->_skin;
+	}
+
+	void ReplayPlayer::_buildHitObjects()
+	{
+		this->_objs.clear();
+		for (unsigned i = 0; i < this->_beatmap.hitObjects.length; i++)
+			this->_objs.push_back(HitObjectFactory::build(this->_skin, this->_beatmap.hitObjects.content[i], this->_replay.mode));
 	}
 }

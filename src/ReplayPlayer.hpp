@@ -10,6 +10,7 @@
 #include <osu_map_parser.hpp>
 #include <osu_replay_parser.hpp>
 #include "OsuSkin.hpp"
+#include "HitObjects/HitObject.hpp"
 
 namespace OsuReplayPlayer
 {
@@ -18,6 +19,9 @@ namespace OsuReplayPlayer
 		OsuSkin _skin;
 		OsuMap _beatmap;
 		OsuReplay _replay;
+		std::vector<std::unique_ptr<HitObject>> _objs;
+
+		void _buildHitObjects();
 
 	public:
 		ReplayPlayer(const std::string &beatmapPath, const std::string &replayPath);
