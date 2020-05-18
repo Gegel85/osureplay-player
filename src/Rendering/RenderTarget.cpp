@@ -3,3 +3,11 @@
 //
 
 #include "RenderTarget.hpp"
+
+namespace OsuReplayPlayer
+{
+	bool RenderTarget::isValid() const
+	{
+		return true;
+	}
+}

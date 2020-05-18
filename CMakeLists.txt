@@ -86,7 +86,7 @@ add_executable(
 	src/HitObjects/HitCircle.hpp
 	src/HitObjects/Spinner.cpp
 	src/HitObjects/Spinner.hpp
-	src/HitObjects/HitObjectFactory.cpp src/HitObjects/HitObjectFactory.hpp)
+	src/HitObjects/HitObjectFactory.cpp src/HitObjects/HitObjectFactory.hpp src/Rendering/SfmlWindowRenderTarget.cpp src/Rendering/SfmlWindowRenderTarget.hpp)
 
 if (WIN32)
 	if (MSVC)
