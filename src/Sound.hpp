@@ -24,7 +24,7 @@ namespace OsuReplayPlayer
 		Sound(const std::string &path, int64_t sample_rate = SAMPLE_RATE);
 		unsigned int getNbChannels() const;
 		int64_t getSampleRate() const;
-		std::vector<short> operator[](unsigned int index) const;
+		const std::vector<short> &operator[](unsigned int index) const;
 		const sf::SoundBuffer &getBuffer() const;
 	};
 }

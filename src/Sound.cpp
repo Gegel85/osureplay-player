@@ -124,7 +124,7 @@ namespace OsuReplayPlayer
 		return this->_sampleRate;
 	}
 
-	std::vector<short> Sound::operator[](unsigned int index) const
+	const std::vector<short> &Sound::operator[](unsigned int index) const
 	{
 		return this->_data[index];
 	}
