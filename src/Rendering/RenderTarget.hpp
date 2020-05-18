@@ -16,6 +16,7 @@ namespace OsuReplayPlayer
 	public:
 		virtual ~RenderTarget() = default;
 		virtual void clear(sf::Color color) = 0;
+		virtual void drawPixel(sf::Vector2u pos, sf::Color color) = 0;
 		virtual void drawPoint(sf::Vector2f pos, sf::Color color) = 0;
 		virtual void drawRectangle(sf::Vector2i pos, sf::Vector2u size, sf::Color color) = 0;
 		virtual void drawFilledRectangle(sf::Vector2i pos, sf::Vector2u size, sf::Color color) = 0;
