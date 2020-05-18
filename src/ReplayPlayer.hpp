@@ -16,19 +16,24 @@ namespace OsuReplayPlayer
 {
 	class ReplayPlayer {
 	private:
+		unsigned _fps;
 		OsuSkin _skin;
 		OsuMap _beatmap;
 		OsuReplay _replay;
+		RenderTarget &_target;
 		std::vector<std::unique_ptr<HitObject>> _objs;
 
 		void _buildHitObjects();
 
 	public:
-		ReplayPlayer(const std::string &beatmapPath, const std::string &replayPath);
+		ReplayPlayer(RenderTarget &target, const std::string &beatmapPath, const std::string &replayPath, unsigned fps = 60);
 		~ReplayPlayer();
 		void displayMapInfos();
 		void displayReplayInfos();
 		OsuSkin &getSkin();
+		const OsuMap &getBeatmap() const;
+		const OsuReplay &getReplay() const;
+		void run();
 	};
 }
 

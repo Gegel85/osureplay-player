@@ -11,9 +11,11 @@
 
 namespace OsuReplayPlayer
 {
-	ReplayPlayer::ReplayPlayer(const std::string &beatmapPath, const std::string &replayPath) :
+	ReplayPlayer::ReplayPlayer(RenderTarget &target, const std::string &beatmapPath, const std::string &replayPath, unsigned fps) :
+		_fps(fps),
 		_beatmap(OsuMap_parseMapFile(beatmapPath.c_str())),
-		_replay(OsuReplay_parseReplayFile(replayPath.c_str()))
+		_replay(OsuReplay_parseReplayFile(replayPath.c_str())),
+		_target(target)
 	{
 		if (this->_replay.error) {
 			std::cerr << "Replay file (" << replayPath << ") is not valid: " << this->_replay.error << std::endl;
@@ -161,5 +163,23 @@ namespace OsuReplayPlayer
 		this->_objs.clear();
 		for (unsigned i = 0; i < this->_beatmap.hitObjects.length; i++)
 			this->_objs.push_back(HitObjectFactory::build(this->_skin, this->_beatmap.hitObjects.content[i], this->_replay.mode));
+	}
+
+	void ReplayPlayer::run()
+	{
+		while (this->_target.isValid()) {
+			this->_target.clear(sf::Color::Black);
+			this->_target.renderFrame();
+		}
+	}
+
+	const OsuMap &ReplayPlayer::getBeatmap() const
+	{
+		return this->_beatmap;
+	}
+
+	const OsuReplay &ReplayPlayer::getReplay() const
+	{
+		return this->_replay;
 	}
 }

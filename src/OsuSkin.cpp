@@ -21,11 +21,15 @@ namespace OsuReplayPlayer
 			const auto &extension = p.extension().string();
 
 			if (OsuSkin::_handlers.find(extension) == OsuSkin::_handlers.end()) {
+#ifdef _DEBUG
 				std::cout << "File " << p.string() << " ignored because the extension '" << extension << "' is not recognized as a media format." << std::endl;
+#endif
 				continue;
 			}
 
+#ifdef _DEBUG
 			std::cout << "Loading file " << p.string() << std::endl;
+#endif
 			if (p.has_extension())
 				try {
 					OsuSkin::_handlers.at(extension)(this, p.string());
