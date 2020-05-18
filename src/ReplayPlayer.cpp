@@ -32,6 +32,7 @@ namespace OsuReplayPlayer
 
 	void ReplayPlayer::displayMapInfos()
 	{
+		std::cout << "File version: " << this->_beatmap.fileVersion << std::endl;
 		std::cout << "[General infos]" << std::endl;
 		std::cout << "Audio file name: " << this->_beatmap.generalInfos.audioFileName << std::endl;
 		std::cout << "Audio lead in: " << this->_beatmap.generalInfos.audioLeadIn << std::endl;

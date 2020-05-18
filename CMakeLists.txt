@@ -63,7 +63,13 @@ add_executable(
 	src/Sound.hpp
 	src/libav.hpp
 	src/libav.cpp
-	src/Utils.cpp src/Utils.hpp)
+	src/Utils.cpp
+	src/Utils.hpp
+	src/HitObjects/HitObject.cpp
+	src/HitObjects/HitObject.hpp
+	src/Rendering/RenderTarget.cpp
+	src/Rendering/RenderTarget.hpp
+)
 
 if (WIN32)
 	if (MSVC)
