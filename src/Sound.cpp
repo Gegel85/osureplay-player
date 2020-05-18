@@ -2,6 +2,8 @@
 // Created by Gegel85 on 17/05/2020.
 //
 
+#include <sstream>
+#include <cassert>
 #include "libav.hpp"
 #include "Sound.hpp"
 #include "Exceptions.hpp"
@@ -10,6 +12,9 @@ namespace OsuReplayPlayer
 {
 	Sound::Sound(const std::string &path, int64_t sample_rate)
 	{
+		size_t maxSize = 0;
+		std::vector<short> _result;
+
 		this->_buffer.loadFromFile(path);
 
 		// initialize all muxers, demuxers and protocols for libavformat
@@ -31,8 +36,6 @@ namespace OsuReplayPlayer
 		// Find the index of the first audio stream
 		for (size_t stream_index = 0; stream_index < format->nb_streams; stream_index++) {
 			if (format->streams[stream_index]->codec->codec_type == AVMEDIA_TYPE_AUDIO) {
-				this->_nbChannels++;
-
 				std::vector<short> buff;
 				AVStream *stream = format->streams[stream_index];
 
@@ -74,15 +77,20 @@ namespace OsuReplayPlayer
 
 					// resample frames
 					short *buffer;
+
 					av_samples_alloc((uint8_t**) &buffer, NULL, 1, frame->nb_samples, AV_SAMPLE_FMT_S16, 0);
+
 					int frame_count = swr_convert(swr, (uint8_t**) &buffer, frame->nb_samples, (const uint8_t**) frame->data, frame->nb_samples);
 
 					// append resampled frames to data
 					auto oldSize = buff.size();
-					buff.resize(buff.size() + frame->nb_samples);
-					for (auto i = 0; i < frame->nb_samples; i++)
+					buff.resize(buff.size() + frame_count);
+					for (auto i = 0; i < frame_count; i++)
 						buff[oldSize + i] = buffer[i];
 				}
+
+				this->_data.push_back(buff);
+				maxSize = std::max(maxSize, buff.size());
 
 				// clean up
 				av_frame_free(&frame);
@@ -90,15 +98,25 @@ namespace OsuReplayPlayer
 				avcodec_close(codec);
 			}
 		}
-		if (!this->_nbChannels)
-			NoAudioStreamException("Could not retrieve audio stream from file '" + path + "'");
-
 		avformat_free_context(format);
+
+		if (this->_data.empty())
+			throw NoAudioStreamException("Could not retrieve audio stream from file '" + path + "'");
+
+		if (maxSize == 0)
+			return;
+
+		_result.resize(maxSize * this->_data.size(), 0);
+		for (unsigned i = 0; i < this->_data.size(); i++)
+			for (unsigned j = 0; j < this->_data[i].size(); j++)
+				_result[maxSize * i + j] = this->_data[i][j];
+
+		assert(this->_buffer.loadFromSamples(_result.data(), maxSize, this->_data.size(), sample_rate));
 	}
 
 	unsigned int Sound::getNbChannels() const
 	{
-		return this->_nbChannels;
+		return this->_data.size();
 	}
 
 	int64_t OsuReplayPlayer::Sound::getSampleRate() const

@@ -15,7 +15,6 @@ namespace OsuReplayPlayer
 {
 	class Sound {
 	private:
-		unsigned _nbChannels = 0;
 		int64_t _sampleRate = 0;
 		std::vector<std::vector<short>> _data;
 		sf::SoundBuffer _buffer;
