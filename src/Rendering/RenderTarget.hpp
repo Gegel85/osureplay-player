@@ -15,6 +15,7 @@ namespace OsuReplayPlayer
 	class RenderTarget {
 	public:
 		virtual ~RenderTarget() = default;
+		virtual sf::Vector2u getSize() const = 0;
 		virtual void clear(sf::Color color) = 0;
 		virtual void drawPixel(sf::Vector2u pos, sf::Color color) = 0;
 		virtual void drawPoint(sf::Vector2f pos, sf::Color color) = 0;
