@@ -80,7 +80,13 @@ add_executable(
 	src/HitObjects/HitObject.hpp
 	src/Rendering/RenderTarget.cpp
 	src/Rendering/RenderTarget.hpp
-)
+	src/HitObjects/Slider.cpp
+	src/HitObjects/Slider.hpp
+	src/HitObjects/HitCircle.cpp
+	src/HitObjects/HitCircle.hpp
+	src/HitObjects/Spinner.cpp
+	src/HitObjects/Spinner.hpp
+	src/HitObjects/HitObjectFactory.cpp src/HitObjects/HitObjectFactory.hpp)
 
 if (WIN32)
 	if (MSVC)
