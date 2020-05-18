@@ -4,6 +4,17 @@ project(osureplay_player)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/packages)
 
+if ("${CMAKE_BUILD_TYPE}" STREQUAL Debug)
+	if (CMAKE_COMPILER_IS_GNUCC)
+		add_compile_options(-Wall -Wextra -W -g -D_DEBUG)
+	endif (CMAKE_COMPILER_IS_GNUCC)
+endif ()
+if ("${CMAKE_BUILD_TYPE}" STREQUAL Release)
+	if (CMAKE_COMPILER_IS_GNUCC)
+		add_compile_options(-DNDEBUG -O2)
+	endif (CMAKE_COMPILER_IS_GNUCC)
+endif ()
+
 find_package(SFML REQUIRED)
 find_package(libav REQUIRED)
 
