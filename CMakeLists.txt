@@ -63,7 +63,7 @@ add_executable(
 	src/Sound.hpp
 	src/libav.hpp
 	src/libav.cpp
-)
+	src/Utils.cpp src/Utils.hpp)
 
 if (WIN32)
 	if (MSVC)

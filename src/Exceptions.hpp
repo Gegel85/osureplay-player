@@ -31,6 +31,11 @@ namespace OsuReplayPlayer
 		InvalidReplayException(const std::string &msg) : BaseException(msg) {};
 	};
 
+	class ImageLoadingFailedException : public BaseException {
+	public:
+		ImageLoadingFailedException(const std::string &msg) : BaseException(msg) {};
+	};
+
 	class NoAudioStreamException : public BaseException {
 	public:
 		NoAudioStreamException(const std::string &msg) : BaseException(msg) {};

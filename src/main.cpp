@@ -3,6 +3,7 @@
 //
 
 #include <iostream>
+#include <filesystem>
 #include "version.hpp"
 #include "ReplayPlayer.hpp"
 
@@ -23,5 +24,7 @@ int main(int argc, char **argv)
 	std::cout << "Map file: " << argv[2] << std::endl;
 	state.displayMapInfos();
 
+	state.getSkin().addFolder("default_skin");
+	state.getSkin().addFolder(std::filesystem::path(argv[2]).parent_path().string());
 	return EXIT_SUCCESS;
 }

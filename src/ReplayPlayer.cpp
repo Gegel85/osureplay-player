@@ -122,7 +122,7 @@ namespace OsuReplayPlayer
 
 		std::cout << "[Storyboard]" << std::endl;
 		std::cout << "Background path: " << this->_beatmap.storyBoard.backgroundPath << std::endl;
-		std::cout << "Video path: " << this->_beatmap.storyBoard.videoPath << std::endl;
+		std::cout << "Video path: " << (this->_beatmap.storyBoard.videoPath ?: "Not specified") << std::endl;
 		std::cout << this->_beatmap.storyBoard.storyboardEvents.length << " events." << std::endl;
 	}
 
@@ -146,5 +146,10 @@ namespace OsuReplayPlayer
 		std::cout << "Timestamp: " << std::hex << this->_replay.timestamp << std::endl;
 		std::cout << "Something: " << this->_replay.something << std::endl;
 		std::cout << "Replay length: " << std::dec << this->_replay.replayLength << std::endl << std::endl;
+	}
+
+	OsuSkin &ReplayPlayer::getSkin()
+	{
+		return this->_skin;
 	}
 }

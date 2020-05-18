@@ -9,11 +9,13 @@
 #include <string>
 #include <osu_map_parser.hpp>
 #include <osu_replay_parser.hpp>
+#include "OsuSkin.hpp"
 
 namespace OsuReplayPlayer
 {
 	class ReplayPlayer {
 	private:
+		OsuSkin _skin;
 		OsuMap _beatmap;
 		OsuReplay _replay;
 
@@ -22,6 +24,7 @@ namespace OsuReplayPlayer
 		~ReplayPlayer();
 		void displayMapInfos();
 		void displayReplayInfos();
+		OsuSkin &getSkin();
 	};
 }
 
