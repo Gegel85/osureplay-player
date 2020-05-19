@@ -7,8 +7,8 @@
 namespace OsuReplayPlayer::HitObjects
 {
 
-	Spinner::Spinner(const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode, unsigned &lastComboNbr) :
-		HitObject(skin, obj, gameMode, lastComboNbr)
+	Spinner::Spinner(const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode, MapState &state) :
+		HitObject(skin, obj, gameMode, state)
 	{
 
 	}

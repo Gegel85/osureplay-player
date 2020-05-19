@@ -20,6 +20,12 @@ namespace OsuReplayPlayer
 		HIT_OBJECT_MANIA_LONG_NOTE
 	};
 
+	struct MapState {
+		unsigned lastComboNbr;
+		unsigned lastColor;
+		OsuMap_colorArray colors;
+	};
+
 	HitObjectType getObjectTypeFromMapValue(unsigned char);
 
 	class HitObject {
@@ -36,9 +42,10 @@ namespace OsuReplayPlayer
 		OsuGameMode _gameMode;
 		const OsuSkin &_skin;
 		unsigned _comboNbr;
+		OsuMap_color _color;
 
 	public:
-		HitObject(const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode, unsigned &lastComboNbr);
+		HitObject(const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode, MapState &state);
 
 		bool isNewCombo() const;
 		HitObjectType getType() const;
