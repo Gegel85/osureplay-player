@@ -28,7 +28,7 @@ namespace OsuReplayPlayer
 		void drawPoint(sf::Vector2f pos, sf::Color color) override;
 		void drawRectangle(sf::Vector2i pos, sf::Vector2u size, unsigned thickness, sf::Color color) override;
 		void drawFilledRectangle(sf::Vector2i pos, sf::Vector2u size, sf::Color color) override;
-		void drawImage(sf::Vector2i pos, sf::Image &image, sf::Vector2i newSize, sf::Color tint, bool centered, float rotation) override;
+		void drawImage(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize, sf::Color tint, bool centered, float rotation) override;
 		void drawCircle(unsigned thickness, sf::Vector2i pos, float radius, sf::Color color) override;
 		void drawFilledCircle(sf::Vector2i pos, float radius, sf::Color color) override;
 		void renderFrame() override;

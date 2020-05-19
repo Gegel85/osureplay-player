@@ -161,22 +161,45 @@ namespace OsuReplayPlayer
 	void ReplayPlayer::_buildHitObjects()
 	{
 		MapState state{
-			.lastComboNbr =  1,
-			.lastColor =  0,
-			.colors = this->_beatmap.colors
+			.lastComboNbr = 1,
+			.lastColor = 0,
+			.gameMode = this->_replay.mode,
+			.skin = this->_skin,
+			.colors = this->_beatmap.colors,
+			.infos = this->_beatmap.difficulty,
 		};
 
 		this->_objs.clear();
 		for (unsigned i = 0; i < this->_beatmap.hitObjects.length; i++)
-			this->_objs.push_back(HitObjectFactory::build(this->_skin, this->_beatmap.hitObjects.content[i], this->_replay.mode, state));
+			this->_objs.push_back(HitObjectFactory::build(this->_beatmap.hitObjects.content[i], state));
 	}
 
 	void ReplayPlayer::run()
 	{
 		while (this->_target.isValid()) {
 			this->_target.clear(sf::Color::Black);
+			this->_state.elapsedTime += ((this->_replay.mods & MODE_DOUBLE_TIME) || (this->_replay.mods & MODE_NIGHTCORE) ? 1500. : 1000.) / this->_fps;
+			for (int i = this->_getLastObjToDisplay() - 1; (unsigned)i >= this->_state.currentGameHitObject && i >= 0; i--)
+				this->_objs[i]->draw(this->_target, this->_state);
 			this->_target.renderFrame();
 		}
+	}
+
+	unsigned ReplayPlayer::_getLastObjToDisplay()
+	{
+		unsigned end = this->_state.currentGameHitObject;
+
+		while (true) {
+			if (end >= this->_objs.size())
+				break;
+
+			auto time = this->_objs[end]->getTimeToAppear();
+
+			if (time >= 800 && time - 800 > this->_state.elapsedTime)
+				break;
+			end++;
+		}
+		return end;
 	}
 
 	const OsuMap &ReplayPlayer::getBeatmap() const

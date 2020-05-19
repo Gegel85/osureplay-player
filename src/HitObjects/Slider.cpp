@@ -6,13 +6,13 @@
 
 namespace OsuReplayPlayer::HitObjects
 {
-	Slider::Slider(const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode, MapState &state) :
-		HitObject(skin, obj, gameMode, state)
+	Slider::Slider(const OsuMap_hitObject &obj, MapState &state) :
+		HitObject(obj, state)
 	{
 
 	}
 
-	void Slider::draw(RenderTarget &target)
+	void Slider::draw(RenderTarget &target, const ReplayState &state)
 	{
 
 	}

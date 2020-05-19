@@ -65,12 +65,12 @@ namespace OsuReplayPlayer
 		this->draw(this->_rect);
 	}
 
-	void SFMLWindowRenderTarget::drawImage(sf::Vector2i pos, sf::Image &image, sf::Vector2i newSize, sf::Color tint, bool centered, float rotation)
+	void SFMLWindowRenderTarget::drawImage(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize, sf::Color tint, bool centered, float rotation)
 	{
 		sf::Vector2u size = image.getSize();
 		sf::Vector2f scale = {
-			newSize.x < 0 ? 1 : static_cast<float>(newSize.x / size.x),
-			newSize.y < 0 ? 1 : static_cast<float>(newSize.y / size.y)
+			newSize.x < 0 ? 1 : static_cast<float>(newSize.x) / (size.x ?: 1),
+			newSize.y < 0 ? 1 : static_cast<float>(newSize.y) / (size.y ?: 1)
 		};
 
 		if (centered)
@@ -81,6 +81,7 @@ namespace OsuReplayPlayer
 		this->_sprite.setScale(scale);
 		this->_sprite.setColor(tint);
 		this->_sprite.setRotation(rotation);
+		this->draw(this->_sprite);
 	}
 
 	void SFMLWindowRenderTarget::drawCircle(unsigned thickness, sf::Vector2i pos, float radius, sf::Color color)

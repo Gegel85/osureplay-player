@@ -12,9 +12,9 @@ namespace OsuReplayPlayer::HitObjects
 {
 	class Spinner : public HitObject {
 	public:
-		Spinner(const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode, MapState &state);
+		Spinner(const OsuMap_hitObject &obj, MapState &state);
 
-		void draw(RenderTarget &target) override;
+		void draw(RenderTarget &target, const ReplayState &state) override;
 	};
 }
 

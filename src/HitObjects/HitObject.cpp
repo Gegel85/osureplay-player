@@ -17,7 +17,7 @@ namespace OsuReplayPlayer
 		return HIT_OBJECT_CIRCLE;
 	}
 
-	HitObject::HitObject(const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode, MapState &state) :
+	HitObject::HitObject(const OsuMap_hitObject &obj, MapState &state) :
 		_newCombo(obj.type & HITOBJ_NEW_COMBO),
 		_type(getObjectTypeFromMapValue(obj.type)),
 		_hitSound(obj.hitSound),
@@ -25,10 +25,12 @@ namespace OsuReplayPlayer
 		_timeToAppear(obj.timeToAppear),
 		_position(obj.position),
 		_extra(obj.extra),
-		_gameMode(gameMode),
-		_skin(skin),
 		_comboNbr(this->_newCombo ? (state.lastComboNbr = 1) : (++state.lastComboNbr)),
-		_color(this->_newCombo ? (state.colors.content[state.lastColor = (state.lastColor + 1 + this->_colorSkip) % state.colors.length]) : state.colors.content[state.lastColor])
+		_mods(0),
+		_gameMode(state.gameMode),
+		_color(this->_newCombo ? (state.colors.content[state.lastColor = (state.lastColor + 1 + this->_colorSkip) % state.colors.length]) : state.colors.content[state.lastColor]),
+		_skin(state.skin),
+		_difficulty(state.infos)
 	{
 
 	}
@@ -66,5 +68,12 @@ namespace OsuReplayPlayer
 	const OsuMap_hitObjectAddition &HitObject::getExtra() const
 	{
 		return this->_extra;
+	}
+
+	unsigned char	HitObject::calcAlpha(unsigned long totalTicks)
+	{
+		if (static_cast<long>(this->_timeToAppear - totalTicks) <= 400)
+			return BASE_OBJ_ALPHA;
+		return static_cast<long>(this->_timeToAppear - totalTicks - 400) * -BASE_OBJ_ALPHA / 400 + BASE_OBJ_ALPHA;
 	}
 }

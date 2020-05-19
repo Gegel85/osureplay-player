@@ -12,9 +12,9 @@ namespace OsuReplayPlayer::HitObjects
 {
 	class Slider : public HitObject {
 	public:
-		Slider(const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode, MapState &state);
+		Slider(const OsuMap_hitObject &obj, MapState &state);
 
-		void draw(RenderTarget &target) override;
+		void draw(RenderTarget &target, const ReplayState &state) override;
 	};
 }
 

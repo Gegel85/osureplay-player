@@ -11,6 +11,8 @@
 #include "../OsuSkin.hpp"
 #include "../Rendering/RenderTarget.hpp"
 
+#define BASE_OBJ_ALPHA 255
+
 namespace OsuReplayPlayer
 {
 	enum HitObjectType {
@@ -23,8 +25,13 @@ namespace OsuReplayPlayer
 	struct MapState {
 		unsigned lastComboNbr;
 		unsigned lastColor;
-		OsuMap_colorArray colors;
+		OsuGameMode gameMode;
+		const OsuSkin &skin;
+		const OsuMap_colorArray &colors;
+		const OsuMap_difficultyInfos &infos;
 	};
+
+	struct ReplayState;
 
 	HitObjectType getObjectTypeFromMapValue(unsigned char);
 
@@ -39,13 +46,15 @@ namespace OsuReplayPlayer
 		OsuMap_hitObjectAddition _extra;
 
 	protected:
-		OsuGameMode _gameMode;
-		const OsuSkin &_skin;
 		unsigned _comboNbr;
+		unsigned char _mods;
+		OsuGameMode _gameMode;
 		OsuMap_color _color;
+		const OsuSkin &_skin;
+		OsuMap_difficultyInfos _difficulty;
 
 	public:
-		HitObject(const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode, MapState &state);
+		HitObject(const OsuMap_hitObject &obj, MapState &state);
 
 		bool isNewCombo() const;
 		HitObjectType getType() const;
@@ -54,8 +63,9 @@ namespace OsuReplayPlayer
 		unsigned long getTimeToAppear() const;
 		OsuIntegerVector getPosition() const;
 		const OsuMap_hitObjectAddition &getExtra() const;
+		unsigned char calcAlpha(unsigned long totalTicks);
 
-		virtual void draw(RenderTarget &target) = 0;
+		virtual void draw(RenderTarget &target, const ReplayState &state) = 0;
 	};
 }
 

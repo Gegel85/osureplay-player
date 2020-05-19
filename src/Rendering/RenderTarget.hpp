@@ -22,7 +22,7 @@ namespace OsuReplayPlayer
 		virtual void drawPoint(sf::Vector2f pos, sf::Color color) = 0;
 		virtual void drawRectangle(sf::Vector2i pos, sf::Vector2u size, unsigned thickness, sf::Color color) = 0;
 		virtual void drawFilledRectangle(sf::Vector2i pos, sf::Vector2u size, sf::Color color) = 0;
-		virtual void drawImage(sf::Vector2i pos, sf::Image &image, sf::Vector2i newSize, sf::Color tint, bool centered, float rotation) = 0;
+		virtual void drawImage(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize, sf::Color tint, bool centered, float rotation) = 0;
 		virtual void drawCircle(unsigned thickness, sf::Vector2i pos, float radius, sf::Color color) = 0;
 		virtual void drawFilledCircle(sf::Vector2i pos, float radius, sf::Color color) = 0;
 		virtual void renderFrame() = 0;

@@ -15,6 +15,8 @@ namespace OsuReplayPlayer
 {
 	class OsuSkin {
 	private:
+		Sound _emptySound;
+		sf::Image _emptyImage;
 		std::map<std::string, Sound> _sounds;
 		std::map<std::string, sf::Image> _images;
 
@@ -24,6 +26,8 @@ namespace OsuReplayPlayer
 		void addImage(const std::string &path);
 		void addSound(const std::string &path);
 		void addFolder(const std::string &path);
+		const Sound &getSound(const std::string &name) const;
+		const sf::Image &getImage(const std::string &name) const;
 	};
 }
 

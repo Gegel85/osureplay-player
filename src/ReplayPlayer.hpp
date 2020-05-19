@@ -14,16 +14,23 @@
 
 namespace OsuReplayPlayer
 {
+	struct ReplayState {
+		double elapsedTime = 0;
+		unsigned currentGameHitObject = 0;
+	};
+
 	class ReplayPlayer {
 	private:
 		unsigned _fps;
 		OsuSkin _skin;
 		OsuMap _beatmap;
 		OsuReplay _replay;
+		ReplayState _state;
 		RenderTarget &_target;
 		std::vector<std::unique_ptr<HitObject>> _objs;
 
 		void _buildHitObjects();
+		unsigned _getLastObjToDisplay();
 
 	public:
 		ReplayPlayer(RenderTarget &target, const std::string &beatmapPath, const std::string &replayPath, unsigned fps = 60);

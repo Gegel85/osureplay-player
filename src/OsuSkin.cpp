@@ -87,4 +87,22 @@ namespace OsuReplayPlayer
 			std::cerr << "Warning: " << path << " will replace the previously loaded sound " << name << "." << std::endl;
 		this->_sounds.emplace(name, path);
 	}
+
+	const Sound &OsuSkin::getSound(const std::string &name) const
+	{
+		try {
+			return this->_sounds.at(name);
+		} catch (std::out_of_range &) {
+			return this->_emptySound;
+		}
+	}
+
+	const sf::Image &OsuSkin::getImage(const std::string &name) const
+	{
+		try {
+			return this->_images.at(name);
+		} catch (std::out_of_range &) {
+			return this->_emptyImage;
+		}
+	}
 }

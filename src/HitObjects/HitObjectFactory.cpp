@@ -9,25 +9,25 @@
 
 namespace OsuReplayPlayer
 {
-	const std::vector<std::function<HitObject *(const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode, MapState &state)>> HitObjectFactory::_builders{
-		[](const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode, MapState &state){ //HIT_OBJECT_CIRCLE
-			return new HitObjects::HitCircle(skin, obj, gameMode, state);
+	const std::vector<std::function<HitObject *(const OsuMap_hitObject &obj, MapState &state)>> HitObjectFactory::_builders{
+		[](const OsuMap_hitObject &obj, MapState &state){ //HIT_OBJECT_CIRCLE
+			return new HitObjects::HitCircle(obj, state);
 		},
-		[](const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode, MapState &state){ //HIT_OBJECT_SLIDER
-			return new HitObjects::Slider(skin, obj, gameMode, state);
+		[](const OsuMap_hitObject &obj, MapState &state){ //HIT_OBJECT_SLIDER
+			return new HitObjects::Slider(obj, state);
 		},
-		[](const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode, MapState &state){ //HIT_OBJECT_SPINNER
-			return new HitObjects::Spinner(skin, obj, gameMode, state);
+		[](const OsuMap_hitObject &obj, MapState &state){ //HIT_OBJECT_SPINNER
+			return new HitObjects::Spinner(obj, state);
 		},
-		[](const OsuSkin &, const OsuMap_hitObject &, OsuGameMode, MapState &){ //HIT_OBJECT_MANIA_LONG_NOTE
+		[](const OsuMap_hitObject &, MapState &){ //HIT_OBJECT_MANIA_LONG_NOTE
 			return nullptr;
 		}
 	};
 
-	std::unique_ptr<HitObject> HitObjectFactory::build(const OsuSkin &skin, const OsuMap_hitObject &obj, OsuGameMode gameMode, MapState &state)
+	std::unique_ptr<HitObject> HitObjectFactory::build(const OsuMap_hitObject &obj, MapState &state)
 	{
 		return std::unique_ptr<HitObject>(
-			HitObjectFactory::_builders[getObjectTypeFromMapValue(obj.type)](skin, obj, gameMode, state)
+			HitObjectFactory::_builders[getObjectTypeFromMapValue(obj.type)](obj, state)
 		);
 	}
 }
