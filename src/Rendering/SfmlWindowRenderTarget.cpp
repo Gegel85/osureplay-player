@@ -68,9 +68,13 @@ namespace OsuReplayPlayer
 	void SFMLWindowRenderTarget::drawImage(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize, sf::Color tint, bool centered, float rotation)
 	{
 		sf::Vector2u size = image.getSize();
+
+		if (!size.x || !size.y)
+			return;
+
 		sf::Vector2f scale = {
-			newSize.x < 0 ? 1 : static_cast<float>(newSize.x) / (size.x ?: 1),
-			newSize.y < 0 ? 1 : static_cast<float>(newSize.y) / (size.y ?: 1)
+			newSize.x < 0 ? 1 : static_cast<float>(newSize.x) / size.x,
+			newSize.y < 0 ? 1 : static_cast<float>(newSize.y) / size.y
 		};
 
 		if (centered)

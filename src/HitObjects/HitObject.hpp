@@ -53,6 +53,9 @@ namespace OsuReplayPlayer
 		const OsuSkin &_skin;
 		OsuMap_difficultyInfos _difficulty;
 
+		void _displayApproachCircle(RenderTarget &target, float baseRadius, unsigned char alpha, unsigned long totalTicks);
+		void _displayComboNumber(RenderTarget &target, unsigned char alpha);
+
 	public:
 		HitObject(const OsuMap_hitObject &obj, MapState &state);
 

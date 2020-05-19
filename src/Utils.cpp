@@ -28,4 +28,42 @@ namespace OsuReplayPlayer::Utils {
 		return "Unknown exception";
 #endif
 	}
+
+	void displayStr(const std::string &str, RenderTarget &target, const OsuSkin &skin, sf::Vector2i pos, unsigned char alpha, unsigned textSize, const std::string &font)
+	{
+		sf::Vector2u size  = getTextSize(str, textSize);
+		std::string displayed;
+
+		for (char c : str) {
+			displayed += c;
+			target.drawImage(
+				{
+					static_cast<int>(pos.x - size.x / 2 + getTextSize(displayed, textSize).x - 7.5),
+					static_cast<int>(pos.y - size.y / 2 + getTextSize(displayed, textSize).y - 7.5),
+				},
+				skin.getImage(font + "-" + c),
+				{static_cast<int>(textSize), static_cast<int>(textSize)},
+				{255, 255, 255, alpha},
+				true,
+				0
+			);
+		}
+	}
+
+	sf::Vector2u getTextSize(const std::string &str, unsigned charSize)
+	{
+		unsigned     buffer = 0;
+		sf::Vector2u size = {0, charSize};
+
+		for (char c : str) {
+			if (c == '\n') {
+				size.y += charSize;
+				size.x = std::max(size.x, buffer);
+				buffer = 0;
+			} else
+				buffer += charSize;
+		}
+		size.x = std::max(size.x, buffer);
+		return size;
+	}
 }

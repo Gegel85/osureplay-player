@@ -3,6 +3,7 @@
 //
 
 #include "HitObject.hpp"
+#include "../Utils.hpp"
 
 namespace OsuReplayPlayer
 {
@@ -75,5 +76,46 @@ namespace OsuReplayPlayer
 		if (static_cast<long>(this->_timeToAppear - totalTicks) <= 400)
 			return BASE_OBJ_ALPHA;
 		return static_cast<long>(this->_timeToAppear - totalTicks - 400) * -BASE_OBJ_ALPHA / 400 + BASE_OBJ_ALPHA;
+	}
+
+	void HitObject::_displayApproachCircle(RenderTarget &target, float baseRadius, unsigned char alpha, unsigned long totalTicks)
+	{
+		if (this->_timeToAppear < totalTicks)
+			return;
+
+		float radius = baseRadius + (this->_timeToAppear - totalTicks) / 8.f;
+
+		target.drawImage(
+			{
+				this->_position.x,
+				this->_position.y
+			},
+			this->_skin.getImage("approachcircle"),
+			{
+				static_cast<int>(radius * 2),
+				static_cast<int>(radius * 2)
+			},
+			{
+				this->_color.red,
+				this->_color.green,
+				this->_color.blue,
+				alpha
+			},
+			true,
+			0
+		);
+	}
+
+	void HitObject::_displayComboNumber(RenderTarget &target, unsigned char alpha)
+	{
+		Utils::displayStr(
+			std::to_string(this->_comboNbr),
+			target,
+			this->_skin,
+			{this->_position.x, this->_position.y},
+			alpha,
+			15,
+			"default"
+		);
 	}
 }

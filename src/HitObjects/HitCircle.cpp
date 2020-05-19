@@ -19,8 +19,8 @@ namespace OsuReplayPlayer::HitObjects
 
 		target.drawImage(
 			{
-				static_cast<int>(this->getPosition().x + radius),
-				static_cast<int>(this->getPosition().y + radius)
+				this->getPosition().x,
+				this->getPosition().y
 			},
 			this->_skin.getImage("hitcircle"),
 			{
@@ -38,8 +38,8 @@ namespace OsuReplayPlayer::HitObjects
 		);
 		target.drawImage(
 			{
-				static_cast<int>(this->getPosition().x + radius),
-				static_cast<int>(this->getPosition().y + radius)
+				this->getPosition().x,
+				this->getPosition().y
 			},
 			this->_skin.getImage("hitcircleoverlay"),
 			{
@@ -50,25 +50,7 @@ namespace OsuReplayPlayer::HitObjects
 			true,
 			0
 		);
-		/*displayApproachCircle(
-			frameBuffer,
-			(sfColor){color.red, color.green, color.blue, alpha},
-			object,
-			circleSize,
-			totalTicks,
-			images
-		);
-		displayNumber(
-			frameBuffer,
-			combo,
-			(sfVector2i) {
-				object->position.x + padding.x,
-				object->position.y + padding.y
-			},
-			images,
-			alpha,
-			15,
-			"default"
-		);*/
+		this->_displayApproachCircle(target, radius, alpha, state.elapsedTime);
+		this->_displayComboNumber(target, alpha);
 	}
 }
