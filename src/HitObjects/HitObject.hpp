@@ -37,6 +37,7 @@ namespace OsuReplayPlayer
 
 	class HitObject {
 	private:
+		bool _clicked = false;
 		bool _newCombo;
 		HitObjectType _type;
 		unsigned char _hitSound;
@@ -67,6 +68,7 @@ namespace OsuReplayPlayer
 		OsuIntegerVector getPosition() const;
 		const OsuMap_hitObjectAddition &getExtra() const;
 		unsigned char calcAlpha(unsigned long totalTicks);
+		virtual bool hasExpired(ReplayState &state);
 
 		virtual void draw(RenderTarget &target, const ReplayState &state) = 0;
 	};

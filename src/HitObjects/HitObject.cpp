@@ -4,6 +4,7 @@
 
 #include "HitObject.hpp"
 #include "../Utils.hpp"
+#include "../ReplayPlayer.hpp"
 
 namespace OsuReplayPlayer
 {
@@ -117,5 +118,10 @@ namespace OsuReplayPlayer
 			15,
 			"default"
 		);
+	}
+
+	bool HitObject::hasExpired(ReplayState &state)
+	{
+		return this->_clicked || (this->_timeToAppear + 150 + 50 * (5 - this->_difficulty.overallDifficulty) / 5 <= state.elapsedTime);
 	}
 }
