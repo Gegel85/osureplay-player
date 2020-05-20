@@ -185,10 +185,10 @@ namespace OsuReplayPlayer
 
 		while (this->_target.isValid() && this->_state.currentGameHitObject < this->_objs.size()) {
 			this->_target.clear(sf::Color::Black);
-			this->_state.elapsedTime += ((this->_replay.mods & MODE_DOUBLE_TIME) || (this->_replay.mods & MODE_NIGHTCORE) ? 1500. : 1000.) / this->_fps;
 			for (int i = this->_getLastObjToDisplay() - 1; (unsigned)i >= this->_state.currentGameHitObject && i >= 0; i--)
 				this->_objs[i]->draw(this->_target, this->_state);
 			this->_target.renderFrame();
+			this->_state.elapsedTime += ((this->_replay.mods & MODE_DOUBLE_TIME) || (this->_replay.mods & MODE_NIGHTCORE) ? 1500. : 1000.) / this->_fps;
 			while (this->_objs[this->_state.currentGameHitObject]->hasExpired(this->_state))
 				this->_state.currentGameHitObject++;
 		}
