@@ -49,6 +49,11 @@ namespace OsuReplayPlayer
 			BaseException(msg + ": " + getAvErrorCode(averror))
 		{};
 	};
+
+	class InvalidSliderException : public BaseException {
+	public:
+		InvalidSliderException(const std::string &msg) : BaseException(msg) {};
+	};
 }
 
 

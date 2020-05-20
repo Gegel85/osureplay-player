@@ -37,7 +37,6 @@ namespace OsuReplayPlayer
 
 	class HitObject {
 	private:
-		bool _clicked = false;
 		bool _newCombo;
 		HitObjectType _type;
 		unsigned char _hitSound;
@@ -47,6 +46,7 @@ namespace OsuReplayPlayer
 		OsuMap_hitObjectAddition _extra;
 
 	protected:
+		bool _clicked = false;
 		unsigned _comboNbr;
 		unsigned char _mods;
 		OsuGameMode _gameMode;

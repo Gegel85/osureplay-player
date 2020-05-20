@@ -9,6 +9,8 @@
 #include <unordered_set>
 #include "HitObject.hpp"
 
+#define POINTS_PRECISION 75
+
 namespace OsuReplayPlayer::HitObjects
 {
 	enum OsuSliderShape {
@@ -20,6 +22,7 @@ namespace OsuReplayPlayer::HitObjects
 
 	class Slider : public HitObject {
 	private:
+		OsuSliderShape _type;
 		double _pixelLength;
 		unsigned int _nbOfRepeats;
 		OsuIntegerVector _end;
@@ -28,10 +31,15 @@ namespace OsuReplayPlayer::HitObjects
 		std::vector<unsigned char> _edgeHitSounds;
 		std::vector<OsuMap_sampleSet> _edgeAdditions;
 
+		void _makeCurve();
+		void _makeBezierCurve();
+		OsuIntegerVector _getBezierPoint(const std::vector<OsuIntegerVector> &points, double percent);
+		double _getTimeLength(OsuMap_timingPointEvent timingPt) const;
 	public:
 		Slider(const OsuMap_hitObject &obj, MapState &state);
 
 		void draw(RenderTarget &target, const ReplayState &state) override;
+		bool hasExpired(ReplayState &state) override;
 	};
 }
 
