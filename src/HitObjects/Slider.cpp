@@ -52,21 +52,18 @@ namespace OsuReplayPlayer::HitObjects
 
 		this->_topLeft = {INT32_MAX, INT32_MAX};
 
-		//this->_drawPoints.reserve(this->_points.size() * radius * radius * 4);
 		for (auto &pt : this->_points)
 			for (int x = -radius; x <= radius; x++)
 				for (int y = -radius; y <= radius; y++)
 					if (sqrt(pow(x, 2) + pow(y, 2)) <= radius) {
 						sf::Vector2i point(x + pt.x, y + pt.y);
 
-						_temp.emplace(point);//this->_drawPoints.emplace_back(x + pt.x, y + pt.y);
+						_temp.emplace(point);
 						this->_topLeft.x = std::min(this->_topLeft.x, point.x);
 						this->_topLeft.y = std::min(this->_topLeft.y, point.y);
 						_bottomRight.x = std::max(_bottomRight.x, point.x);
 						_bottomRight.y = std::max(_bottomRight.y, point.y);
 					}
-		//Utils::removeDuplicate(this->_drawPoints);
-		//this->_drawPoints.shrink_to_fit();
 		this->_image.create(_bottomRight.x - this->_topLeft.x + 1, _bottomRight.y - this->_topLeft.y + 1, sf::Color::Transparent);
 		for (auto &pt : _temp)
 			this->_image.setPixel(pt.x - this->_topLeft.x, pt.y - this->_topLeft.y, {255, 255, 255, 255});
