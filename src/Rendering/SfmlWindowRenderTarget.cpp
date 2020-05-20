@@ -78,7 +78,7 @@ namespace OsuReplayPlayer
 		};
 
 		if (centered)
-			this->_sprite.setOrigin(size.x / 2.f, size.y /2.f);
+			this->_sprite.setOrigin(size.x / 2.f, size.y / 2.f);
 		this->_texture.loadFromImage(image);
 		this->_sprite.setTexture(this->_texture, true);
 		this->_sprite.setPosition(pos.x, pos.y);

@@ -54,10 +54,10 @@ namespace OsuReplayPlayer::HitObjects
 
 		//this->_drawPoints.reserve(this->_points.size() * radius * radius * 4);
 		for (auto &pt : this->_points)
-			for (int x = 0; x < radius * 2; x++)
-				for (int y = 0; y < radius * 2; y++)
-					if (sqrt(pow(radius - x, 2) + pow(radius - y, 2)) <= radius) {
-						sf::Vector2i point(x + pt.x - radius, y + pt.y - radius);
+			for (int x = -radius; x <= radius; x++)
+				for (int y = -radius; y <= radius; y++)
+					if (sqrt(pow(x, 2) + pow(y, 2)) <= radius) {
+						sf::Vector2i point(x + pt.x, y + pt.y);
 
 						_temp.emplace(point);//this->_drawPoints.emplace_back(x + pt.x, y + pt.y);
 						this->_topLeft.x = std::min(this->_topLeft.x, point.x);
@@ -67,9 +67,9 @@ namespace OsuReplayPlayer::HitObjects
 					}
 		//Utils::removeDuplicate(this->_drawPoints);
 		//this->_drawPoints.shrink_to_fit();
-		this->_image.create(_bottomRight.x - this->_topLeft.x + 1, _bottomRight.y - this->_topLeft.y + 1);
+		this->_image.create(_bottomRight.x - this->_topLeft.x + 1, _bottomRight.y - this->_topLeft.y + 1, sf::Color::Transparent);
 		for (auto &pt : _temp)
-			this->_image.setPixel(pt.x, pt.y, {255, 255, 255, 255});
+			this->_image.setPixel(pt.x - this->_topLeft.x, pt.y - this->_topLeft.y, {255, 255, 255, 255});
 	}
 
 	void Slider::draw(RenderTarget &target, const ReplayState &state)
@@ -78,7 +78,10 @@ namespace OsuReplayPlayer::HitObjects
 		double radius = 54.4 - 4.48 * this->_difficulty.circleSize;
 
 		target.drawImage(
-			this->_topLeft,
+			{
+				static_cast<int>(this->_topLeft.x + radius - 12.5),
+				static_cast<int>(this->_topLeft.y + radius - 12.5),
+			},
 			this->_image,
 			{-1, -1},
 			{
@@ -87,7 +90,7 @@ namespace OsuReplayPlayer::HitObjects
 				this->_color.blue,
 				alpha
 			},
-			true,
+			false,
 			0
 		);
 

@@ -22,7 +22,7 @@ namespace OsuReplayPlayer
 			throw InvalidReplayException(this->_replay.error);
 		}
 
-		std::cout << "Loading beatmap file " << replayPath << std::endl;
+		std::cout << "Loading beatmap file " << beatmapPath << std::endl;
 		this->_beatmap = OsuMap_parseMapFile(beatmapPath.c_str());
 		if (this->_beatmap.error) {
 			std::cerr << "Beatmap file (" << beatmapPath << ") is not valid: " << this->_beatmap.error << std::endl;
