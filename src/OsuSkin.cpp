@@ -105,4 +105,14 @@ namespace OsuReplayPlayer
 			return this->_emptyImage;
 		}
 	}
+
+	bool OsuSkin::hasSound(const std::string &name) const
+	{
+		return this->_sounds.find(name) != this->_sounds.end();
+	}
+
+	bool OsuSkin::hasImage(const std::string &name) const
+	{
+		return this->_images.find(name) != this->_images.end();
+	}
 }

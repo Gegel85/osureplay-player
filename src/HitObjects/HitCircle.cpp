@@ -28,9 +28,9 @@ namespace OsuReplayPlayer::HitObjects
 				static_cast<int>(radius * 2)
 			},
 			{
-				static_cast<sf::Uint8>(this->_color.red * 0.5),
-				static_cast<sf::Uint8>(this->_color.green * 0.5),
-				static_cast<sf::Uint8>(this->_color.blue * 0.5),
+				this->_color.red,
+				this->_color.green,
+				this->_color.blue,
 				alpha
 			},
 			true,

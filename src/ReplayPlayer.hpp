@@ -17,6 +17,7 @@ namespace OsuReplayPlayer
 	struct ReplayState {
 		double elapsedTime = 0;
 		unsigned currentGameHitObject = 0;
+		OsuMap_timingPointEvent timingPt;
 	};
 
 	class ReplayPlayer {

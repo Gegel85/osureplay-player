@@ -24,7 +24,7 @@ namespace OsuReplayPlayer
 		bool isValid() const override;
 		sf::Vector2u getSize() const override;
 		void clear(sf::Color color) override;
-		void drawPixel(sf::Vector2u pos, sf::Color color) override;
+		void drawPixel(sf::Vector2i pos, sf::Color color) override;
 		void drawPoint(sf::Vector2f pos, sf::Color color) override;
 		void drawRectangle(sf::Vector2i pos, sf::Vector2u size, unsigned thickness, sf::Color color) override;
 		void drawFilledRectangle(sf::Vector2i pos, sf::Vector2u size, sf::Color color) override;

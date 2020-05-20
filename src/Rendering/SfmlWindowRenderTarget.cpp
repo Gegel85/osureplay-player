@@ -22,7 +22,7 @@ namespace OsuReplayPlayer
 		sf::RenderWindow::clear(color);
 	}
 
-	void SFMLWindowRenderTarget::drawPixel(sf::Vector2u pos, sf::Color color)
+	void SFMLWindowRenderTarget::drawPixel(sf::Vector2i pos, sf::Color color)
 	{
 		this->_rect.setFillColor(color);
 		this->_rect.setOutlineThickness(0);

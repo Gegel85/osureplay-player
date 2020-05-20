@@ -13,18 +13,23 @@ namespace OsuReplayPlayer
 {
 	ReplayPlayer::ReplayPlayer(RenderTarget &target, const std::string &beatmapPath, const std::string &replayPath, unsigned fps) :
 		_fps(fps),
-		_beatmap(OsuMap_parseMapFile(beatmapPath.c_str())),
-		_replay(OsuReplay_parseReplayFile(replayPath.c_str())),
 		_target(target)
 	{
+		std::cout << "Loading replay file " << replayPath << std::endl;
+		this->_replay = OsuReplay_parseReplayFile(replayPath.c_str());
 		if (this->_replay.error) {
 			std::cerr << "Replay file (" << replayPath << ") is not valid: " << this->_replay.error << std::endl;
 			throw InvalidReplayException(this->_replay.error);
 		}
+
+		std::cout << "Loading beatmap file " << replayPath << std::endl;
+		this->_beatmap = OsuMap_parseMapFile(beatmapPath.c_str());
 		if (this->_beatmap.error) {
 			std::cerr << "Beatmap file (" << beatmapPath << ") is not valid: " << this->_beatmap.error << std::endl;
 			throw InvalidBeatmapException(this->_beatmap.error);
 		}
+
+		std::cout << "Preparing player" << std::endl;
 		this->_buildHitObjects();
 	}
 
@@ -176,6 +181,8 @@ namespace OsuReplayPlayer
 
 	void ReplayPlayer::run()
 	{
+		this->_state.timingPt = *this->_beatmap.timingPoints.content;
+
 		while (this->_target.isValid()) {
 			this->_target.clear(sf::Color::Black);
 			this->_state.elapsedTime += ((this->_replay.mods & MODE_DOUBLE_TIME) || (this->_replay.mods & MODE_NIGHTCORE) ? 1500. : 1000.) / this->_fps;

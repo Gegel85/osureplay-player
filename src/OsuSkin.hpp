@@ -28,6 +28,8 @@ namespace OsuReplayPlayer
 		void addFolder(const std::string &path);
 		const Sound &getSound(const std::string &name) const;
 		const sf::Image &getImage(const std::string &name) const;
+		bool hasSound(const std::string &name) const;
+		bool hasImage(const std::string &name) const;
 	};
 }
 

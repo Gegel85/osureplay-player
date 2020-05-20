@@ -6,11 +6,28 @@
 #define OSUREPLAY_PLAYER_SLIDER_HPP
 
 
+#include <unordered_set>
 #include "HitObject.hpp"
 
 namespace OsuReplayPlayer::HitObjects
 {
+	enum OsuSliderShape {
+		SLIDER_SHAPE_BEZIER = 'B',
+		SLIDER_SHAPE_LINE = 'L',
+		SLIDER_SHAPE_PERFECT_CIRCLE = 'P',
+		SLIDER_SHAPE_CATMULL = 'C'
+	};
+
 	class Slider : public HitObject {
+	private:
+		double _pixelLength;
+		unsigned int _nbOfRepeats;
+		OsuIntegerVector _end;
+		std::vector<OsuIntegerVector> _points;
+		std::vector<sf::Vector2i> _drawPoints;
+		std::vector<unsigned char> _edgeHitSounds;
+		std::vector<OsuMap_sampleSet> _edgeAdditions;
+
 	public:
 		Slider(const OsuMap_hitObject &obj, MapState &state);
 
