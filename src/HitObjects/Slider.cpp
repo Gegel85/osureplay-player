@@ -6,6 +6,21 @@
 #include "Slider.hpp"
 #include "../ReplayPlayer.hpp"
 #include "../Exceptions.hpp"
+#include "../Utils.hpp"
+
+template<typename _Tp>
+struct __less : public std::binary_function<_Tp, _Tp, bool>
+{
+	_GLIBCXX14_CONSTEXPR
+	bool
+	operator()(const _Tp& v1, const _Tp& v2) const
+	{
+		size_t val1 = (static_cast<size_t>(v1.y) << 32U) | v1.x;
+		size_t val2 = (static_cast<size_t>(v2.y) << 32U) | v2.x;
+
+		return val1 < val2;
+	}
+};
 
 namespace OsuReplayPlayer::HitObjects
 {
@@ -30,6 +45,31 @@ namespace OsuReplayPlayer::HitObjects
 		this->_end = infos->curvePoints.content[infos->curvePoints.length - 1];
 		this->_type = static_cast<OsuSliderShape>(infos->type);
 		this->_makeCurve();
+
+		double radius = 54.4 - 4.48 * this->_difficulty.circleSize;
+		std::set<sf::Vector2i, __less<sf::Vector2i>> _temp;
+		sf::Vector2i _bottomRight = {INT32_MIN, INT32_MIN};
+
+		this->_topLeft = {INT32_MAX, INT32_MAX};
+
+		//this->_drawPoints.reserve(this->_points.size() * radius * radius * 4);
+		for (auto &pt : this->_points)
+			for (int x = 0; x < radius * 2; x++)
+				for (int y = 0; y < radius * 2; y++)
+					if (sqrt(pow(radius - x, 2) + pow(radius - y, 2)) <= radius) {
+						sf::Vector2i point(x + pt.x - radius, y + pt.y - radius);
+
+						_temp.emplace(point);//this->_drawPoints.emplace_back(x + pt.x, y + pt.y);
+						this->_topLeft.x = std::min(this->_topLeft.x, point.x);
+						this->_topLeft.y = std::min(this->_topLeft.y, point.y);
+						_bottomRight.x = std::max(_bottomRight.x, point.x);
+						_bottomRight.y = std::max(_bottomRight.y, point.y);
+					}
+		//Utils::removeDuplicate(this->_drawPoints);
+		//this->_drawPoints.shrink_to_fit();
+		this->_image.create(_bottomRight.x - this->_topLeft.x + 1, _bottomRight.y - this->_topLeft.y + 1);
+		for (auto &pt : _temp)
+			this->_image.setPixel(pt.x, pt.y, {255, 255, 255, 255});
 	}
 
 	void Slider::draw(RenderTarget &target, const ReplayState &state)
@@ -37,8 +77,19 @@ namespace OsuReplayPlayer::HitObjects
 		unsigned char alpha = this->calcAlpha(state.elapsedTime);
 		double radius = 54.4 - 4.48 * this->_difficulty.circleSize;
 
-		for (auto &point : this->_drawPoints)
-			target.drawPixel(point, {this->_color.red, this->_color.green, this->_color.blue, alpha});
+		target.drawImage(
+			this->_topLeft,
+			this->_image,
+			{-1, -1},
+			{
+				this->_color.red,
+				this->_color.green,
+				this->_color.blue,
+				alpha
+			},
+			true,
+			0
+		);
 
 		target.drawImage(
 			{

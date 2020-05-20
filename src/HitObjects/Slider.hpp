@@ -26,8 +26,9 @@ namespace OsuReplayPlayer::HitObjects
 		double _pixelLength;
 		unsigned int _nbOfRepeats;
 		OsuIntegerVector _end;
+		sf::Vector2i _topLeft;
+		sf::Image _image;
 		std::vector<OsuIntegerVector> _points;
-		std::vector<sf::Vector2i> _drawPoints;
 		std::vector<unsigned char> _edgeHitSounds;
 		std::vector<OsuMap_sampleSet> _edgeAdditions;
 
