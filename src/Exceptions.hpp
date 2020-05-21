@@ -54,6 +54,11 @@ namespace OsuReplayPlayer
 	public:
 		InvalidSliderException(const std::string &msg) : BaseException(msg) {};
 	};
+
+	class NotImplementedException : public BaseException {
+	public:
+		NotImplementedException(const std::string &msg) : BaseException(msg) {};
+	};
 }
 
 

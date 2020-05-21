@@ -42,10 +42,10 @@ namespace OsuReplayPlayer
 		unsigned char _hitSound;
 		unsigned char _colorSkip;
 		unsigned long _timeToAppear;
-		OsuIntegerVector _position;
 		OsuMap_hitObjectAddition _extra;
 
 	protected:
+		OsuIntegerVector _position;
 		bool _clicked = false;
 		unsigned _comboNbr;
 		unsigned char _mods;

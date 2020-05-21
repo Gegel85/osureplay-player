@@ -8,6 +8,14 @@
 #include "../Exceptions.hpp"
 #include "../Utils.hpp"
 
+#ifndef M_PI
+#define M_PI 3.14159265358979323846
+#endif
+
+#ifndef M_PI_2
+#define M_PI_2 1.57079632679489661923
+#endif
+
 template<typename _Tp>
 struct __less : public std::binary_function<_Tp, _Tp, bool>
 {
@@ -31,7 +39,6 @@ namespace OsuReplayPlayer::HitObjects
 
 		this->_pixelLength = infos->pixelLength;
 		this->_nbOfRepeats = infos->nbOfRepeats;
-		//TODO: Implement slider shapes
 		this->_points.reserve(infos->curvePoints.length + 1);
 		this->_points.push_back(this->getPosition());
 		for (unsigned i = 0; i < infos->curvePoints.length; i++)
@@ -234,6 +241,129 @@ namespace OsuReplayPlayer::HitObjects
 		this->_points.shrink_to_fit();
 	}
 
+	void Slider::_getLinePoints()
+	{
+		OsuIntegerVector diff;
+		std::vector<OsuIntegerVector> array;
+
+		if (this->_points.size() != 2)
+			throw InvalidSliderException("Invalid linear slider: there is more than a single point");
+		diff = {
+			this->_points[1].x - this->_points[0].x,
+			this->_points[1].y - this->_points[0].y
+		};
+		array.resize(sqrt(pow(diff.x, 2) + pow(diff.y, 2)));
+		for (unsigned i = 0; i < array.size(); i++)
+			array.push_back({
+				static_cast<int>(diff.x * (static_cast<float>(i) / array.size()) + this->getPosition().x),
+				static_cast<int>(diff.y * (static_cast<float>(i) / array.size()) + this->getPosition().y)
+			});
+		this->_points = array;
+	}
+
+	double	calcAngle(OsuIntegerVector pt, sf::Vector2<double> center)
+	{
+		sf::Vector2<double> point1(pt.x, pt.y);
+		sf::Vector2<double> point2 = {center.x, center.y};
+		double distance = sqrt(pow(point2.x - point1.x, 2) + pow(point2.y - point1.y, 2));
+		sf::Vector2<double> vec2 = {(point2.x - point1.x) / distance, (point2.y - point1.y) / distance};
+
+		return (atan2(vec2.y, vec2.x) * 180 / M_PI);
+	}
+
+	void Slider::_getCirclePoints()
+	{
+		std::vector<OsuIntegerVector> newArray;
+		sf::Vector2<double> center;
+		double radius;
+		double angles[3];
+		double arcAngle;
+		double values[3];
+		bool goClockwise;
+
+		if (this->_points.size() != 3)
+			throw InvalidSliderException("Invalid linear slider: there is more than 2 points");
+
+		auto pt1 = this->_points[0];
+		auto pt2 = this->_points[1];
+		auto pt3 = this->_points[2];
+
+		values[0] = ((pt2.x - pt1.x) * (pt3.y - pt2.y) + (pt2.y - pt1.y) * (pt2.x - pt3.x));
+		if (!values[0]) {
+			double dists[3] = {
+				pow(pt1.x - pt2.x, 2) + pow(pt1.y - pt2.y, 2),
+				pow(pt2.x - pt3.x, 2) + pow(pt2.y - pt3.y, 2),
+				pow(pt1.x - pt3.x, 2) + pow(pt1.y - pt3.y, 2),
+			};
+			double best = fmax(fmax(dists[0], dists[1]), dists[2]);
+
+			if (best == dists[0]) {
+				this->_points.pop_back();
+				return this->_getLinePoints();
+			}
+			if (best == dists[1]) {
+				this->_points.erase(this->_points.begin());
+				return this->_getLinePoints();
+			}
+			if (best == dists[2]) {
+				this->_points.erase(this->_points.begin() + 1);
+				return this->_getLinePoints();
+			}
+		}
+
+		values[1] = (pow(pt2.x, 2) + pow(pt2.y, 2) - pow(pt3.x, 2) - pow(pt3.y, 2));
+		values[2] = (pow(pt2.x, 2) + pow(pt2.y, 2) - pow(pt1.x, 2) - pow(pt1.y, 2));
+		//Don't ask please
+		center.y =
+			(
+				(pt2.x - pt3.x) * values[2] -
+				(pt2.x - pt1.x) * values[1]
+			) / (
+				values[0] * 2
+			);
+
+		/*
+		** Tbh, I don't know myself
+		** That just worked so it's here
+		** That's the center of the circle
+		*/
+		center.x =
+			(
+				(pt2.y - pt1.y) * values[1] -
+				(pt2.y - pt3.y) * values[2]
+			) / (
+				values[0] * 2
+			);
+
+		//Calc the radius (quick maths)
+		radius = sqrt(pow(pt1.x - center.x, 2) + pow(pt1.y - center.y, 2));
+
+		//Calc angles
+		angles[0] = fmod(360 - calcAngle(pt1, center), 360);
+		angles[1] = fmod(360 - calcAngle(pt2, center), 360);
+		angles[2] = fmod(360 - calcAngle(pt3, center), 360);
+
+		//Check whether we go clockwise or not
+		goClockwise = fmod(angles[1] - angles[0] + 360, 360) > fmod(angles[2] - angles[0] + 360, 360);
+
+		//Calc the total arc angle
+		arcAngle = fmod((goClockwise ? angles[0] - angles[2] : angles[2] - angles[0]) + 360, 360);
+
+		//The size of the arc in pixels
+		newArray.reserve(M_PI_2 * radius * arcAngle / 360 + 1);
+
+		//Create the arc
+		for (size_t i = 0; i < newArray.size(); i++) {
+			double	angle = ((goClockwise ? angles[2] : angles[0]) + (arcAngle * (goClockwise ? 1 - i / newArray.size() : i / newArray.size()))) * M_PI / 180;
+
+			newArray.push_back(OsuIntegerVector{
+				lround(-cos(angle) * radius + center.x),
+				lround(sin(angle) * radius + center.y)
+			});
+		}
+		this->_points = newArray;
+	}
+
 	void Slider::_makeCurve()
 	{
 		switch (this->_type) {
@@ -241,11 +371,13 @@ namespace OsuReplayPlayer::HitObjects
 			this->_makeBezierCurve();
 			break;
 		case SLIDER_SHAPE_LINE:
+			this->_getLinePoints();
 			break;
 		case SLIDER_SHAPE_PERFECT_CIRCLE:
+			this->_getCirclePoints();
 			break;
 		case SLIDER_SHAPE_CATMULL:
-			break;
+			throw NotImplementedException("Catmull slider are deprecated and not yet supported.");
 		default:
 			throw InvalidSliderException(std::string("Invalid slider type '") + static_cast<char>(this->_type) + "'");
 		}

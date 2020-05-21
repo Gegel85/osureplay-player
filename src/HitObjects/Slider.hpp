@@ -34,6 +34,8 @@ namespace OsuReplayPlayer::HitObjects
 
 		void _makeCurve();
 		void _makeBezierCurve();
+		void _getLinePoints();
+		void _getCirclePoints();
 		OsuIntegerVector _getBezierPoint(const std::vector<OsuIntegerVector> &points, double percent);
 		double _getTimeLength(OsuMap_timingPointEvent timingPt) const;
 	public:
