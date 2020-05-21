@@ -254,10 +254,10 @@ namespace OsuReplayPlayer::HitObjects
 		};
 		array.resize(sqrt(pow(diff.x, 2) + pow(diff.y, 2)));
 		for (unsigned i = 0; i < array.size(); i++)
-			array.push_back({
+			array[i] = {
 				static_cast<int>(diff.x * (static_cast<float>(i) / array.size()) + this->getPosition().x),
 				static_cast<int>(diff.y * (static_cast<float>(i) / array.size()) + this->getPosition().y)
-			});
+			};
 		this->_points = array;
 	}
 
@@ -350,16 +350,16 @@ namespace OsuReplayPlayer::HitObjects
 		arcAngle = fmod((goClockwise ? angles[0] - angles[2] : angles[2] - angles[0]) + 360, 360);
 
 		//The size of the arc in pixels
-		newArray.reserve(M_PI_2 * radius * arcAngle / 360 + 1);
+		newArray.resize(M_PI_2 * radius * arcAngle / 360 + 1);
 
 		//Create the arc
 		for (size_t i = 0; i < newArray.size(); i++) {
 			double	angle = ((goClockwise ? angles[2] : angles[0]) + (arcAngle * (goClockwise ? 1 - i / newArray.size() : i / newArray.size()))) * M_PI / 180;
 
-			newArray.push_back(OsuIntegerVector{
+			newArray[i] = OsuIntegerVector{
 				lround(-cos(angle) * radius + center.x),
 				lround(sin(angle) * radius + center.y)
-			});
+			};
 		}
 		this->_points = newArray;
 	}
