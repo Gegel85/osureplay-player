@@ -59,6 +59,16 @@ namespace OsuReplayPlayer
 	public:
 		NotImplementedException(const std::string &msg) : BaseException(msg) {};
 	};
+
+	class InvalidStateException : public BaseException {
+	public:
+		InvalidStateException(const std::string &msg) : BaseException(msg) {};
+	};
+
+	class SystemCallFailedException : public BaseException {
+	public:
+		SystemCallFailedException(const std::string &msg) : BaseException(msg) {};
+	};
 }
 
 

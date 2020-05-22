@@ -28,6 +28,7 @@ namespace OsuReplayPlayer
 		OsuReplay _replay;
 		ReplayState _state;
 		RenderTarget &_target;
+		unsigned _totalFrames;
 		std::vector<std::unique_ptr<HitObject>> _objs;
 
 		void _buildHitObjects();

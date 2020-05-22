@@ -19,9 +19,7 @@
 template<typename _Tp>
 struct __less : public std::binary_function<_Tp, _Tp, bool>
 {
-	_GLIBCXX14_CONSTEXPR
-	bool
-	operator()(const _Tp& v1, const _Tp& v2) const
+	constexpr bool operator()(const _Tp& v1, const _Tp& v2) const
 	{
 		size_t val1 = (static_cast<size_t>(v1.y) << 32U) | v1.x;
 		size_t val2 = (static_cast<size_t>(v2.y) << 32U) | v2.x;
@@ -54,6 +52,7 @@ namespace OsuReplayPlayer::HitObjects
 		this->_makeCurve();
 
 		double radius = 54.4 - 4.48 * this->_difficulty.circleSize;
+		double sqRadius = radius * radius;
 		std::set<sf::Vector2i, __less<sf::Vector2i>> _temp;
 		sf::Vector2i _bottomRight = {INT32_MIN, INT32_MIN};
 
@@ -62,7 +61,7 @@ namespace OsuReplayPlayer::HitObjects
 		for (auto &pt : this->_points)
 			for (int x = -radius; x <= radius; x++)
 				for (int y = -radius; y <= radius; y++)
-					if (sqrt(pow(x, 2) + pow(y, 2)) <= radius) {
+					if (pow(x, 2) + pow(y, 2) <= sqRadius) {
 						sf::Vector2i point(x + pt.x, y + pt.y);
 
 						_temp.emplace(point);
