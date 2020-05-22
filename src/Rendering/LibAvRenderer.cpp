@@ -69,9 +69,9 @@ namespace OsuReplayPlayer
 
 	void LibAvRenderer::drawPixel(sf::Vector2i pos, sf::Color color)
 	{
-		if (pos.x < 0 || pos.x >= this->_size.x)
+		if (pos.x < 0 || static_cast<unsigned>(pos.x) >= this->_size.x)
 			return;
-		if (pos.y < 0 || pos.y >= this->_size.y)
+		if (pos.y < 0 || static_cast<unsigned>(pos.y) >= this->_size.y)
 			return;
 		if (this->_pixelArray[pos.y][pos.x].a != 255)
 			return;
@@ -94,7 +94,7 @@ namespace OsuReplayPlayer
 			this->drawPixel({static_cast<int>(pos.x + 1), static_cast<int>(pos.y + 1)}, color);
 	}
 
-	void LibAvRenderer::drawRectangle(sf::Vector2i pos, sf::Vector2u size, unsigned thickness, sf::Color color)
+	void LibAvRenderer::drawRectangle(sf::Vector2i pos, sf::Vector2u size, unsigned, sf::Color color)
 	{
 		for (unsigned x = 0; x < size.x; x++)
 			this->drawPoint({static_cast<float>(x + pos.x), static_cast<float>(pos.y)}, color);
@@ -196,7 +196,7 @@ namespace OsuReplayPlayer
 
 			size_t total = fwrite(this->_videoPacket->data, 1, this->_videoPacket->size, this->_videoStream);
 
-			if (total != this->_videoPacket->size) {
+			if (total != static_cast<size_t>(this->_videoPacket->size)) {
 				std::stringstream stream;
 
 				stream << "fwrite(" << std::hex << std::showbase << this->_videoPacket->data << ", 1, " << std::dec << this->_videoPacket->size << ", " << std::hex << this->_videoStream << ")";
@@ -306,7 +306,7 @@ namespace OsuReplayPlayer
 
 			size_t total = fwrite(this->_videoPacket->data, 1, this->_videoPacket->size, this->_videoStream);
 
-			if (total != this->_videoPacket->size) {
+			if (total != static_cast<size_t>(this->_videoPacket->size)) {
 				std::stringstream stream;
 
 				stream << "fwrite(" << std::hex << std::showbase << this->_videoPacket->data << ", 1, " << std::dec << this->_videoPacket->size << ", " << std::hex << this->_videoStream << ")";
