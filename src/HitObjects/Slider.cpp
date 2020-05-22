@@ -82,8 +82,8 @@ namespace OsuReplayPlayer::HitObjects
 
 		target.drawImage(
 			{
-				static_cast<int>(this->_topLeft.x + radius - 12.5),
-				static_cast<int>(this->_topLeft.y + radius - 12.5),
+				static_cast<int>(this->_topLeft.x),
+				static_cast<int>(this->_topLeft.y),
 			},
 			this->_image,
 			{-1, -1},

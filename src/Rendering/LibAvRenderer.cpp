@@ -135,7 +135,7 @@ namespace OsuReplayPlayer
 
 		for (unsigned x = 0; x < size.x * scale.x; x++)
 			for (unsigned y = 0; y < size.y * scale.y; y++) {
-				if (static_cast<int>(y / scale.y) >= size.y || static_cast<int>(x / scale.x) >= size.x)
+				if (static_cast<unsigned>(y / scale.y) >= size.y || static_cast<unsigned>(x / scale.x) >= size.x)
 					col = {0, 0, 0, 0};
 				else
 					col = {
