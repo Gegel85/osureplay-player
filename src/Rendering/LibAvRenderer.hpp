@@ -22,6 +22,7 @@ namespace OsuReplayPlayer
 
 		void _initVideoCodec(sf::Vector2u size, unsigned fps, size_t bitRate);
 		void _initVideoFrame();
+		void _convert();
 		void _flush();
 	public:
 		LibAvRenderer(const std::string &path, sf::Vector2u size, unsigned fps, size_t bitRate);

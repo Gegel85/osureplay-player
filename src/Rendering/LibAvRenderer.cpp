@@ -20,6 +20,10 @@ namespace OsuReplayPlayer
 		this->_initVideoCodec(size, fps, bitRate);
 		this->_initVideoFrame();
 
+		this->_videoPacket = av_packet_alloc();
+		if (!this->_videoPacket)
+			throw AvErrorException("Memory allocation error");
+
 		this->_videoStream = fopen((path + ".mp4").c_str(), "wb");
 		if (!this->_videoStream)
 			throw SystemCallFailedException("fopen(" + path + ".mp4): " + strerror(errno));
@@ -29,8 +33,25 @@ namespace OsuReplayPlayer
 	{
 		delete[] this->_buffer;
 		delete[] this->_pixelArray;
-		if (this->_videoStream)
+		if (this->_videoStream) {
+			this->_flush();
+
+			uint8_t endcode[] = {0, 0, 1, 0xb7};
+
+			/* add sequence end code to have a real MPEG file */
+			fwrite(endcode, 1, sizeof(endcode), this->_videoStream);
+
 			fclose(this->_videoStream);
+		}
+
+		/* free frames */
+		av_frame_free(&this->_videoFrame);
+
+		/* free packets */
+		av_packet_free(&this->_videoPacket);
+
+		/* free codec contexts */
+		avcodec_free_context(&this->_videoCodecContext);
 	}
 
 	sf::Vector2u LibAvRenderer::getSize() const
@@ -40,6 +61,7 @@ namespace OsuReplayPlayer
 
 	void LibAvRenderer::clear(sf::Color color)
 	{
+		color.a = 255;
 		for (unsigned x = 0; x < this->_size.x; x++)
 			for (unsigned y = 0; y < this->_size.y; y++)
 				this->_buffer[x + y * this->_size.x] = color;
@@ -158,7 +180,7 @@ namespace OsuReplayPlayer
 
 	void LibAvRenderer::renderFrame()
 	{
-		this->_flush();
+		this->_convert();
 
 		/* send the frame to the encoder */
 		int ret = avcodec_send_frame(this->_videoCodecContext, this->_videoFrame);
@@ -185,7 +207,7 @@ namespace OsuReplayPlayer
 		}
 	}
 
-	void LibAvRenderer::_flush()
+	void LibAvRenderer::_convert()
 	{
 		/* make sure the frame data is writable */
 		if (av_frame_make_writable(this->_videoFrame) < 0)
@@ -265,5 +287,33 @@ namespace OsuReplayPlayer
 
 		if (err < 0)
 			throw AvErrorException("Could not allocate video data buffers", err);
+		this->_videoFrame = frame;
+	}
+
+	void LibAvRenderer::_flush()
+	{
+		/* send the frame to the encoder */
+		int ret = avcodec_send_frame(this->_videoCodecContext, nullptr);
+		if (ret < 0)
+			throw AvErrorException("Error sending a frame for encoding", ret);
+
+		while (ret >= 0) {
+			ret = avcodec_receive_packet(this->_videoCodecContext, this->_videoPacket);
+			if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
+				return;
+			else if (ret < 0)
+				throw AvErrorException("Error during encoding", ret);
+
+			size_t total = fwrite(this->_videoPacket->data, 1, this->_videoPacket->size, this->_videoStream);
+
+			if (total != this->_videoPacket->size) {
+				std::stringstream stream;
+
+				stream << "fwrite(" << std::hex << std::showbase << this->_videoPacket->data << ", 1, " << std::dec << this->_videoPacket->size << ", " << std::hex << this->_videoStream << ")";
+				stream << " wrote " << std::dec << total << " bytes instead of " << this->_videoPacket->size << std::endl;
+				throw SystemCallFailedException(stream.str());
+			}
+			av_packet_unref(this->_videoPacket);
+		}
 	}
 }
