@@ -10,7 +10,7 @@
 
 namespace OsuReplayPlayer
 {
-	class SFMLSoundManager : SoundManager {
+	class SFMLSoundManager : public SoundManager {
 	private:
 		unsigned _currentSound = 0;
 		std::vector<sf::Sound> _sounds{64};

@@ -23,8 +23,8 @@ namespace OsuReplayPlayer
 		static const std::map<std::string, std::function<void (OsuSkin *, const std::string &)>> _handlers;
 
 	public:
-		void addImage(const std::string &path);
-		void addSound(const std::string &path);
+		void addImage(const std::string &path, const std::string &id = "");
+		void addSound(const std::string &path, const std::string &id = "");
 		void addFolder(const std::string &path);
 		const Sound &getSound(const std::string &name) const;
 		const sf::Image &getImage(const std::string &name) const;

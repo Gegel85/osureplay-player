@@ -11,6 +11,7 @@
 #include <osu_replay_parser.hpp>
 #include "OsuSkin.hpp"
 #include "HitObjects/HitObject.hpp"
+#include "Sound/SoundManager.hpp"
 
 namespace OsuReplayPlayer
 {
@@ -22,12 +23,14 @@ namespace OsuReplayPlayer
 
 	class ReplayPlayer {
 	private:
+		bool _musicStarted = false;
 		unsigned _fps;
 		OsuSkin _skin;
 		OsuMap _beatmap;
 		OsuReplay _replay;
 		ReplayState _state;
 		RenderTarget &_target;
+		SoundManager &_sound;
 		unsigned _totalFrames;
 		std::vector<std::unique_ptr<HitObject>> _objs;
 
@@ -35,7 +38,7 @@ namespace OsuReplayPlayer
 		unsigned _getLastObjToDisplay();
 
 	public:
-		ReplayPlayer(RenderTarget &target, const std::string &beatmapPath, const std::string &replayPath, unsigned fps = 60);
+		ReplayPlayer(RenderTarget &target, SoundManager &sound, const std::string &beatmapPath, const std::string &replayPath, unsigned fps = 60);
 		~ReplayPlayer();
 		void displayMapInfos();
 		void displayReplayInfos();

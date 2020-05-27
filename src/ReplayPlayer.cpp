@@ -5,15 +5,17 @@
 #include <iostream>
 #include <numeric>
 #include <iomanip>
+#include <filesystem>
 #include "ReplayPlayer.hpp"
 #include "Exceptions.hpp"
 #include "HitObjects/HitObjectFactory.hpp"
 
 namespace OsuReplayPlayer
 {
-	ReplayPlayer::ReplayPlayer(RenderTarget &target, const std::string &beatmapPath, const std::string &replayPath, unsigned fps) :
+	ReplayPlayer::ReplayPlayer(RenderTarget &target, SoundManager &sound, const std::string &beatmapPath, const std::string &replayPath, unsigned fps) :
 		_fps(fps),
-		_target(target)
+		_target(target),
+		_sound(sound)
 	{
 		std::cout << "Loading replay file " << replayPath << std::endl;
 		this->_replay = OsuReplay_parseReplayFile(replayPath.c_str());
@@ -33,6 +35,7 @@ namespace OsuReplayPlayer
 		this->_buildHitObjects();
 
 		this->_totalFrames = this->_replay.replayLength * fps / ((this->_replay.mods & MODE_DOUBLE_TIME) ? 1500 : 1000) + 1;
+		this->_skin.addSound(std::filesystem::path(beatmapPath).parent_path().append(this->_beatmap.generalInfos.audioFileName).string(), "__bgMusic");
 	}
 
 	ReplayPlayer::~ReplayPlayer()
@@ -196,6 +199,10 @@ namespace OsuReplayPlayer
 			this->_state.elapsedTime += ((this->_replay.mods & MODE_DOUBLE_TIME) || (this->_replay.mods & MODE_NIGHTCORE) ? 1500. : 1000.) / this->_fps;
 			while (this->_state.currentGameHitObject < this->_objs.size() && this->_objs[this->_state.currentGameHitObject]->hasExpired(this->_state))
 				this->_state.currentGameHitObject++;
+			if (!this->_musicStarted && this->_beatmap.generalInfos.audioLeadIn <= this->_state.elapsedTime) {
+				this->_musicStarted = true;
+				this->_sound.playSound(this->_skin.getSound("__bgMusic"));
+			}
 		}
 	}
 

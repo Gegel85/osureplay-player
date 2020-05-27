@@ -57,12 +57,12 @@ namespace OsuReplayPlayer
 		}}
 	};
 
-	void OsuSkin::addImage(const std::string &path)
+	void OsuSkin::addImage(const std::string &path, const std::string &id)
 	{
 		auto filename = std::filesystem::path(path).filename();
-		std::string name = filename.string();
+		std::string name = id.empty() ? filename.string() : id;
 
-		if (filename.has_extension())
+		if (filename.has_extension() && id.empty())
 			name = name.substr(0, name.size() - filename.extension().string().size());
 
 		if (this->_images.find(name) != this->_images.end())
@@ -75,12 +75,12 @@ namespace OsuReplayPlayer
 		this->_images[name] = image;
 	}
 
-	void OsuSkin::addSound(const std::string &path)
+	void OsuSkin::addSound(const std::string &path, const std::string &id)
 	{
 		auto filename = std::filesystem::path(path).filename();
-		std::string name = filename.string();
+		std::string name = id.empty() ? filename.string() : id;
 
-		if (filename.has_extension())
+		if (filename.has_extension() && id.empty())
 			name = name.substr(0, name.size() - filename.extension().string().size());
 
 		if (this->_sounds.find(name) != this->_sounds.end())

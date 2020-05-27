@@ -9,6 +9,7 @@
 #include "ReplayPlayer.hpp"
 #include "Rendering/SfmlWindowRenderTarget.hpp"
 #include "Rendering/LibAvRenderer.hpp"
+#include "Sound/SfmlSoundManager.hpp"
 
 int main(int argc, char **argv)
 {
@@ -18,14 +19,16 @@ int main(int argc, char **argv)
 	}
 
 	std::unique_ptr<OsuReplayPlayer::RenderTarget> target;
+	std::unique_ptr<OsuReplayPlayer::SoundManager> manager;
 	OsuReplayPlayer::SFMLWindowRenderTarget *sfmlTarget = nullptr;
 
 	if (argc == 3) {
 		sfmlTarget = new OsuReplayPlayer::SFMLWindowRenderTarget(sf::Vector2u{640, 480}, "");
+		manager = std::make_unique<OsuReplayPlayer::SFMLSoundManager>();
 		target.reset(sfmlTarget);
 	} else if (argc == 4)
 		target = std::make_unique<OsuReplayPlayer::LibAvRenderer>(argv[3], sf::Vector2u{640, 480}, 60, 4000000);
-	OsuReplayPlayer::ReplayPlayer state(*target, argv[1], argv[2]);
+	OsuReplayPlayer::ReplayPlayer state(*target, *manager, argv[1], argv[2]);
 
 	if (sfmlTarget) {
 		sfmlTarget->setFramerateLimit(60);
