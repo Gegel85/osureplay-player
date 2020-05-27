@@ -86,7 +86,17 @@ add_executable(
 	src/HitObjects/HitCircle.hpp
 	src/HitObjects/Spinner.cpp
 	src/HitObjects/Spinner.hpp
-	src/HitObjects/HitObjectFactory.cpp src/HitObjects/HitObjectFactory.hpp src/Rendering/SfmlWindowRenderTarget.cpp src/Rendering/SfmlWindowRenderTarget.hpp src/Rendering/LibAvRenderer.cpp src/Rendering/LibAvRenderer.hpp)
+	src/HitObjects/HitObjectFactory.cpp
+	src/HitObjects/HitObjectFactory.hpp
+	src/Rendering/SfmlWindowRenderTarget.cpp
+	src/Rendering/SfmlWindowRenderTarget.hpp
+	src/Rendering/LibAvRenderer.cpp
+	src/Rendering/LibAvRenderer.hpp
+	src/Sound/SoundManager.cpp
+	src/Sound/SoundManager.hpp
+	src/Sound/SfmlSoundManager.cpp
+	src/Sound/SfmlSoundManager.hpp
+)
 
 if (WIN32)
 	if (MSVC)
