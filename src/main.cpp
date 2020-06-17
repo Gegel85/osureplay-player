@@ -28,7 +28,7 @@ int main(int argc, char **argv)
 		manager = std::make_unique<OsuReplayPlayer::SFMLSoundManager>();
 		target.reset(sfmlTarget);
 	} else if (argc == 4) {
-		target = std::make_unique<OsuReplayPlayer::LibAvRenderer>(argv[3] + std::string(".mp4"), sf::Vector2u{640, 480}, 60, 4000000);
+		target = std::make_unique<OsuReplayPlayer::LibAvRenderer>(argv[3] + std::string(".mp4"), sf::Vector2u{640, 480}, 60, 400000);
 		manager = std::make_unique<OsuReplayPlayer::LibAvSoundManager>(argv[3] + std::string(".mp2"));
 	}
 	OsuReplayPlayer::ReplayPlayer state(*target, *manager, argv[1], argv[2]);

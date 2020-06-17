@@ -12,15 +12,15 @@ namespace OsuReplayPlayer
 {
 	class LibAvRenderer : public RenderTarget {
 	private:
+		AVFormatContext *_fmtContext;
 		sf::Vector2u _size;
 		sf::Color **_pixelArray;
 		sf::Color *_buffer;
-		FILE *_stream;
-		AVCodecContext *_codecContext;
-		AVFrame *_frame;
+		AVStream *_stream;
 		AVPacket *_packet;
+		AVFrame *_frame;
 
-		void _initCodec(sf::Vector2u size, unsigned fps, size_t bitRate);
+		void _initStream(sf::Vector2u size, unsigned fps, size_t bitRate);
 		void _initFrame();
 		void _prepareFrame();
 		void _flush(bool sendFrame);
