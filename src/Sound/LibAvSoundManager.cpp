@@ -73,12 +73,13 @@ namespace OsuReplayPlayer
 	void LibAvSoundManager::tick(float time)
 	{
 		int ret;
+		auto *buffer = reinterpret_cast<short *>(this->_frame->data[0]);
 
 		this->_totalTime += time;
 		for (; this->_i < SAMPLE_RATE * this->_totalTime; this->_i++) {
 			for (auto &sound : this->_sounds) {
 				if (sound.sound.get()[0].size() > sound.pos) {
-					this->_frame->data[0][this->_index] += sound.sound.get()[0][sound.pos] / 2.;
+					buffer[this->_index] += sound.sound.get()[0][sound.pos] / 2.;
 					sound.pos++;
 				}
 			}
@@ -88,7 +89,7 @@ namespace OsuReplayPlayer
 					throw AvErrorException("Frame is not writable", ret);
 				this->_flush(true);
 				this->_index = 0;
-				memset(this->_frame->data[0], 0, this->_codecContext->frame_size * sizeof(*this->_frame->data[0]));
+				memset(buffer, 0, this->_codecContext->frame_size * sizeof(*buffer));
 			}
 		}
 	}
@@ -141,7 +142,7 @@ namespace OsuReplayPlayer
 			throw AvErrorException("Could not allocate audio data buffers", ret);
 
 		this->_frame = frame;
-		memset(this->_frame->data[0], 0, this->_codecContext->frame_size * sizeof(*this->_frame->data[0]));
+		memset(this->_frame->data[0], 0, this->_codecContext->frame_size * sizeof(short));
 	}
 
 	void LibAvSoundManager::_flush(bool sendFrame)
