@@ -3,7 +3,7 @@
 //
 
 #include <cmath>
-#include <sstream>
+#include <iostream>
 #include "LibAvRenderer.hpp"
 #include "../Exceptions.hpp"
 
@@ -62,13 +62,13 @@ namespace OsuReplayPlayer
 		/* Free packets */
 		av_packet_free(&this->_packet);
 
-		/* Free codec contexts */
-		avcodec_close(this->_stream->codec);
+		/* Free codec */
+		avcodec_free_context(&this->_enc);
 
 		if (!(this->_fmtContext->oformat->flags & AVFMT_NOFILE))
-			avio_close(this->_fmtContext->pb);
+			avio_closep(&this->_fmtContext->pb);
 
-		av_free(this->_fmtContext);
+		avformat_free_context(this->_fmtContext);
 	}
 
 	sf::Vector2u LibAvRenderer::getSize() const
@@ -199,19 +199,22 @@ namespace OsuReplayPlayer
 	void LibAvRenderer::renderFrame()
 	{
 		this->_prepareFrame();
+		this->_frame->pts = this->_nextPts++;
 		this->_flush(true);
 	}
 
 	void LibAvRenderer::_prepareFrame()
 	{
+		int ret = 0;
+
 		/* make sure the frame data is writable */
-		if (av_frame_make_writable(this->_frame) < 0)
-			throw InvalidStateException("The frame data is not writable\n");
+		if ((ret = av_frame_make_writable(this->_frame)) < 0)
+			throw AvErrorException("The frame data is not writable", ret);
 
 		/* prepare the frame */
 		/* Y */
-		for (int y = 0; y < this->_stream->codec->height; y++) {
-			for (int x = 0; x < this->_stream->codec->width; x++) {
+		for (unsigned y = 0; y < this->_size.y; y++) {
+			for (unsigned x = 0; x < this->_size.x; x++) {
 				this->_frame->data[0][y * this->_frame->linesize[0] + x] =
 					0.299 * this->_pixelArray[y][x].r +
 					0.587 * this->_pixelArray[y][x].g +
@@ -220,8 +223,8 @@ namespace OsuReplayPlayer
 		}
 
 		/* Cb Cr */
-		for (int y = 0; y < this->_stream->codec->height / 2; y++) {
-			for (int x = 0; x < this->_stream->codec->width / 2; x++) {
+		for (unsigned y = 0; y < this->_size.y / 2; y++) {
+			for (unsigned x = 0; x < this->_size.x / 2; x++) {
 				this->_frame->data[1][y * this->_frame->linesize[1] + x] =
 					-0.1687 * this->_pixelArray[y * 2][x * 2].r +
 					-0.3313 * this->_pixelArray[y * 2][x * 2].g +
@@ -234,95 +237,109 @@ namespace OsuReplayPlayer
 		}
 	}
 
-	void LibAvRenderer::_initStream(sf::Vector2u size, unsigned fps, size_t bitRate)
+	void LibAvRenderer::_initStream(sf::Vector2u size, unsigned fps, size_t bitRate, const std::map<std::string, std::string> &opts)
 	{
-		int ret;
 		AVCodec *codec;
-		AVStream *stream = avformat_new_stream(this->_fmtContext, nullptr);
-		AVCodecContext *codecContext;
-		AVCPBProperties *properties;
+		AVCodecContext *c;
+		int ret;
 
-		if (!stream)
-			throw AvErrorException("Couldn't alloc video stream");
-
-		codecContext = stream->codec;
-		codecContext->codec_id = this->_fmtContext->oformat->video_codec;
-		codecContext->codec_type = AVMEDIA_TYPE_VIDEO;
-
-		/* Put sample parameters */
-		codecContext->bit_rate = bitRate;
-
-		/* Resolution must be a multiple of two */
-		codecContext->width = size.x;
-		codecContext->height = size.y;
-
-		/* Frames per second */
-		codecContext->time_base = {1, static_cast<int>(fps)};
-		codecContext->framerate = {static_cast<int>(fps), 1};
-
-		codecContext->pix_fmt = AV_PIX_FMT_YUV420P;
-
-		/* Emit one intra frame every 12 frames at most */
-		codecContext->gop_size = 12;
-		if (codecContext->codec_id == AV_CODEC_ID_MPEG1VIDEO)
-			codecContext->mb_decision = 2;
-
-		if (this->_fmtContext->oformat->flags & AVFMT_GLOBALHEADER)
-			codecContext->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-
-		/* Find the codec */
-		codec = avcodec_find_encoder(codecContext->codec_id);
+		/* find the encoder */
+		codec = avcodec_find_encoder(this->_fmtContext->oformat->video_codec);
 		if (!codec)
-			throw AvErrorException("Cannot find codec");
+			throw AvErrorException("Could not find encoder for '" + std::string(avcodec_get_name(this->_fmtContext->oformat->video_codec)) + "'");
 
-		/* Open it */
-		if ((ret = avcodec_open2(codecContext, codec, nullptr)) < 0)
-			throw AvErrorException("Cannot open codec", ret);
+		this->_stream = avformat_new_stream(this->_fmtContext, nullptr);
+		if (!this->_stream)
+			throw AvErrorException( "Could not allocate stream");
 
-		properties = (AVCPBProperties *)av_stream_new_side_data(stream, AV_PKT_DATA_CPB_PROPERTIES, sizeof(*properties));
+		this->_stream->id = this->_fmtContext->nb_streams - 1;
+		this->_enc = c = avcodec_alloc_context3(codec);
 
-		properties->avg_bitrate = 900;
-		properties->max_bitrate = 1000;
-		properties->min_bitrate = 0;
-		properties->buffer_size = 2 * 1024 * 1024;
-		properties->vbv_delay = UINT64_MAX;
-		this->_stream = stream;
+		if (!c)
+			throw AvErrorException("Could not alloc an encoding context");
+
+		c->codec_id = this->_fmtContext->oformat->video_codec;
+		c->bit_rate = bitRate;
+
+		/* Resolution must be a multiple of two. */
+		c->width    = size.x;
+		c->height   = size.y;
+
+		/* timebase: This is the fundamental unit of time (in seconds) in terms
+		 * of which frame timestamps are represented. For fixed-fps content,
+		 * timebase should be 1/framerate and timestamp increments should be
+		 * identical to 1. */
+		this->_stream->time_base = { 1, static_cast<int>(fps) };
+		c->time_base     = this->_stream->time_base;
+		c->gop_size      = 12; /* emit one intra frame every twelve frames at most */
+		c->pix_fmt       = AV_PIX_FMT_YUV420P;
+
+		if (c->codec_id == AV_CODEC_ID_MPEG1VIDEO) {
+			/* Needed to avoid using macroblocks in which some coeffs overflow.
+			 * This does not happen with normal video, it just happens here as
+			 * the motion of the chroma plane does not match the luma plane. */
+			c->mb_decision = 2;
+		}
+
+		/* Some formats want stream headers to be separate. */
+		if (this->_fmtContext->oformat->flags & AVFMT_GLOBALHEADER)
+			c->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+
+		AVDictionary *opt = nullptr;
+
+		for (auto &pair : opts)
+			av_dict_set(&opt, pair.first.c_str(), pair.second.c_str(), 0);
+
+		/* open the codec */
+		ret = avcodec_open2(c, codec, &opt);
+		av_dict_free(&opt);
+
+		if (ret < 0)
+			throw AvErrorException("Could not open video codec", ret);
+
+		/* copy the stream parameters to the muxer */
+		ret = avcodec_parameters_from_context(this->_stream->codecpar, c);
+		if (ret < 0)
+			throw AvErrorException("Could not copy the stream parameters", ret);
 	}
 
 	void LibAvRenderer::_initFrame()
 	{
-		AVFrame	*frame = av_frame_alloc();
+		this->_frame = av_frame_alloc();
 
-		if (!frame)
+		if (!this->_frame)
 			throw AvErrorException("Could not allocate video frame");
-		frame->format = this->_stream->codec->pix_fmt;
-		frame->width = this->_stream->codec->width;
-		frame->height = this->_stream->codec->height;
-		frame->quality = 1;
 
-		int err = av_frame_get_buffer(frame, 32);
+		this->_frame->format = this->_enc->pix_fmt;
+		this->_frame->width = this->_enc->width;
+		this->_frame->height = this->_enc->height;
+		this->_frame->quality = 1;
+
+		int err = av_frame_get_buffer(this->_frame, 32);
 
 		if (err < 0)
 			throw AvErrorException("Could not allocate video data buffers", err);
-		this->_frame = frame;
 	}
 
 	void LibAvRenderer::_flush(bool sendFrame)
 	{
 		/* send the frame to the encoder */
-		int ret = avcodec_send_frame(this->_stream->codec, sendFrame ? this->_frame : nullptr);
+		int ret = avcodec_send_frame(this->_enc, sendFrame ? this->_frame : nullptr);
 
 		if (ret < 0)
 			throw AvErrorException("Error sending a frame for encoding", ret);
 
 		while (ret >= 0) {
-			ret = avcodec_receive_packet(this->_stream->codec, this->_packet);
+			ret = avcodec_receive_packet(this->_enc, this->_packet);
 			if (ret == AVERROR(EAGAIN) || ret == AVERROR_EOF)
 				return;
 			else if (ret < 0)
 				throw AvErrorException("Error during encoding", ret);
-			//if ((ret = av_interleaved_write_frame(this->_fmtContext, this->_packet)) < 0)
-			if ((ret = av_write_frame(this->_fmtContext, this->_packet)) < 0)
+
+			av_packet_rescale_ts(this->_packet, this->_enc->time_base, this->_stream->time_base);
+			this->_packet->stream_index = this->_stream->index;
+			if ((ret = av_interleaved_write_frame(this->_fmtContext, this->_packet)) < 0)
+			//if ((ret = av_write_frame(this->_fmtContext, this->_packet)) < 0)
 				throw AvErrorException("Cannot write in file", ret);
 		}
 	}

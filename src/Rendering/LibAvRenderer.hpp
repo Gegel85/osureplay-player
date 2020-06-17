@@ -5,6 +5,7 @@
 #ifndef OSUREPLAY_PLAYER_LIBAVRENDERER_HPP
 #define OSUREPLAY_PLAYER_LIBAVRENDERER_HPP
 
+#include <map>
 #include "../libav.hpp"
 #include "RenderTarget.hpp"
 
@@ -13,17 +14,20 @@ namespace OsuReplayPlayer
 	class LibAvRenderer : public RenderTarget {
 	private:
 		AVFormatContext *_fmtContext;
+		AVCodecContext *_enc;
 		sf::Vector2u _size;
 		sf::Color **_pixelArray;
 		sf::Color *_buffer;
 		AVStream *_stream;
 		AVPacket *_packet;
 		AVFrame *_frame;
+		unsigned _nextPts = 0;
 
-		void _initStream(sf::Vector2u size, unsigned fps, size_t bitRate);
+		void _initStream(sf::Vector2u size, unsigned fps, size_t bitRate, const std::map<std::string, std::string> &opts = {});
 		void _initFrame();
 		void _prepareFrame();
 		void _flush(bool sendFrame);
+
 	public:
 		LibAvRenderer(const std::string &path, sf::Vector2u size, unsigned fps, size_t bitRate);
 		~LibAvRenderer() override;
