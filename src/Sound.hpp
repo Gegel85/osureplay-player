@@ -18,12 +18,14 @@ namespace OsuReplayPlayer
 		int64_t _sampleRate = 0;
 		std::vector<std::vector<short>> _data;
 		sf::SoundBuffer _buffer;
+		size_t _maxSize = 0;
 
 	public:
 		Sound() = default;
 		Sound(const std::string &path, int64_t sample_rate = SAMPLE_RATE);
 		unsigned int getNbChannels() const;
 		int64_t getSampleRate() const;
+		size_t getLength() const;
 		const std::vector<short> &operator[](unsigned int index) const;
 		const sf::SoundBuffer &getBuffer() const;
 	};

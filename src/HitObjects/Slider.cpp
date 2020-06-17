@@ -44,12 +44,12 @@ namespace OsuReplayPlayer::HitObjects
 		this->_edgeHitSounds.reserve(this->_nbOfRepeats + 1);
 		this->_edgeAdditions.reserve(this->_nbOfRepeats + 1);
 		for (unsigned i = 0; i < this->_nbOfRepeats + 1; i++) {
-			this->_edgeHitSounds.push_back(infos->edgeHitsounds[i]);
-			this->_edgeAdditions.push_back(infos->edgeAdditions[i]);
+			this->_edgeHitSounds.push_back(infos->edgeHitsounds ? infos->edgeHitsounds[i] : 0);
+			this->_edgeAdditions.push_back(infos->edgeAdditions ? infos->edgeAdditions[i] : OsuMap_sampleSet{0, 0});
 		}
 		this->_end = infos->curvePoints.content[infos->curvePoints.length - 1];
 		this->_type = static_cast<OsuSliderShape>(infos->type);
-		this->_makeCurve();
+		//this->_makeCurve();
 
 		double radius = 54.4 - 4.48 * this->_difficulty.circleSize;
 		double sqRadius = radius * radius;

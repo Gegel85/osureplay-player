@@ -15,15 +15,15 @@ namespace OsuReplayPlayer
 		sf::Vector2u _size;
 		sf::Color **_pixelArray;
 		sf::Color *_buffer;
-		FILE *_videoStream;
-		AVCodecContext *_videoCodecContext;
-		AVFrame *_videoFrame;
-		AVPacket *_videoPacket;
+		FILE *_stream;
+		AVCodecContext *_codecContext;
+		AVFrame *_frame;
+		AVPacket *_packet;
 
-		void _initVideoCodec(sf::Vector2u size, unsigned fps, size_t bitRate);
-		void _initVideoFrame();
-		void _convert();
-		void _flush();
+		void _initCodec(sf::Vector2u size, unsigned fps, size_t bitRate);
+		void _initFrame();
+		void _prepareFrame();
+		void _flush(bool sendFrame);
 	public:
 		LibAvRenderer(const std::string &path, sf::Vector2u size, unsigned fps, size_t bitRate);
 		~LibAvRenderer() override;

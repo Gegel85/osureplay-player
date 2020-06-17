@@ -12,7 +12,7 @@ namespace OsuReplayPlayer
 			sound.setVolume(volume);
 	}
 
-	unsigned int SFMLSoundManager::playSound(const Sound &sound)
+	unsigned int SFMLSoundManager::playSound(const Sound &sound, double pitch)
 	{
 		while (this->_sounds[this->_currentSound].getStatus() == sf::Sound::Playing) {
 			this->_currentSound++;
@@ -22,6 +22,7 @@ namespace OsuReplayPlayer
 		auto &s = this->_sounds[this->_currentSound];
 
 		s.setBuffer(sound.getBuffer());
+		s.setPitch(pitch);
 		s.play();
 		return this->_currentSound;
 	}
@@ -29,5 +30,9 @@ namespace OsuReplayPlayer
 	void SFMLSoundManager::stopSound(unsigned id)
 	{
 		this->_sounds[id].stop();
+	}
+
+	void SFMLSoundManager::tick(float)
+	{
 	}
 }

@@ -12,7 +12,6 @@ namespace OsuReplayPlayer
 {
 	Sound::Sound(const std::string &path, int64_t sample_rate)
 	{
-		size_t maxSize = 0;
 		std::vector<short> _result;
 
 		this->_buffer.loadFromFile(path);
@@ -90,7 +89,7 @@ namespace OsuReplayPlayer
 				}
 
 				this->_data.push_back(buff);
-				maxSize = std::max(maxSize, buff.size());
+				this->_maxSize = std::max(this->_maxSize, buff.size());
 
 				// clean up
 				av_frame_free(&frame);
@@ -103,15 +102,15 @@ namespace OsuReplayPlayer
 		if (this->_data.empty())
 			throw NoAudioStreamException("Could not retrieve audio stream from file '" + path + "'");
 
-		if (maxSize == 0)
+		if (this->_maxSize == 0)
 			return;
 
-		_result.resize(maxSize * this->_data.size(), 0);
+		_result.resize(this->_maxSize * this->_data.size(), 0);
 		for (unsigned i = 0; i < this->_data.size(); i++)
 			for (unsigned j = 0; j < this->_data[i].size(); j++)
-				_result[maxSize * i + j] = this->_data[i][j];
+				_result[this->_maxSize * i + j] = this->_data[i][j];
 
-		assert(this->_buffer.loadFromSamples(_result.data(), maxSize, this->_data.size(), sample_rate));
+		assert(this->_buffer.loadFromSamples(_result.data(), this->_maxSize, this->_data.size(), sample_rate));
 	}
 
 	unsigned int Sound::getNbChannels() const
@@ -132,5 +131,10 @@ namespace OsuReplayPlayer
 	const sf::SoundBuffer &OsuReplayPlayer::Sound::getBuffer() const
 	{
 		return this->_buffer;
+	}
+
+	size_t Sound::getLength() const
+	{
+		return this->_maxSize;
 	}
 }

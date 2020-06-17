@@ -17,8 +17,9 @@ namespace OsuReplayPlayer
 
 	public:
 		void setVolume(float volume) override;
-		unsigned int playSound(const Sound &sound) override;
+		unsigned int playSound(const Sound &sound, double pitch) override;
 		void stopSound(unsigned id) override;
+		void tick(float time) override;
 	};
 }
 

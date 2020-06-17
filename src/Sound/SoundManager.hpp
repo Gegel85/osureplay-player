@@ -13,8 +13,9 @@ namespace OsuReplayPlayer
 	class SoundManager {
 	public:
 		virtual void setVolume(float volume) = 0;
-		virtual unsigned playSound(const Sound &sound) = 0;
+		virtual unsigned playSound(const Sound &sound, double pitch = 1) = 0;
 		virtual void stopSound(unsigned id) = 0;
+		virtual void tick(float time) = 0;
 	};
 }
 
