@@ -32,7 +32,7 @@ namespace OsuReplayPlayer
 		this->_sounds[id].stop();
 	}
 
-	void SFMLSoundManager::tick(float)
+	void SFMLSoundManager::tick(unsigned, unsigned framePerSeconds)
 	{
 	}
 }

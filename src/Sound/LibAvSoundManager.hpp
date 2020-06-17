@@ -24,7 +24,6 @@ namespace OsuReplayPlayer
 		AVPacket *_packet;
 		AVFrame *_frame;
 		FILE *_stream;
-		float _totalTime = 0;
 		float _volume = 1;
 		int _index = 0;
 		unsigned _i = 0;
@@ -37,7 +36,7 @@ namespace OsuReplayPlayer
 		LibAvSoundManager(const std::string &path);
 		~LibAvSoundManager();
 		void setVolume(float volume) override;
-		void tick(float time) override;
+		void tick(unsigned currentFrame, unsigned framePerSeconds) override;
 		unsigned int playSound(const Sound &sound, double pitch) override;
 		void stopSound(unsigned int id) override;
 	};

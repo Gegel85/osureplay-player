@@ -191,19 +191,22 @@ namespace OsuReplayPlayer
 		this->_state.timingPt = *this->_beatmap.timingPoints.content;
 
 		while (this->_target.isValid() && this->_state.currentGameHitObject < this->_objs.size()) {
+			if (!this->_musicStarted && this->_beatmap.generalInfos.audioLeadIn <= this->_state.elapsedTime) {
+				this->_musicStarted = true;
+				this->_sound.playSound(this->_skin.getSound("__bgMusic"), (this->_replay.mods & MODE_DOUBLE_TIME) || (this->_replay.mods & MODE_NIGHTCORE) ? 1.5 : 1.);
+			}
+
 			this->_target.clear(sf::Color::Black);
 			for (int i = this->_getLastObjToDisplay() - 1; (unsigned)i >= this->_state.currentGameHitObject && i >= 0; i--)
 				this->_objs[i]->draw(this->_target, this->_state);
+
 			std::cout << "Rendering frame " << currentFrame++ << "/" << this->_totalFrames << std::endl;
 			this->_target.renderFrame();
-			this->_sound.tick(1.f / this->_fps);
-			this->_state.elapsedTime += ((this->_replay.mods & MODE_DOUBLE_TIME) || (this->_replay.mods & MODE_NIGHTCORE) ? 1500. : 1000.) / this->_fps;
+			this->_sound.tick(currentFrame, this->_fps);
+
+			this->_state.elapsedTime = ((this->_replay.mods & MODE_DOUBLE_TIME) || (this->_replay.mods & MODE_NIGHTCORE) ? 1500.f : 1000.f) * currentFrame / this->_fps;
 			while (this->_state.currentGameHitObject < this->_objs.size() && this->_objs[this->_state.currentGameHitObject]->hasExpired(this->_state))
 				this->_state.currentGameHitObject++;
-			if (!this->_musicStarted && this->_beatmap.generalInfos.audioLeadIn <= this->_state.elapsedTime) {
-				this->_musicStarted = true;
-				this->_sound.playSound(this->_skin.getSound("__bgMusic"));
-			}
 		}
 	}
 

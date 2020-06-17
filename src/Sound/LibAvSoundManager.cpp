@@ -70,17 +70,16 @@ namespace OsuReplayPlayer
 		sound.pos = sound.sound.get().getLength();
 	}
 
-	void LibAvSoundManager::tick(float time)
+	void LibAvSoundManager::tick(unsigned currentFrame, unsigned framePerSeconds)
 	{
 		int ret;
 		auto *buffer = reinterpret_cast<short *>(this->_frame->data[0]);
 
-		this->_totalTime += time;
-		for (; this->_i < SAMPLE_RATE * this->_totalTime; this->_i++) {
+		for (; this->_i < currentFrame * SAMPLE_RATE / framePerSeconds; this->_i++) {
 			for (auto &sound : this->_sounds) {
 				if (sound.sound.get()[0].size() > sound.pos) {
 					buffer[this->_index] += sound.sound.get()[0][sound.pos] / 2.;
-					sound.pos++;
+					sound.pos += sound.pitch;
 				}
 			}
 			this->_index++;
