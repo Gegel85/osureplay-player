@@ -96,7 +96,11 @@ add_executable(
 	src/Sound/SoundManager.hpp
 	src/Sound/SfmlSoundManager.cpp
 	src/Sound/SfmlSoundManager.hpp
-	src/Sound/LibAvSoundManager.cpp src/Sound/LibAvSoundManager.hpp)
+	src/Sound/LibAvSoundManager.cpp
+	src/Sound/LibAvSoundManager.hpp
+	src/LibAvRendererSound.cpp
+	src/LibAvRendererSound.hpp
+)
 
 if (WIN32)
 	if (MSVC)
