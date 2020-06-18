@@ -11,10 +11,14 @@
 namespace OsuReplayPlayer::HitObjects
 {
 	class Spinner : public HitObject {
+	private:
+		unsigned _end;
+
 	public:
 		Spinner(const OsuMap_hitObject &obj, MapState &state);
 
 		void draw(RenderTarget &target, const ReplayState &state) override;
+		bool hasExpired(ReplayState &state) override;
 	};
 }
 

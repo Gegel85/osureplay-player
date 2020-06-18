@@ -54,8 +54,6 @@ int main(int argc, char **argv)
 	} else {
 		libAv = std::make_unique<OsuReplayPlayer::LibAvRendererSound>(argv[3], vc, ac);
 		state = new OsuReplayPlayer::ReplayPlayer(*libAv, *libAv, argv[1], argv[2]);
-		//target = std::make_unique<OsuReplayPlayer::LibAvRenderer>(argv[3] + std::string(".mp4"), sf::Vector2u{640, 480}, 60, 400000);
-		//manager = std::make_unique<OsuReplayPlayer::LibAvSoundManager>(argv[3] + std::string(".mp2"));
 	}
 
 	std::cout << "Replay file " << argv[1] << ": " << std::endl;
