@@ -3,6 +3,7 @@
 //
 
 #include <cmath>
+#include <iostream>
 #include "Slider.hpp"
 #include "../ReplayPlayer.hpp"
 #include "../Exceptions.hpp"
@@ -154,7 +155,7 @@ namespace OsuReplayPlayer::HitObjects
 
 		if (this->getTimeToAppear() < state.elapsedTime) {
 			auto len = this->_getTimeLength(state.timingPt);
-			double ptId = this->_points.size() * std::fmod( state.elapsedTime - this->getTimeToAppear(), len) / len;
+			double ptId = this->_points.size() * std::fmod(state.elapsedTime - this->getTimeToAppear(), len) / len;
 
 			sf::Vector2i currentPoint =  {
 				this->_points[static_cast<int>(ptId)].x,
