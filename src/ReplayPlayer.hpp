@@ -18,6 +18,7 @@ namespace OsuReplayPlayer
 	struct ReplayState {
 		double elapsedTime = 0;
 		unsigned currentGameHitObject = 0;
+		unsigned currentTimingPt = 0;
 		OsuMap_timingPointEvent timingPt;
 	};
 
@@ -36,6 +37,7 @@ namespace OsuReplayPlayer
 
 		void _buildHitObjects();
 		unsigned _getLastObjToDisplay();
+		void _updateState();
 
 	public:
 		ReplayPlayer(RenderTarget &target, SoundManager &sound, const std::string &beatmapPath, const std::string &replayPath, unsigned fps = 60);

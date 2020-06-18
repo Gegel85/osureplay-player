@@ -197,7 +197,7 @@ namespace OsuReplayPlayer
 			}
 
 			this->_target.clear(sf::Color::Black);
-			for (int i = this->_getLastObjToDisplay() - 1; (unsigned)i >= this->_state.currentGameHitObject && i >= 0; i--)
+			for (int i = this->_getLastObjToDisplay() - 1; static_cast<unsigned>(i) >= this->_state.currentGameHitObject && i >= 0; i--)
 				this->_objs[i]->draw(this->_target, this->_state);
 
 			std::cout << "Rendering frame " << currentFrame++ << "/" << this->_totalFrames << std::endl;
@@ -205,8 +205,7 @@ namespace OsuReplayPlayer
 			this->_sound.tick(currentFrame, this->_fps);
 
 			this->_state.elapsedTime = ((this->_replay.mods & MODE_DOUBLE_TIME) || (this->_replay.mods & MODE_NIGHTCORE) ? 1500.f : 1000.f) * currentFrame / this->_fps;
-			while (this->_state.currentGameHitObject < this->_objs.size() && this->_objs[this->_state.currentGameHitObject]->hasExpired(this->_state))
-				this->_state.currentGameHitObject++;
+			this->_updateState();
 		}
 	}
 
@@ -235,5 +234,19 @@ namespace OsuReplayPlayer
 	const OsuReplay &ReplayPlayer::getReplay() const
 	{
 		return this->_replay;
+	}
+
+	void ReplayPlayer::_updateState()
+	{
+		while (this->_state.currentGameHitObject < this->_objs.size() && this->_objs[this->_state.currentGameHitObject]->hasExpired(this->_state))
+			this->_state.currentGameHitObject++;
+
+		while (
+			this->_state.currentTimingPt < this->_beatmap.timingPoints.length - 1 &&
+			this->_beatmap.timingPoints.content[this->_state.currentTimingPt + 1].timeToHappen < this->_state.elapsedTime
+		) {
+			this->_state.currentTimingPt++;
+			this->_state.timingPt = this->_beatmap.timingPoints.content[this->_state.currentTimingPt];
+		}
 	}
 }

@@ -49,7 +49,7 @@ namespace OsuReplayPlayer::HitObjects
 		}
 		this->_end = infos->curvePoints.content[infos->curvePoints.length - 1];
 		this->_type = static_cast<OsuSliderShape>(infos->type);
-		//this->_makeCurve();
+		this->_makeCurve();
 
 		double radius = 54.4 - 4.48 * this->_difficulty.circleSize;
 		double sqRadius = radius * radius;
