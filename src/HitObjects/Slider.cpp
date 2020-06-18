@@ -313,26 +313,18 @@ namespace OsuReplayPlayer::HitObjects
 		values[1] = (pow(pt2.x, 2) + pow(pt2.y, 2) - pow(pt3.x, 2) - pow(pt3.y, 2));
 		values[2] = (pow(pt2.x, 2) + pow(pt2.y, 2) - pow(pt1.x, 2) - pow(pt1.y, 2));
 		//Don't ask please
-		center.y =
-			(
-				(pt2.x - pt3.x) * values[2] -
-				(pt2.x - pt1.x) * values[1]
-			) / (
-				values[0] * 2
-			);
+		center.y = (
+			(pt2.x - pt3.x) * values[2] - (pt2.x - pt1.x) * values[1]
+		) / (values[0] * 2);
 
 		/*
 		** Tbh, I don't know myself
 		** That just worked so it's here
 		** That's the center of the circle
 		*/
-		center.x =
-			(
-				(pt2.y - pt1.y) * values[1] -
-				(pt2.y - pt3.y) * values[2]
-			) / (
-				values[0] * 2
-			);
+		center.x = (
+			(pt2.y - pt1.y) * values[1] - (pt2.y - pt3.y) * values[2]
+		) / (values[0] * 2);
 
 		//Calc the radius (quick maths)
 		radius = sqrt(pow(pt1.x - center.x, 2) + pow(pt1.y - center.y, 2));
