@@ -64,7 +64,11 @@ dkms.conf
 *.flv
 *.mpeg
 *.mp2
+*.mov
 
 # Osu maps and replays
 *.osu
-*.osr
+*.osr
+
+# Test maps
+test_map*
