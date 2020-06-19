@@ -189,6 +189,7 @@ namespace OsuReplayPlayer
 	{
 		unsigned currentFrame = 0;
 
+		this->_target.setGlobalPadding({64, 48});
 		this->_state.timingPt = *this->_beatmap.timingPoints.content;
 
 		while (this->_target.isValid() && this->_state.currentGameHitObject < this->_objs.size()) {

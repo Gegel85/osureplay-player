@@ -49,16 +49,17 @@ namespace OsuReplayPlayer
 	private:
 		AVFormatContext *_fmtContext;
 
+		OutputStream _videoStream;
+		sf::Vector2u _size;
+		sf::Color **_pixelArray;
+		sf::Color *_buffer;
+		sf::Vector2i _padding;
+
 		OutputStream _audioStream;
 		std::vector<PlayingSound> _sounds;
 		float _volume = 1;
 		int _index = 0;
 		unsigned _i = 0;
-
-		OutputStream _videoStream;
-		sf::Vector2u _size;
-		sf::Color **_pixelArray;
-		sf::Color *_buffer;
 
 		void _initVideoPart(const VideoConfig &vidConf);
 		void _initVideoStream(sf::Vector2u size, unsigned fps, size_t bitRate, const std::map<std::string, std::string> &opts = {});
@@ -84,6 +85,7 @@ namespace OsuReplayPlayer
 		void drawCircle(unsigned thickness, sf::Vector2i pos, float radius, sf::Color color) override;
 		void drawFilledCircle(sf::Vector2i pos, float radius, sf::Color color) override;
 		void renderFrame() override;
+		void setGlobalPadding(sf::Vector2i padding) override;
 
 		void setVolume(float volume) override;
 		void tick(unsigned currentFrame, unsigned framePerSeconds) override;

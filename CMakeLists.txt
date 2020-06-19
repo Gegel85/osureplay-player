@@ -90,14 +90,10 @@ add_executable(
 	src/HitObjects/HitObjectFactory.hpp
 	src/Rendering/SfmlWindowRenderTarget.cpp
 	src/Rendering/SfmlWindowRenderTarget.hpp
-	src/Rendering/LibAvRenderer.cpp
-	src/Rendering/LibAvRenderer.hpp
 	src/Sound/SoundManager.cpp
 	src/Sound/SoundManager.hpp
 	src/Sound/SfmlSoundManager.cpp
 	src/Sound/SfmlSoundManager.hpp
-	src/Sound/LibAvSoundManager.cpp
-	src/Sound/LibAvSoundManager.hpp
 	src/LibAvRendererSound.cpp
 	src/LibAvRendererSound.hpp
 	src/Controller/Controller.hpp

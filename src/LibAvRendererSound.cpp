@@ -77,6 +77,9 @@ namespace OsuReplayPlayer
 
 	void LibAvRendererSound::drawPixel(sf::Vector2i pos, sf::Color color)
 	{
+		pos.x += this->_padding.x;
+		pos.y += this->_padding.y;
+
 		if (pos.x < 0 || static_cast<unsigned>(pos.x) >= this->_size.x)
 			return;
 		if (pos.y < 0 || static_cast<unsigned>(pos.y) >= this->_size.y)
@@ -105,20 +108,20 @@ namespace OsuReplayPlayer
 	void LibAvRendererSound::drawRectangle(sf::Vector2i pos, sf::Vector2u size, unsigned, sf::Color color)
 	{
 		for (unsigned x = 0; x < size.x; x++)
-			this->drawPoint({static_cast<float>(x + pos.x), static_cast<float>(pos.y)}, color);
+			this->drawPoint({static_cast<float>(x) + pos.x, static_cast<float>(pos.y)}, color);
 		for (unsigned x = 0; x < size.x; x++)
-			this->drawPoint({static_cast<float>(x + pos.x), static_cast<float>(pos.y + size.y - 1)}, color);
+			this->drawPoint({static_cast<float>(x) + pos.x, static_cast<float>(pos.y) + size.y - 1}, color);
 		for (unsigned y = 0; y < size.x; y++)
-			this->drawPoint({static_cast<float>(pos.x), static_cast<float>(pos.y + y)}, color);
+			this->drawPoint({static_cast<float>(pos.x), static_cast<float>(pos.y) + y}, color);
 		for (unsigned y = 0; y < size.x; y++)
-			this->drawPoint({static_cast<float>(pos.x + size.x - 1), static_cast<float>(pos.y + y)}, color);
+			this->drawPoint({static_cast<float>(pos.x) + size.x - 1, static_cast<float>(pos.y) + y}, color);
 	}
 
 	void LibAvRendererSound::drawFilledRectangle(sf::Vector2i pos, sf::Vector2u size, sf::Color color)
 	{
 		for (unsigned x = 0; x < size.x; x++)
 			for (unsigned y = 0; y < size.y; y++)
-				this->drawPoint({static_cast<float>(x + pos.x), static_cast<float>(y + pos.y)}, color);
+				this->drawPoint({static_cast<float>(x) + pos.x, static_cast<float>(y) + pos.y}, color);
 	}
 
 	void LibAvRendererSound::drawImage(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize, sf::Color tint, bool centered, float rotation)
@@ -154,8 +157,8 @@ namespace OsuReplayPlayer
 					};
 				if (rotation == 0)
 					this->drawPoint({
-						static_cast<float>(pos.x + x),
-						static_cast<float>(pos.y + y)
+						static_cast<float>(pos.x) + x,
+						static_cast<float>(pos.y) + y
 					}, col);
 				else
 					this->drawPoint({
@@ -192,6 +195,11 @@ namespace OsuReplayPlayer
 		this->_prepareVideoFrame();
 		this->_videoStream.frame->pts = this->_videoStream.nextPts++;
 		this->_flushVideo(true);
+	}
+
+	void LibAvRendererSound::setGlobalPadding(sf::Vector2i padding)
+	{
+		this->_padding = padding;
 	}
 
 	void LibAvRendererSound::_prepareVideoFrame()

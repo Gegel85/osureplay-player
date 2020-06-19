@@ -26,6 +26,7 @@ namespace OsuReplayPlayer
 		virtual void drawCircle(unsigned thickness, sf::Vector2i pos, float radius, sf::Color color) = 0;
 		virtual void drawFilledCircle(sf::Vector2i pos, float radius, sf::Color color) = 0;
 		virtual void renderFrame() = 0;
+		virtual void setGlobalPadding(sf::Vector2i padding) = 0;
 	};
 }
 

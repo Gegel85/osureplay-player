@@ -17,7 +17,6 @@ namespace OsuReplayPlayer
 		sf::CircleShape _circle;
 		sf::Texture _texture;
 		sf::Sprite _sprite;
-
 	public:
 		SFMLWindowRenderTarget(sf::Vector2u size, const std::string &title);
 
@@ -32,6 +31,7 @@ namespace OsuReplayPlayer
 		void drawCircle(unsigned thickness, sf::Vector2i pos, float radius, sf::Color color) override;
 		void drawFilledCircle(sf::Vector2i pos, float radius, sf::Color color) override;
 		void renderFrame() override;
+		void setGlobalPadding(sf::Vector2i padding) override;
 	};
 }
 

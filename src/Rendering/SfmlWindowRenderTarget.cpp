@@ -123,4 +123,11 @@ namespace OsuReplayPlayer
 				this->close();
 		this->display();
 	}
+
+	void SFMLWindowRenderTarget::setGlobalPadding(sf::Vector2i padding)
+	{
+		sf::View view{sf::FloatRect(-padding.x, -padding.y, this->getView().getSize().x, this->getView().getSize().y)};
+
+		this->setView(view);
+	}
 }

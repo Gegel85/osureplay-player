@@ -22,8 +22,8 @@ struct __less : public std::binary_function<_Tp, _Tp, bool>
 {
 	constexpr bool operator()(const _Tp& v1, const _Tp& v2) const
 	{
-		size_t val1 = (static_cast<size_t>(v1.y) << 32U) | v1.x;
-		size_t val2 = (static_cast<size_t>(v2.y) << 32U) | v2.x;
+		size_t val1 = (static_cast<size_t>(v1.y) << 32U) | (static_cast<size_t>(v1.x) & 0xFFFFFFFFU);
+		size_t val2 = (static_cast<size_t>(v2.y) << 32U) | (static_cast<size_t>(v2.x) & 0xFFFFFFFFU);
 
 		return val1 < val2;
 	}
