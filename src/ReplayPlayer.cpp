@@ -204,11 +204,14 @@ namespace OsuReplayPlayer
 			}
 
 			this->_target.clear(sf::Color::Black);
-			if (this->_state.currentGameHitObject < this->_objs.size())
+			if (this->_state.currentGameHitObject < this->_objs.size()) {
+				this->_objs[this->_state.currentGameHitObject]->update(this->_state);
 				for (int i = this->_getLastObjToDisplay() - 1; static_cast<unsigned>(i) >= this->_state.currentGameHitObject && i >= 0; i--)
 					this->_objs[i]->draw(this->_target, this->_state);
+			}
 
 			this->_drawCursor();
+			this->_updateParticles();
 
 			std::cout << "Rendering frame " << currentFrame++ << "/" << this->_totalFrames << std::endl;
 			this->_target.renderFrame();
@@ -249,8 +252,10 @@ namespace OsuReplayPlayer
 
 	void ReplayPlayer::_updateState()
 	{
-		while (this->_state.currentGameHitObject < this->_objs.size() && this->_objs[this->_state.currentGameHitObject]->hasExpired(this->_state))
+		while (this->_state.currentGameHitObject < this->_objs.size() && this->_objs[this->_state.currentGameHitObject]->hasExpired(this->_state)) {
+			this->_onExpire(*this->_objs[this->_state.currentGameHitObject]);
 			this->_state.currentGameHitObject++;
+		}
 
 		while (
 			this->_state.currentTimingPt < this->_beatmap.timingPoints.length - 1 &&
@@ -274,5 +279,38 @@ namespace OsuReplayPlayer
 				true,
 				0
 			);
+	}
+
+	void ReplayPlayer::_onExpire(HitObject &obj)
+	{
+		if (obj.brokeCombo()) {
+			this->_state.perfectCombo = false;
+			this->_state.combo = 0;
+		}
+		this->_state.combo++;
+
+		if (obj.isEndCombo()) {
+
+		}
+
+		this->_state.perfectCombo |= obj.isNewCombo();
+	}
+
+	void ReplayPlayer::_updateParticles()
+	{
+		for (auto &particle : this->_particles) {
+			particle.draw(this->_target);
+			particle.update(1000.f / this->_fps);
+		}
+		this->_particles.erase(
+			std::remove_if(
+				this->_particles.begin(),
+				this->_particles.end(),
+				[](const OsuParticle &particle){
+					return particle.hasExpired();
+				}
+			),
+			this->_particles.end()
+		);
 	}
 }

@@ -46,8 +46,10 @@ namespace OsuReplayPlayer
 		OsuMap_hitObjectAddition _extra;
 
 	protected:
+		unsigned _gainedScore = 0;
 		OsuIntegerVector _position;
 		bool _clicked = false;
+		bool _brokeCombo = true;
 		unsigned _comboNbr;
 		unsigned char _mods;
 		OsuGameMode _gameMode;
@@ -70,6 +72,8 @@ namespace OsuReplayPlayer
 		OsuIntegerVector getPosition() const;
 		const OsuMap_hitObjectAddition &getExtra() const;
 		unsigned char calcAlpha(unsigned long totalTicks);
+		unsigned getScore() const;
+		bool brokeCombo() const;
 		virtual bool hasExpired(ReplayState &state);
 
 		virtual void draw(RenderTarget &target, const ReplayState &state) = 0;

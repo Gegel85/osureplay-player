@@ -99,7 +99,7 @@ add_executable(
 	src/Controller/Controller.hpp
 	src/Controller/ReplayController.cpp
 	src/Controller/ReplayController.hpp
-)
+	src/OsuParticle.cpp src/OsuParticle.hpp)
 
 if (WIN32)
 	if (MSVC)

@@ -54,7 +54,7 @@ namespace OsuReplayPlayer::HitObjects
 		this->_displayComboNumber(target, alpha);
 	}
 
-	void HitCircle::update(const ReplayState &state)
+	void HitCircle::update(const ReplayState &)
 	{
 
 	}

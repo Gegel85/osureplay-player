@@ -130,4 +130,14 @@ namespace OsuReplayPlayer
 	{
 		return this->_clicked || (this->_timeToAppear + 150 + 50 * (5 - this->_difficulty.overallDifficulty) / 5 <= state.elapsedTime);
 	}
+
+	unsigned HitObject::getScore() const
+	{
+		return this->_gainedScore;
+	}
+
+	bool HitObject::brokeCombo() const
+	{
+		return this->_brokeCombo;
+	}
 }

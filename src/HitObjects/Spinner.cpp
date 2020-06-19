@@ -39,7 +39,7 @@ namespace OsuReplayPlayer::HitObjects
 		return this->_end <= state.elapsedTime;
 	}
 
-	void Spinner::update(const ReplayState &state)
+	void Spinner::update(const ReplayState &)
 	{
 
 	}

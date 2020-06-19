@@ -376,7 +376,7 @@ namespace OsuReplayPlayer::HitObjects
 		}
 	}
 
-	void Slider::update(const ReplayState &state)
+	void Slider::update(const ReplayState &)
 	{
 
 	}
