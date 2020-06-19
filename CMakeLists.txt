@@ -100,6 +100,9 @@ add_executable(
 	src/Sound/LibAvSoundManager.hpp
 	src/LibAvRendererSound.cpp
 	src/LibAvRendererSound.hpp
+	src/Controller/Controller.hpp
+	src/Controller/ReplayController.cpp
+	src/Controller/ReplayController.hpp
 )
 
 if (WIN32)

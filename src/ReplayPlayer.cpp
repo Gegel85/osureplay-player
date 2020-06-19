@@ -23,6 +23,7 @@ namespace OsuReplayPlayer
 			std::cerr << "Replay file (" << replayPath << ") is not valid: " << this->_replay.error << std::endl;
 			throw InvalidReplayException(this->_replay.error);
 		}
+		this->_controller.setEvents(this->_replay.gameEvents);
 
 		std::cout << "Loading beatmap file " << beatmapPath << std::endl;
 		this->_beatmap = OsuMap_parseMapFile(beatmapPath.c_str());
@@ -200,10 +201,13 @@ namespace OsuReplayPlayer
 			for (int i = this->_getLastObjToDisplay() - 1; static_cast<unsigned>(i) >= this->_state.currentGameHitObject && i >= 0; i--)
 				this->_objs[i]->draw(this->_target, this->_state);
 
+			this->_drawCursor();
+
 			std::cout << "Rendering frame " << currentFrame++ << "/" << this->_totalFrames << std::endl;
 			this->_target.renderFrame();
 			this->_sound.tick(currentFrame, this->_fps);
 
+			this->_controller.update(this->_state.elapsedTime);
 			this->_state.elapsedTime = ((this->_replay.mods & MODE_DOUBLE_TIME) || (this->_replay.mods & MODE_NIGHTCORE) ? 1500.f : 1000.f) * currentFrame / this->_fps;
 			this->_updateState();
 		}
@@ -248,5 +252,20 @@ namespace OsuReplayPlayer
 			this->_state.currentTimingPt++;
 			this->_state.timingPt = this->_beatmap.timingPoints.content[this->_state.currentTimingPt];
 		}
+	}
+
+	void ReplayPlayer::_drawCursor()
+	{
+		auto pos = this->_controller.getPosition();
+
+		if (pos.x > 0 && pos.y > 0)
+			this->_target.drawImage(
+				{static_cast<int>(pos.x), static_cast<int>(pos.y)},
+				this->_skin.getImage("cursor"),
+				{-1, -1},
+				{255, 255, 255, 255},
+				true,
+				0
+			);
 	}
 }

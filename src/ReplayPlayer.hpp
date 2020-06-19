@@ -12,6 +12,7 @@
 #include "OsuSkin.hpp"
 #include "HitObjects/HitObject.hpp"
 #include "Sound/SoundManager.hpp"
+#include "Controller/ReplayController.hpp"
 
 namespace OsuReplayPlayer
 {
@@ -24,6 +25,7 @@ namespace OsuReplayPlayer
 
 	class ReplayPlayer {
 	private:
+		ReplayController _controller;
 		bool _musicStarted = false;
 		unsigned _fps;
 		OsuSkin _skin;
@@ -38,6 +40,7 @@ namespace OsuReplayPlayer
 		void _buildHitObjects();
 		unsigned _getLastObjToDisplay();
 		void _updateState();
+		void _drawCursor();
 
 	public:
 		ReplayPlayer(RenderTarget &target, SoundManager &sound, const std::string &beatmapPath, const std::string &replayPath, unsigned fps = 60);
