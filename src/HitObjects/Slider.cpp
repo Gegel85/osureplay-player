@@ -31,8 +31,8 @@ struct __less : public std::binary_function<_Tp, _Tp, bool>
 
 namespace OsuReplayPlayer::HitObjects
 {
-	Slider::Slider(const OsuMap_hitObject &obj, MapState &state) :
-		HitObject(obj, state)
+	Slider::Slider(const OsuMap_hitObject &obj, MapState &state, bool endsCombo) :
+		HitObject(obj, state, endsCombo)
 	{
 		auto *infos = reinterpret_cast<OsuMap_hitObjectSliderInfos *>(obj.additionalInfos);
 
@@ -374,5 +374,10 @@ namespace OsuReplayPlayer::HitObjects
 		default:
 			throw InvalidSliderException(std::string("Invalid slider type '") + static_cast<char>(this->_type) + "'");
 		}
+	}
+
+	void Slider::update(const ReplayState &state)
+	{
+
 	}
 }

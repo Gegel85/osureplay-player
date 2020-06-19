@@ -38,6 +38,7 @@ namespace OsuReplayPlayer
 	class HitObject {
 	private:
 		bool _newCombo;
+		bool _endCombo;
 		HitObjectType _type;
 		unsigned char _hitSound;
 		unsigned char _colorSkip;
@@ -58,8 +59,9 @@ namespace OsuReplayPlayer
 		void _displayComboNumber(RenderTarget &target, unsigned char alpha);
 
 	public:
-		HitObject(const OsuMap_hitObject &obj, MapState &state);
+		HitObject(const OsuMap_hitObject &obj, MapState &state, bool endsCombo);
 
+		bool isEndCombo() const;
 		bool isNewCombo() const;
 		HitObjectType getType() const;
 		unsigned char getHitSound() const;
@@ -71,6 +73,7 @@ namespace OsuReplayPlayer
 		virtual bool hasExpired(ReplayState &state);
 
 		virtual void draw(RenderTarget &target, const ReplayState &state) = 0;
+		virtual void update(const ReplayState &state) = 0;
 	};
 }
 

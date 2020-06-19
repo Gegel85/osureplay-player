@@ -15,10 +15,11 @@ namespace OsuReplayPlayer::HitObjects
 		unsigned _end;
 
 	public:
-		Spinner(const OsuMap_hitObject &obj, MapState &state);
+		Spinner(const OsuMap_hitObject &obj, MapState &state, bool endsCombo);
 
 		void draw(RenderTarget &target, const ReplayState &state) override;
 		bool hasExpired(ReplayState &state) override;
+		void update(const ReplayState &state) override;
 	};
 }
 

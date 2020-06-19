@@ -8,8 +8,8 @@
 namespace OsuReplayPlayer::HitObjects
 {
 
-	Spinner::Spinner(const OsuMap_hitObject &obj, MapState &state) :
-		HitObject(obj, state),
+	Spinner::Spinner(const OsuMap_hitObject &obj, MapState &state, bool endsCombo) :
+		HitObject(obj, state, endsCombo),
 		_end(*reinterpret_cast<unsigned *>(obj.additionalInfos))
 	{
 
@@ -37,5 +37,10 @@ namespace OsuReplayPlayer::HitObjects
 	bool Spinner::hasExpired(ReplayState &state)
 	{
 		return this->_end <= state.elapsedTime;
+	}
+
+	void Spinner::update(const ReplayState &state)
+	{
+
 	}
 }

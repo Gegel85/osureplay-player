@@ -182,7 +182,12 @@ namespace OsuReplayPlayer
 
 		this->_objs.clear();
 		for (unsigned i = 0; i < this->_beatmap.hitObjects.length; i++)
-			this->_objs.push_back(HitObjectFactory::build(this->_beatmap.hitObjects.content[i], state));
+			this->_objs.push_back(HitObjectFactory::build(
+				this->_beatmap.hitObjects.content[i],
+				state,
+				i == this->_beatmap.hitObjects.length - 1 ||
+				(this->_beatmap.hitObjects.content[i + 1].type & HITOBJ_NEW_COMBO))
+			);
 	}
 
 	void ReplayPlayer::run()

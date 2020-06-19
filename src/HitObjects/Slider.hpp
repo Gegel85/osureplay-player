@@ -39,10 +39,11 @@ namespace OsuReplayPlayer::HitObjects
 		OsuIntegerVector _getBezierPoint(const std::vector<OsuIntegerVector> &points, double percent);
 		double _getTimeLength(OsuMap_timingPointEvent timingPt) const;
 	public:
-		Slider(const OsuMap_hitObject &obj, MapState &state);
+		Slider(const OsuMap_hitObject &obj, MapState &state, bool endsCombo);
 
 		void draw(RenderTarget &target, const ReplayState &state) override;
 		bool hasExpired(ReplayState &state) override;
+		void update(const ReplayState &state) override;
 	};
 }
 

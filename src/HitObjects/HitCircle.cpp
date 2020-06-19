@@ -7,8 +7,8 @@
 
 namespace OsuReplayPlayer::HitObjects
 {
-	HitCircle::HitCircle(const OsuMap_hitObject &obj, MapState &state) :
-		HitObject(obj, state)
+	HitCircle::HitCircle(const OsuMap_hitObject &obj, MapState &state, bool endsCombo) :
+		HitObject(obj, state, endsCombo)
 	{
 	}
 
@@ -52,5 +52,10 @@ namespace OsuReplayPlayer::HitObjects
 		);
 		this->_displayApproachCircle(target, radius, alpha, state.elapsedTime);
 		this->_displayComboNumber(target, alpha);
+	}
+
+	void HitCircle::update(const ReplayState &state)
+	{
+
 	}
 }

@@ -12,10 +12,10 @@ namespace OsuReplayPlayer
 {
 	class HitObjectFactory {
 	private:
-		static const std::vector<std::function<HitObject *(const OsuMap_hitObject &obj, MapState &state)>> _builders;
+		static const std::vector<std::function<HitObject *(const OsuMap_hitObject &obj, MapState &state, bool endsCombo)>> _builders;
 
 	public:
-		static std::unique_ptr<HitObject> build(const OsuMap_hitObject &obj, MapState &state);
+		static std::unique_ptr<HitObject> build(const OsuMap_hitObject &obj, MapState &state, bool endsCombo);
 	};
 }
 

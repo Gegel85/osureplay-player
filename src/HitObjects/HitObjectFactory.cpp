@@ -9,25 +9,25 @@
 
 namespace OsuReplayPlayer
 {
-	const std::vector<std::function<HitObject *(const OsuMap_hitObject &obj, MapState &state)>> HitObjectFactory::_builders{
-		[](const OsuMap_hitObject &obj, MapState &state){ //HIT_OBJECT_CIRCLE
-			return new HitObjects::HitCircle(obj, state);
+	const std::vector<std::function<HitObject *(const OsuMap_hitObject &obj, MapState &state, bool endsCombo)>> HitObjectFactory::_builders{
+		[](const OsuMap_hitObject &obj, MapState &state, bool endsCombo){ //HIT_OBJECT_CIRCLE
+			return new HitObjects::HitCircle(obj, state, endsCombo);
 		},
-		[](const OsuMap_hitObject &obj, MapState &state){ //HIT_OBJECT_SLIDER
-			return new HitObjects::Slider(obj, state);
+		[](const OsuMap_hitObject &obj, MapState &state, bool endsCombo){ //HIT_OBJECT_SLIDER
+			return new HitObjects::Slider(obj, state, endsCombo);
 		},
-		[](const OsuMap_hitObject &obj, MapState &state){ //HIT_OBJECT_SPINNER
-			return new HitObjects::Spinner(obj, state);
+		[](const OsuMap_hitObject &obj, MapState &state, bool endsCombo){ //HIT_OBJECT_SPINNER
+			return new HitObjects::Spinner(obj, state, endsCombo);
 		},
-		[](const OsuMap_hitObject &, MapState &){ //HIT_OBJECT_MANIA_LONG_NOTE
+		[](const OsuMap_hitObject &, MapState &, bool){ //HIT_OBJECT_MANIA_LONG_NOTE
 			return nullptr;
 		}
 	};
 
-	std::unique_ptr<HitObject> HitObjectFactory::build(const OsuMap_hitObject &obj, MapState &state)
+	std::unique_ptr<HitObject> HitObjectFactory::build(const OsuMap_hitObject &obj, MapState &state, bool endsCombo)
 	{
 		return std::unique_ptr<HitObject>(
-			HitObjectFactory::_builders[getObjectTypeFromMapValue(obj.type)](obj, state)
+			HitObjectFactory::_builders[getObjectTypeFromMapValue(obj.type)](obj, state, endsCombo)
 		);
 	}
 }

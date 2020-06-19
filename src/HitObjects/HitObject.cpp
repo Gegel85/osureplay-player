@@ -19,8 +19,9 @@ namespace OsuReplayPlayer
 		return HIT_OBJECT_CIRCLE;
 	}
 
-	HitObject::HitObject(const OsuMap_hitObject &obj, MapState &state) :
+	HitObject::HitObject(const OsuMap_hitObject &obj, MapState &state, bool endsCombo) :
 		_newCombo(obj.type & HITOBJ_NEW_COMBO),
+		_endCombo(endsCombo),
 		_type(getObjectTypeFromMapValue(obj.type)),
 		_hitSound(obj.hitSound),
 		_colorSkip((obj.type & HITOBJ_COLOR_SKIP_NBR) >> 4),
@@ -35,6 +36,11 @@ namespace OsuReplayPlayer
 		_difficulty(state.infos)
 	{
 
+	}
+
+	bool HitObject::isEndCombo() const
+	{
+		return this->_endCombo;
 	}
 
 	bool HitObject::isNewCombo() const
