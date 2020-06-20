@@ -25,6 +25,7 @@ int main(int argc, char **argv)
 	std::unique_ptr<OsuReplayPlayer::SoundManager> manager;
 	std::unique_ptr<OsuReplayPlayer::LibAvRendererSound> libAv;
 	std::map<std::string, std::string> opts;
+	OsuReplayPlayer::ReplayPlayer *state;
 
 	OsuReplayPlayer::VideoConfig vc{
 		.opts = opts,
@@ -37,8 +38,6 @@ int main(int argc, char **argv)
 		.bitRate = 64000,
 		.sampleRate = 44100,
 	};
-
-	OsuReplayPlayer::ReplayPlayer *state;
 
 	if (argc == 3) {
 		auto *sfmlTarget = new OsuReplayPlayer::SFMLWindowRenderTarget(sf::Vector2u{640, 480}, "");
@@ -56,13 +55,11 @@ int main(int argc, char **argv)
 		state = new OsuReplayPlayer::ReplayPlayer(*libAv, *libAv, argv[1], argv[2]);
 	}
 
-	std::cout << "Replay file " << argv[1] << ": " << std::endl;
 #ifdef _DEBUG
+	std::cout << "Replay file " << argv[2] << ": " << std::endl;
 	state->displayReplayInfos();
-#endif
 
-	std::cout << "Map file: " << argv[2] << std::endl;
-#ifdef _DEBUG
+	std::cout << "Map file: " << argv[1] << std::endl;
 	state->displayMapInfos();
 #endif
 
