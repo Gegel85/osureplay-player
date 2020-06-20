@@ -18,7 +18,13 @@
 namespace OsuReplayPlayer
 {
 	struct ReplayState {
+		bool clicked = false;
+		bool M1clicked = false;
+		bool M2clicked = false;
+		bool K1clicked = false;
+		bool K2clicked = false;
 		double elapsedTime = 0;
+		sf::Vector2f cursorPos;
 		unsigned currentGameHitObject = 0;
 		unsigned currentTimingPt = 0;
 		unsigned combo = 0;
@@ -46,6 +52,7 @@ namespace OsuReplayPlayer
 		void _updateState();
 		void _drawCursor();
 		void _updateParticles();
+		void _updateCursorState();
 		void _onExpire(HitObject &obj);
 		void _drawScoreResult(HitObject &obj);
 

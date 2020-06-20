@@ -145,4 +145,9 @@ namespace OsuReplayPlayer
 	{
 		return this->_position;
 	}
+
+	double HitObject::getRadius() const
+	{
+		return 54.4 - 4.48 * this->_difficulty.circleSize;
+	}
 }

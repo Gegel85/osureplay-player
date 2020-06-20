@@ -52,7 +52,7 @@ namespace OsuReplayPlayer::HitObjects
 		this->_type = static_cast<OsuSliderShape>(infos->type);
 		this->_makeCurve();
 
-		double radius = 54.4 - 4.48 * this->_difficulty.circleSize;
+		double radius = this->getRadius();
 		double sqRadius = radius * radius;
 		std::set<sf::Vector2i, __less<sf::Vector2i>> _temp;
 		sf::Vector2i _bottomRight = {INT32_MIN, INT32_MIN};
@@ -79,7 +79,7 @@ namespace OsuReplayPlayer::HitObjects
 	void Slider::draw(RenderTarget &target, const ReplayState &state)
 	{
 		unsigned char alpha = this->calcAlpha(state.elapsedTime);
-		double radius = 54.4 - 4.48 * this->_difficulty.circleSize;
+		double radius = this->getRadius();
 
 		target.drawImage(
 			{

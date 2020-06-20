@@ -74,6 +74,7 @@ namespace OsuReplayPlayer
 		unsigned char calcAlpha(unsigned long totalTicks);
 		unsigned getScore() const;
 		bool brokeCombo() const;
+		double getRadius() const;
 		virtual bool hasExpired(ReplayState &state) const;
 		virtual OsuIntegerVector getScoreParticlePosition() const;
 

@@ -211,6 +211,7 @@ namespace OsuReplayPlayer
 			}
 
 			this->_drawCursor();
+			this->_updateCursorState();
 			this->_updateParticles();
 
 			std::cout << "Rendering frame " << currentFrame++ << "/" << this->_totalFrames << std::endl;
@@ -329,5 +330,20 @@ namespace OsuReplayPlayer
 				static_cast<float>(pos.y)
 			}
 		);
+	}
+
+	void ReplayPlayer::_updateCursorState()
+	{
+		this->_state.clicked =
+			(!this->_state.K1clicked && this->_controller.isK1Pressed()) ||
+			(!this->_state.K2clicked && this->_controller.isK2Pressed()) ||
+			(!this->_state.M1clicked && this->_controller.isM1Pressed()) ||
+			(!this->_state.M2clicked && this->_controller.isM2Pressed());
+
+		this->_state.K1clicked = this->_controller.isK1Pressed();
+		this->_state.K2clicked = this->_controller.isK2Pressed();
+		this->_state.M1clicked = this->_controller.isM1Pressed();
+		this->_state.M2clicked = this->_controller.isM2Pressed();
+		this->_state.cursorPos = this->_controller.getPosition();
 	}
 }
