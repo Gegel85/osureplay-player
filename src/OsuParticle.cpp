@@ -14,7 +14,7 @@ namespace OsuReplayPlayer
 		_basePath(basePath),
 		_loop(loop)
 	{
-		while (skin.hasImage(basePath + std::to_string(this->_animationSize)))
+		while (skin.hasImage(basePath + "-" + std::to_string(this->_animationSize)))
 			this->_animationSize++;
 	}
 
@@ -28,7 +28,7 @@ namespace OsuReplayPlayer
 		if (this->_animationSize) {
 			target.drawImage(
 				sf::Vector2i(this->_pos.x, this->_pos.y),
-				this->_skin.get().getImage(this->_basePath + std::to_string(this->_currentAnimation)),
+				this->_skin.get().getImage(this->_basePath + "-" + std::to_string(this->_currentAnimation)),
 				{-1, -1},
 				{
 					255,

@@ -21,7 +21,7 @@ namespace OsuReplayPlayer
 		float _lifeTime;
 		unsigned _fadeTime;
 		std::string _basePath;
-		unsigned _animationSize;
+		unsigned _animationSize = 0;
 		unsigned _currentAnimation = 0;
 		unsigned char _alpha = 255;
 		bool _loop;
