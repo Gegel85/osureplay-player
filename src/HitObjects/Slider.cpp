@@ -191,7 +191,7 @@ namespace OsuReplayPlayer::HitObjects
 		this->_displayComboNumber(target, alpha);
 	}
 
-	bool Slider::hasExpired(ReplayState &state)
+	bool Slider::hasExpired(ReplayState &state) const
 	{
 		return this->_clicked || this->getTimeToAppear() + this->_getTimeLength(state.timingPt) < state.elapsedTime;
 	}
@@ -379,5 +379,10 @@ namespace OsuReplayPlayer::HitObjects
 	void Slider::update(const ReplayState &)
 	{
 
+	}
+
+	OsuIntegerVector Slider::getScoreParticlePosition() const
+	{
+		return this->_points.back();
 	}
 }

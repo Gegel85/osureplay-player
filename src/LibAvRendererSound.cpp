@@ -126,8 +126,12 @@ namespace OsuReplayPlayer
 
 	void LibAvRendererSound::drawImage(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize, sf::Color tint, bool centered, float rotation)
 	{
-		const sf::Color *array = reinterpret_cast<const sf::Color *>(image.getPixelsPtr());
 		sf::Vector2u size = image.getSize();
+
+		if (!size.x || !size.y)
+			return;
+
+		const sf::Color *array = reinterpret_cast<const sf::Color *>(image.getPixelsPtr());
 		sf::Vector2f scale = {
 			newSize.x < 0 ? 1 : (static_cast<float>(newSize.x) / size.x),
 			newSize.y < 0 ? 1 : (static_cast<float>(newSize.y) / size.y)

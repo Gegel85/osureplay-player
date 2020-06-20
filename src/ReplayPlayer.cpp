@@ -288,11 +288,7 @@ namespace OsuReplayPlayer
 			this->_state.combo = 0;
 		}
 		this->_state.combo++;
-
-		if (obj.isEndCombo()) {
-
-		}
-
+		this->_drawScoreResult(obj);
 		this->_state.perfectCombo |= obj.isNewCombo();
 	}
 
@@ -311,6 +307,27 @@ namespace OsuReplayPlayer
 				}
 			),
 			this->_particles.end()
+		);
+	}
+
+	void ReplayPlayer::_drawScoreResult(HitObject &obj)
+	{
+		auto pos = obj.getScoreParticlePosition();
+		auto score = obj.getScore();
+		std::string path = "hit" + std::to_string(score);
+
+		if (obj.isEndCombo() && score > 50)
+			path += this->_state.perfectCombo ? "g" : "k";
+
+		this->_particles.emplace_back(
+			this->_skin,
+			500,
+			250,
+			path,
+			sf::Vector2f{
+				static_cast<float>(pos.x),
+				static_cast<float>(pos.y)
+			}
 		);
 	}
 }

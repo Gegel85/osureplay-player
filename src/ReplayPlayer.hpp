@@ -47,6 +47,7 @@ namespace OsuReplayPlayer
 		void _drawCursor();
 		void _updateParticles();
 		void _onExpire(HitObject &obj);
+		void _drawScoreResult(HitObject &obj);
 
 	public:
 		ReplayPlayer(RenderTarget &target, SoundManager &sound, const std::string &beatmapPath, const std::string &replayPath, unsigned fps = 60);

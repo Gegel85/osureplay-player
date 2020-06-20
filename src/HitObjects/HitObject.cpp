@@ -126,7 +126,7 @@ namespace OsuReplayPlayer
 		);
 	}
 
-	bool HitObject::hasExpired(ReplayState &state)
+	bool HitObject::hasExpired(ReplayState &state) const
 	{
 		return this->_clicked || (this->_timeToAppear + 150 + 50 * (5 - this->_difficulty.overallDifficulty) / 5 <= state.elapsedTime);
 	}
@@ -139,5 +139,10 @@ namespace OsuReplayPlayer
 	bool HitObject::brokeCombo() const
 	{
 		return this->_brokeCombo;
+	}
+
+	OsuIntegerVector HitObject::getScoreParticlePosition() const
+	{
+		return this->_position;
 	}
 }

@@ -34,7 +34,7 @@ namespace OsuReplayPlayer::HitObjects
 		);
 	}
 
-	bool Spinner::hasExpired(ReplayState &state)
+	bool Spinner::hasExpired(ReplayState &state) const
 	{
 		return this->_end <= state.elapsedTime;
 	}

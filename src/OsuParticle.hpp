@@ -19,6 +19,7 @@ namespace OsuReplayPlayer
 		float _rotation = 0;
 		sf::Vector2f _pos;
 		float _lifeTime;
+		unsigned _fadeTime;
 		std::string _basePath;
 		unsigned _animationSize;
 		unsigned _currentAnimation = 0;
@@ -26,7 +27,7 @@ namespace OsuReplayPlayer
 		bool _loop;
 
 	public:
-		OsuParticle(const OsuSkin &skin, unsigned lifeTime, const std::string &basePath, sf::Vector2f pos, bool loop = false);
+		OsuParticle(const OsuSkin &skin, unsigned lifeTime, unsigned fadeTime, const std::string &basePath, sf::Vector2f pos, bool loop = false);
 
 		void draw(RenderTarget &target);
 		bool hasExpired() const;
