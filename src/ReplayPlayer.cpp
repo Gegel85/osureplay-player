@@ -218,7 +218,6 @@ namespace OsuReplayPlayer
 			this->_target.renderFrame();
 			this->_sound.tick(currentFrame, this->_fps);
 
-			this->_controller.update(this->_state.elapsedTime);
 			this->_state.elapsedTime = ((this->_replay.mods & MODE_DOUBLE_TIME) || (this->_replay.mods & MODE_NIGHTCORE) ? 1500.f : 1000.f) * currentFrame / this->_fps;
 			this->_updateState();
 		}
@@ -265,6 +264,8 @@ namespace OsuReplayPlayer
 			this->_state.currentTimingPt++;
 			this->_state.timingPt = this->_beatmap.timingPoints.content[this->_state.currentTimingPt];
 		}
+
+		this->_controller.update(this->_state.elapsedTime);
 	}
 
 	void ReplayPlayer::_drawCursor()
