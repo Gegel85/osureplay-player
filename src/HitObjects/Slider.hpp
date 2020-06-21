@@ -28,6 +28,8 @@ namespace OsuReplayPlayer::HitObjects
 		OsuIntegerVector _end;
 		sf::Vector2i _topLeft;
 		sf::Image _image;
+		unsigned _ballAnimation = 0;
+		std::vector<float> _angles;
 		std::vector<OsuIntegerVector> _points;
 		std::vector<unsigned char> _edgeHitSounds;
 		std::vector<OsuMap_sampleSet> _edgeAdditions;

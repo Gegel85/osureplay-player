@@ -12,7 +12,7 @@ namespace OsuReplayPlayer
 {
 	void OsuSkin::addFolder(const std::string &path)
 	{
-		std::cout << path << std::endl;
+		std::cout << "Loading skin in folder " << path << std::endl;
 		for (auto &entry : std::filesystem::directory_iterator(path)) {
 			if (entry.is_directory())
 				continue;
@@ -21,15 +21,11 @@ namespace OsuReplayPlayer
 			const auto &extension = p.extension().string();
 
 			if (OsuSkin::_handlers.find(extension) == OsuSkin::_handlers.end()) {
-#ifdef _DEBUG
-				std::cout << "File " << p.string() << " ignored because the extension '" << extension << "' is not recognized as a media format." << std::endl;
-#endif
+				std::cerr << "File " << p.string() << " ignored because the extension '" << extension << "' is not recognized as a media format." << std::endl;
 				continue;
 			}
 
-#ifdef _DEBUG
 			std::cout << "Loading file " << p.string() << std::endl;
-#endif
 			if (p.has_extension())
 				try {
 					OsuSkin::_handlers.at(extension)(this, p.string());

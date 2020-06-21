@@ -131,6 +131,9 @@ namespace OsuReplayPlayer
 		if (!size.x || !size.y)
 			return;
 
+		if (rotation != 0)
+			rotation = rotation * 2 / 2;
+
 		const sf::Color *array = reinterpret_cast<const sf::Color *>(image.getPixelsPtr());
 		sf::Vector2f scale = {
 			newSize.x < 0 ? 1 : (static_cast<float>(newSize.x) / size.x),

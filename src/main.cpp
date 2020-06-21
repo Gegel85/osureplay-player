@@ -63,7 +63,7 @@ int main(int argc, char **argv)
 	state->displayMapInfos();
 #endif
 
-	state->getSkin().addFolder("default_skin");
+	state->getSkin().addFolder("test_skin_1");
 	state->getSkin().addFolder(std::filesystem::path(argv[2]).parent_path().string());
 	state->run();
 	delete state;

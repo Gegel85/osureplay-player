@@ -158,21 +158,24 @@ namespace OsuReplayPlayer::HitObjects
 			double ptId = this->_points.size() * std::fmod(state.elapsedTime - this->getTimeToAppear(), len) / len;
 
 			sf::Vector2i currentPoint =  {
-				this->_points[static_cast<int>(ptId)].x,
-				this->_points[static_cast<int>(ptId)].y
+				this->_points[ptId].x,
+				this->_points[ptId].y
 			};
 
 			target.drawImage(
 				currentPoint,
-				this->_skin.getImage("sliderb0"),
+				this->_skin.getImage("sliderb" + std::to_string(this->_ballAnimation)),
 				{
 					static_cast<int>(radius * 2),
 					static_cast<int>(radius * 2)
 				},
 				{255, 255, 255, 255},
 				true,
-				0
+				this->_angles.at(ptId) * 180 / M_PI
 			);
+
+			if (!this->_skin.hasImage("sliderb" + std::to_string(++this->_ballAnimation)))
+				this->_ballAnimation = 0;
 
 			target.drawImage(
 				currentPoint,
@@ -238,6 +241,7 @@ namespace OsuReplayPlayer::HitObjects
 		for (auto &pt : pts)
 			for (unsigned j = 0; j < (pt.size() > 1 ? POINTS_PRECISION : 1); j++)
 				this->_points.emplace_back(Slider::_getBezierPoint(pt, j / (POINTS_PRECISION / 100.)));
+		this->_angles.resize(this->_points.size());
 		this->_points.shrink_to_fit();
 	}
 
@@ -258,6 +262,7 @@ namespace OsuReplayPlayer::HitObjects
 				static_cast<int>(diff.x * (static_cast<float>(i) / array.size()) + this->getPosition().x),
 				static_cast<int>(diff.y * (static_cast<float>(i) / array.size()) + this->getPosition().y)
 			};
+		this->_angles.resize(array.size(), atan2(this->_points[1].y - this->_points[0].y, this->_points[1].x - this->_points[0].x));
 		this->_points = array;
 	}
 
@@ -343,12 +348,14 @@ namespace OsuReplayPlayer::HitObjects
 
 		//The size of the arc in pixels
 		newArray.resize(M_PI_2 * radius * arcAngle / 360 + 1);
+		this->_angles.reserve(newArray.size());
 
 		//Create the arc
 		for (size_t i = 0; i < newArray.size(); i++) {
 			double val = static_cast<float>(i) / newArray.size();
 			double angle = ((goClockwise ? angles[2] : angles[0]) + (arcAngle * (goClockwise ? 1 - val : val))) * M_PI / 180;
 
+			this->_angles.push_back(-angle + M_PI_2);
 			newArray[i] = OsuIntegerVector{
 				lround(-cos(angle) * radius + center.x),
 				lround(sin(angle) * radius + center.y)
