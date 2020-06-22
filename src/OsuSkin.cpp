@@ -61,8 +61,10 @@ namespace OsuReplayPlayer
 		if (filename.has_extension() && id.empty())
 			name = name.substr(0, name.size() - filename.extension().string().size());
 
-		if (this->_images.find(name) != this->_images.end())
+		if (this->_images.find(name) != this->_images.end()) {
 			std::cerr << "Warning: " << path << " will replace the previously loaded image " << name << "." << std::endl;
+			this->_skinned.push_back(name);
+		}
 
 		sf::Image image;
 
@@ -110,5 +112,10 @@ namespace OsuReplayPlayer
 	bool OsuSkin::hasImage(const std::string &name) const
 	{
 		return this->_images.find(name) != this->_images.end();
+	}
+
+	bool OsuSkin::isImageSkinned(const std::string &name) const
+	{
+		return std::find(this->_skinned.begin(), this->_skinned.end(), name) != this->_skinned.end();
 	}
 }

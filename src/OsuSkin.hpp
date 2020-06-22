@@ -19,6 +19,7 @@ namespace OsuReplayPlayer
 		sf::Image _emptyImage;
 		std::map<std::string, Sound> _sounds;
 		std::map<std::string, sf::Image> _images;
+		std::vector<std::string> _skinned;
 
 		static const std::map<std::string, std::function<void (OsuSkin *, const std::string &)>> _handlers;
 
@@ -30,6 +31,7 @@ namespace OsuReplayPlayer
 		const sf::Image &getImage(const std::string &name) const;
 		bool hasSound(const std::string &name) const;
 		bool hasImage(const std::string &name) const;
+		bool isImageSkinned(const std::string &name) const;
 	};
 }
 

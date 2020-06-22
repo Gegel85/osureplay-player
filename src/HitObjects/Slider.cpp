@@ -52,6 +52,9 @@ namespace OsuReplayPlayer::HitObjects
 		this->_type = static_cast<OsuSliderShape>(infos->type);
 		this->_makeCurve();
 
+		if (this->_angles.size() < this->_points.size())
+			this->_angles.resize(this->_points.size());
+
 		double radius = this->getRadius();
 		double sqRadius = radius * radius;
 		std::set<sf::Vector2i, __less<sf::Vector2i>> _temp;
@@ -162,14 +165,32 @@ namespace OsuReplayPlayer::HitObjects
 				this->_points[ptId].y
 			};
 
+			if (!this->_skin.isImageSkinned("sliderb0"))
+				target.drawImage(
+					currentPoint,
+					this->_skin.getImage("sliderb-nd"),
+					{
+						static_cast<int>(radius * 1.975),
+						static_cast<int>(radius * 1.975)
+					},
+					{0, 0, 0,255},
+					true,
+					this->_angles.at(ptId) * 180 / M_PI
+				);
+
 			target.drawImage(
 				currentPoint,
 				this->_skin.getImage("sliderb" + std::to_string(this->_ballAnimation)),
 				{
-					static_cast<int>(radius * 2),
-					static_cast<int>(radius * 2)
+					static_cast<int>(radius * 1.975),
+					static_cast<int>(radius * 1.975)
 				},
-				{255, 255, 255, 255},
+				{
+					this->_color.red,
+					this->_color.green,
+					this->_color.blue,
+					255
+				},
 				true,
 				this->_angles.at(ptId) * 180 / M_PI
 			);
