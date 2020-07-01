@@ -12,21 +12,21 @@ namespace OsuReplayPlayer::HitObjects
 		HitObject(obj, state, endsCombo),
 		_end(*reinterpret_cast<unsigned *>(obj.additionalInfos))
 	{
-
+		this->_gainedScore = 300;
 	}
 
 	void Spinner::draw(RenderTarget &target, const ReplayState &state)
 	{
-		size_t	duration = this->_end - this->getTimeToAppear();
-		size_t	remaining = this->_end - state.elapsedTime;
-		float	radius = this->getTimeToAppear() >= state.elapsedTime ? 400 : 4 * (100 - (duration - remaining) * 100.f / duration);
+		size_t duration = this->_end - this->getTimeToAppear();
+		size_t remaining = this->_end - state.elapsedTime;
+		double radius = this->getRadius();
 
 		target.drawImage(
 			{320 ,240},
 			this->_skin.getImage("spinner-approachcircle"),
 			{
-				static_cast<int>(radius),
-				static_cast<int>(radius)
+				static_cast<float>(radius),
+				static_cast<float>(radius)
 			},
 			{255, 255, 255, calcAlpha(state.elapsedTime)},
 			true,

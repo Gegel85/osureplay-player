@@ -61,6 +61,7 @@ namespace OsuReplayPlayer::HitObjects
 		sf::Vector2i _bottomRight = {INT32_MIN, INT32_MIN};
 
 		this->_topLeft = {INT32_MAX, INT32_MAX};
+		this->_gainedScore = 300;
 
 		for (auto &pt : this->_points)
 			for (int x = -radius; x <= radius; x++)
