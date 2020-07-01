@@ -336,10 +336,9 @@ namespace OsuReplayPlayer
 
 	void ReplayPlayer::_onExpire(HitObject &obj)
 	{
-		if (obj.brokeCombo()) {
-			this->_state.perfectCombo = false;
+		if (obj.brokeCombo())
 			this->_state.combo = 0;
-		}
+		this->_state.perfectCombo &= obj.getScore() == 300;
 		this->_state.combo++;
 		this->_drawScoreResult(obj);
 		this->_state.perfectCombo |= obj.isNewCombo();

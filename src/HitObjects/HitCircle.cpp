@@ -26,8 +26,8 @@ namespace OsuReplayPlayer::HitObjects
 			},
 			this->_skin.getImage("hitcircle"),
 			{
-				static_cast<int>(radius * 2),
-				static_cast<int>(radius * 2)
+				static_cast<float>(radius * 2),
+				static_cast<float>(radius * 2)
 			},
 			{
 				this->_color.red,
@@ -45,8 +45,8 @@ namespace OsuReplayPlayer::HitObjects
 			},
 			this->_skin.getImage("hitcircleoverlay"),
 			{
-				static_cast<int>(radius * 2),
-				static_cast<int>(radius * 2)
+				static_cast<float>(radius * 2),
+				static_cast<float>(radius * 2)
 			},
 			{255, 255, 255, alpha},
 			true,
@@ -70,11 +70,15 @@ namespace OsuReplayPlayer::HitObjects
 		double diff = std::abs(this->getTimeToAppear() - state.elapsedTime);
 
 		this->_clicked = true;
-		if (diff < 50 + 30 * (5 - this->_difficulty.overallDifficulty) / 5)
+		if (diff < 50 + 30 * (5 - this->_difficulty.overallDifficulty) / 5) {
 			this->_gainedScore = 300;
-		else if (diff < 100 + 40 * (5 - this->_difficulty.overallDifficulty) / 5)
+			this->_brokeCombo = false;
+		} else if (diff < 100 + 40 * (5 - this->_difficulty.overallDifficulty) / 5) {
 			this->_gainedScore = 100;
-		else if (diff < 150 + 50 * (5 - this->_difficulty.overallDifficulty) / 5)
+			this->_brokeCombo = false;
+		} else if (diff < 150 + 50 * (5 - this->_difficulty.overallDifficulty) / 5) {
 			this->_gainedScore = 50;
+			this->_brokeCombo = false;
+		}
 	}
 }

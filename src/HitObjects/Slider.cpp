@@ -62,6 +62,7 @@ namespace OsuReplayPlayer::HitObjects
 
 		this->_topLeft = {INT32_MAX, INT32_MAX};
 		this->_gainedScore = 300;
+		this->_brokeCombo = false;
 
 		for (auto &pt : this->_points)
 			for (int x = -radius; x <= radius; x++)
