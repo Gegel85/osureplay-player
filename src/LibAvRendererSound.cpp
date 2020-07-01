@@ -124,6 +124,34 @@ namespace OsuReplayPlayer
 				this->drawPoint({static_cast<float>(x) + pos.x, static_cast<float>(y) + pos.y}, color);
 	}
 
+	void LibAvRendererSound::clear(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize)
+	{sf::Vector2u size = image.getSize();
+
+		if (!size.x || !size.y)
+			return;
+
+		const sf::Color *array = reinterpret_cast<const sf::Color *>(image.getPixelsPtr());
+		sf::Vector2f scale = {
+			newSize.x < 0 ? 1 : (static_cast<float>(newSize.x) / size.x),
+			newSize.y < 0 ? 1 : (static_cast<float>(newSize.y) / size.y)
+		};
+		sf::Color col;
+
+		for (unsigned x = 0; x < size.x * scale.x && x < this->_size.x - pos.x; x++)
+			for (unsigned y = 0; y < size.y * scale.y && y < this->_size.y - pos.y; y++) {
+				if (static_cast<unsigned>(y / scale.y) >= size.y || static_cast<unsigned>(x / scale.x) >= size.x)
+					col = {0, 0, 0, 0};
+				else
+					col = array[static_cast<int>(y / scale.y) * size.x + static_cast<int>(x / scale.x)];
+
+				if (pos.x + x >= this->_size.x)
+					continue;
+				if (pos.y + y >= this->_size.y)
+					continue;
+				this->_pixelArray[pos.y + y][pos.x + x] = col;
+			}
+	}
+
 	void LibAvRendererSound::drawImage(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize, sf::Color tint, bool centered, float rotation)
 	{
 		sf::Vector2u size = image.getSize();
@@ -610,8 +638,12 @@ namespace OsuReplayPlayer
 			av_packet_rescale_ts(this->_audioStream.packet, this->_audioStream.enc->time_base, this->_audioStream.stream->time_base);
 			this->_audioStream.packet->stream_index = this->_audioStream.stream->index;
 			if ((ret = av_interleaved_write_frame(this->_fmtContext, this->_audioStream.packet)) < 0)
-				//if ((ret = av_write_frame(this->_fmtContext, this->_packet)) < 0)
 				throw AvErrorException("Cannot write audio data in file", ret);
 		}
+	}
+
+	sf::Vector2i LibAvRendererSound::getGlobalPadding()
+	{
+		return this->_padding;
 	}
 }

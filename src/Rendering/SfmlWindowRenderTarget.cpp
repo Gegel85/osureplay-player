@@ -128,6 +128,17 @@ namespace OsuReplayPlayer
 	{
 		sf::View view{sf::FloatRect(-padding.x, -padding.y, this->getView().getSize().x, this->getView().getSize().y)};
 
+		this->_padding = padding;
 		this->setView(view);
+	}
+
+	sf::Vector2i SFMLWindowRenderTarget::getGlobalPadding()
+	{
+		return this->_padding;
+	}
+
+	void SFMLWindowRenderTarget::clear(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize)
+	{
+		this->drawImage(pos, image, newSize, sf::Color::White, false, 0);
 	}
 }

@@ -9,6 +9,7 @@
 #include "ReplayPlayer.hpp"
 #include "Exceptions.hpp"
 #include "HitObjects/HitObjectFactory.hpp"
+#include "Utils.hpp"
 
 namespace OsuReplayPlayer
 {
@@ -33,10 +34,38 @@ namespace OsuReplayPlayer
 		}
 
 		std::cout << "Preparing player" << std::endl;
-		this->_buildHitObjects();
 
 		this->_totalFrames = this->_replay.replayLength * fps / ((this->_replay.mods & MODE_DOUBLE_TIME) ? 1500 : 1000) + 1;
-		this->_skin.addSound(std::filesystem::path(beatmapPath).parent_path().append(this->_beatmap.generalInfos.audioFileName).string(), "__bgMusic");
+
+		try {
+			this->_skin.addSound(std::filesystem::path(beatmapPath).parent_path().append(this->_beatmap.generalInfos.audioFileName).string(), "__bgMusic");
+		} catch (std::exception &e) {
+			std::cerr << "Cannot load beatmap music:" << std::endl;
+			std::cerr << "  " << Utils::getLastExceptionName() << ":" << std::endl;
+			std::cerr << "     " << e.what() << std::endl;
+		}
+
+		try {
+			this->_skin.addImage(std::filesystem::path(beatmapPath).parent_path().append(this->_beatmap.storyBoard.backgroundPath).string(), "__bgPicture");
+
+			auto size = this->_skin.getImage("__bgPicture").getSize();
+
+			auto targetSize = target.getSize();
+			double factorX = static_cast<double>(size.x) / targetSize.x;
+			double factorY = static_cast<double>(size.y) / targetSize.y;
+			auto factor = std::min(factorX, factorY);
+
+			this->_bgSize = sf::Vector2i(size.x / factor, size.y / factor);
+			this->_bgPos = sf::Vector2i(
+				static_cast<int>(targetSize.x - this->_bgSize.x) / 2,
+				static_cast<int>(targetSize.y - this->_bgSize.y) / 2
+			);
+		} catch (std::exception &e) {
+			std::cerr << "Cannot load background image:" << std::endl;
+			std::cerr << "  " << Utils::getLastExceptionName() << ":" << std::endl;
+			std::cerr << "     " << e.what() << std::endl;
+		}
+		this->_buildHitObjects();
 	}
 
 	ReplayPlayer::~ReplayPlayer()
@@ -204,6 +233,7 @@ namespace OsuReplayPlayer
 			}
 
 			this->_target.clear(sf::Color::Black);
+			this->_drawBackground();
 			if (this->_state.currentGameHitObject < this->_objs.size()) {
 				this->_objs[this->_state.currentGameHitObject]->update(this->_state);
 				for (int i = this->_getLastObjToDisplay() - 1; static_cast<unsigned>(i) >= this->_state.currentGameHitObject && i >= 0; i--)
@@ -346,5 +376,14 @@ namespace OsuReplayPlayer
 		this->_state.M1clicked = this->_controller.isM1Pressed();
 		this->_state.M2clicked = this->_controller.isM2Pressed();
 		this->_state.cursorPos = this->_controller.getPosition();
+	}
+
+	void ReplayPlayer::_drawBackground()
+	{
+		this->_target.clear(
+			this->_bgPos,
+			this->_skin.getImage("__bgPicture"),
+			this->_bgSize
+		);
 	}
 }

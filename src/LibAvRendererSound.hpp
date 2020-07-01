@@ -77,6 +77,7 @@ namespace OsuReplayPlayer
 		~LibAvRendererSound() override;
 		sf::Vector2u getSize() const override;
 		void clear(sf::Color color) override;
+		void clear(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize) override;
 		void drawPixel(sf::Vector2i pos, sf::Color color) override;
 		void drawPoint(sf::Vector2f pos, sf::Color color) override;
 		void drawRectangle(sf::Vector2i pos, sf::Vector2u size, unsigned thickness, sf::Color color) override;
@@ -86,6 +87,7 @@ namespace OsuReplayPlayer
 		void drawFilledCircle(sf::Vector2i pos, float radius, sf::Color color) override;
 		void renderFrame() override;
 		void setGlobalPadding(sf::Vector2i padding) override;
+		sf::Vector2i getGlobalPadding() override;
 
 		void setVolume(float volume) override;
 		void tick(unsigned currentFrame, unsigned framePerSeconds) override;

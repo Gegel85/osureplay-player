@@ -18,6 +18,7 @@ namespace OsuReplayPlayer
 		virtual bool isValid() const;
 		virtual sf::Vector2u getSize() const = 0;
 		virtual void clear(sf::Color color) = 0;
+		virtual void clear(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize) = 0;
 		virtual void drawPixel(sf::Vector2i pos, sf::Color color) = 0;
 		virtual void drawPoint(sf::Vector2f pos, sf::Color color) = 0;
 		virtual void drawRectangle(sf::Vector2i pos, sf::Vector2u size, unsigned thickness, sf::Color color) = 0;
@@ -27,6 +28,7 @@ namespace OsuReplayPlayer
 		virtual void drawFilledCircle(sf::Vector2i pos, float radius, sf::Color color) = 0;
 		virtual void renderFrame() = 0;
 		virtual void setGlobalPadding(sf::Vector2i padding) = 0;
+		virtual sf::Vector2i getGlobalPadding() = 0;
 	};
 }
 

@@ -34,6 +34,8 @@ namespace OsuReplayPlayer
 
 	class ReplayPlayer {
 	private:
+		sf::Vector2i _bgPos;
+		sf::Vector2<int> _bgSize;
 		ReplayController _controller;
 		bool _musicStarted = false;
 		unsigned _fps;
@@ -51,6 +53,7 @@ namespace OsuReplayPlayer
 		unsigned _getLastObjToDisplay();
 		void _updateState();
 		void _drawCursor();
+		void _drawBackground();
 		void _updateParticles();
 		void _updateCursorState();
 		void _onExpire(HitObject &obj);
