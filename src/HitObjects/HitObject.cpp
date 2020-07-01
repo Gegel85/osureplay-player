@@ -35,7 +35,16 @@ namespace OsuReplayPlayer
 		_skin(state.skin),
 		_difficulty(state.infos)
 	{
+		this->_fadeIn = 800;
+		this->_preempt = 1200;
 
+		if (this->_difficulty.approachRate > 5) {
+			this->_fadeIn -= 500 * (this->_difficulty.approachRate - 5) / 5;
+			this->_preempt -= 750 * (this->_difficulty.approachRate - 5) / 5;
+		} else {
+			this->_fadeIn += 400 * (5 - this->_difficulty.approachRate) / 5;
+			this->_preempt += 600 * (5 - this->_difficulty.approachRate) / 5;
+		}
 	}
 
 	bool HitObject::isEndCombo() const
@@ -80,9 +89,9 @@ namespace OsuReplayPlayer
 
 	unsigned char	HitObject::calcAlpha(unsigned long totalTicks)
 	{
-		if (static_cast<long>(this->_timeToAppear - totalTicks) <= 400)
+		if (static_cast<long>(this->_timeToAppear - totalTicks) <= this->_preempt - this->_fadeIn)
 			return BASE_OBJ_ALPHA;
-		return static_cast<long>(this->_timeToAppear - totalTicks - 400) * -BASE_OBJ_ALPHA / 400 + BASE_OBJ_ALPHA;
+		return static_cast<long>(this->_timeToAppear - totalTicks - (this->_preempt - this->_fadeIn)) * -BASE_OBJ_ALPHA / this->_fadeIn + BASE_OBJ_ALPHA;
 	}
 
 	void HitObject::_displayApproachCircle(RenderTarget &target, float baseRadius, unsigned char alpha, unsigned long totalTicks)
@@ -90,7 +99,7 @@ namespace OsuReplayPlayer
 		if (this->_timeToAppear < totalTicks)
 			return;
 
-		float radius = baseRadius + (this->_timeToAppear - totalTicks) / 8.f;
+		float radius = baseRadius + (this->_timeToAppear - totalTicks) * 100 / this->_preempt;
 
 		target.drawImage(
 			{

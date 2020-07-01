@@ -38,6 +38,7 @@ namespace OsuReplayPlayer
 		sf::Vector2<int> _bgSize;
 		ReplayController _controller;
 		bool _musicStarted = false;
+		float _preempt;
 		unsigned _fps;
 		OsuSkin _skin;
 		OsuMap _beatmap;
@@ -64,6 +65,7 @@ namespace OsuReplayPlayer
 		~ReplayPlayer();
 		void displayMapInfos();
 		void displayReplayInfos();
+		double getBeatmapAr();
 		OsuSkin &getSkin();
 		const OsuMap &getBeatmap() const;
 		const OsuReplay &getReplay() const;

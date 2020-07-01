@@ -52,6 +52,8 @@ namespace OsuReplayPlayer
 		bool _brokeCombo = true;
 		unsigned _comboNbr;
 		unsigned char _mods;
+		float _fadeIn;
+		float _preempt;
 		OsuGameMode _gameMode;
 		OsuMap_color _color;
 		const OsuSkin &_skin;

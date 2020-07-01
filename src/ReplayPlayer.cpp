@@ -35,7 +35,18 @@ namespace OsuReplayPlayer
 
 		std::cout << "Preparing player" << std::endl;
 
-		this->_totalFrames = this->_replay.replayLength * fps / ((this->_replay.mods & MODE_DOUBLE_TIME) ? 1500 : 1000) + 1;
+		this->_preempt = 1200;
+		if (this->_beatmap.difficulty.approachRate > 5)
+			this->_preempt -= 750 * (this->_beatmap.difficulty.approachRate - 5) / 5;
+		else
+			this->_preempt += 600 * (5 - this->_beatmap.difficulty.approachRate) / 5;
+
+		if (this->_replay.mods & MODE_DOUBLE_TIME)
+			this->_totalFrames = this->_replay.replayLength * fps / 1500 + 1;
+		else if (this->_replay.mods & MODE_HALF_TIME)
+			this->_totalFrames = this->_replay.replayLength * fps / 750 + 1;
+		else
+			this->_totalFrames = this->_replay.replayLength * fps / 1000 + 1;
 
 		try {
 			this->_skin.addSound(std::filesystem::path(beatmapPath).parent_path().append(this->_beatmap.generalInfos.audioFileName).string(), "__bgMusic");
@@ -229,7 +240,12 @@ namespace OsuReplayPlayer
 		while (this->_target.isValid() && currentFrame < this->_totalFrames) {
 			if (!this->_musicStarted && this->_beatmap.generalInfos.audioLeadIn <= this->_state.elapsedTime) {
 				this->_musicStarted = true;
-				this->_sound.playSound(this->_skin.getSound("__bgMusic"), (this->_replay.mods & MODE_DOUBLE_TIME) || (this->_replay.mods & MODE_NIGHTCORE) ? 1.5 : 1.);
+				if ((this->_replay.mods & MODE_DOUBLE_TIME) || (this->_replay.mods & MODE_NIGHTCORE))
+					this->_sound.playSound(this->_skin.getSound("__bgMusic"), 1.5);
+				else if (this->_replay.mods & MODE_HALF_TIME)
+					this->_sound.playSound(this->_skin.getSound("__bgMusic"), 0.75);
+				else
+					this->_sound.playSound(this->_skin.getSound("__bgMusic"), 1.0);
 			}
 
 			this->_target.clear(sf::Color::Black);
@@ -248,7 +264,12 @@ namespace OsuReplayPlayer
 			this->_target.renderFrame();
 			this->_sound.tick(currentFrame, this->_fps);
 
-			this->_state.elapsedTime = ((this->_replay.mods & MODE_DOUBLE_TIME) || (this->_replay.mods & MODE_NIGHTCORE) ? 1500.f : 1000.f) * currentFrame / this->_fps;
+			if (this->_replay.mods & MODE_DOUBLE_TIME)
+				this->_state.elapsedTime = 1500.f * currentFrame / this->_fps;
+			else if (this->_replay.mods & MODE_HALF_TIME)
+				this->_state.elapsedTime = 750.f * currentFrame / this->_fps;
+			else
+				this->_state.elapsedTime = 1000.f * currentFrame / this->_fps;
 			this->_updateState();
 		}
 	}
@@ -263,7 +284,7 @@ namespace OsuReplayPlayer
 
 			auto time = this->_objs[end]->getTimeToAppear();
 
-			if (time >= 800 && time - 800 > this->_state.elapsedTime)
+			if (time - this->_preempt > this->_state.elapsedTime)
 				break;
 			end++;
 		}
