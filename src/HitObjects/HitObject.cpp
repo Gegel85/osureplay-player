@@ -2,6 +2,7 @@
 // Created by Gegel85 on 18/05/2020.
 //
 
+#include <cmath>
 #include "HitObject.hpp"
 #include "../Utils.hpp"
 #include "../ReplayPlayer.hpp"
@@ -108,8 +109,8 @@ namespace OsuReplayPlayer
 			},
 			this->_skin.getImage("approachcircle"),
 			{
-				static_cast<int>(radius * 2),
-				static_cast<int>(radius * 2)
+				static_cast<float>(std::floor(radius * 2)),
+				static_cast<float>(std::floor(radius * 2))
 			},
 			{
 				this->_color.red,

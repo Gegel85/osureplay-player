@@ -125,8 +125,8 @@ namespace OsuReplayPlayer::HitObjects
 				this->_skin.getImage("sliderendcircle") :
 				this->_skin.getImage("hitcircle"),
 			{
-				static_cast<int>(radius * 2),
-				static_cast<int>(radius * 2)
+				static_cast<float>(std::floor(radius * 2)),
+				static_cast<float>(std::floor(radius * 2))
 			},
 			{
 				this->_color.red,
@@ -147,8 +147,8 @@ namespace OsuReplayPlayer::HitObjects
 				this->_skin.getImage("sliderendcircleoverlay") :
 				this->_skin.getImage("hitcircleoverlay"),
 			{
-				static_cast<int>(radius * 2),
-				static_cast<int>(radius * 2)
+				static_cast<float>(std::floor(radius * 2)),
+				static_cast<float>(std::floor(radius * 2))
 			},
 			{255, 255, 255, alpha},
 			true,
@@ -164,8 +164,8 @@ namespace OsuReplayPlayer::HitObjects
 				this->_skin.getImage("sliderstartcircle") :
 				this->_skin.getImage("hitcircle"),
 			{
-				static_cast<int>(radius * 2),
-				static_cast<int>(radius * 2)
+				static_cast<float>(std::floor(radius * 2)),
+				static_cast<float>(std::floor(radius * 2))
 			},
 			{
 				this->_color.red,
@@ -186,8 +186,8 @@ namespace OsuReplayPlayer::HitObjects
 				this->_skin.getImage("sliderstartcircleoverlay") :
 				this->_skin.getImage("hitcircleoverlay"),
 			{
-				static_cast<int>(radius * 2),
-				static_cast<int>(radius * 2)
+				static_cast<float>(std::floor(radius * 2)),
+				static_cast<float>(std::floor(radius * 2))
 			},
 			{255, 255, 255, alpha},
 			true,
@@ -196,6 +196,28 @@ namespace OsuReplayPlayer::HitObjects
 
 		if (this->getTimeToAppear() < state.elapsedTime) {
 			double ptId = this->_points.size() * std::fmod(state.elapsedTime - this->getTimeToAppear(), len) / len;
+			auto angle = this->_angles.at(ptId);
+			auto currentLoop = static_cast<unsigned>((state.elapsedTime - this->getTimeToAppear()) / len);
+			size_t end = this->_points.size() - 1;
+
+			if (currentLoop % 2 == 1) {
+				ptId = this->_points.size() - ptId - 1;
+				angle += M_PI;
+				end = 0;
+			}
+
+			if (this->_nbOfRepeats > currentLoop + 1)
+				target.drawImage(
+					{this->_points[end].x, this->_points[end].y},
+					this->_skin.getImage("reversearrow"),
+					{
+						static_cast<float>(std::floor(radius)),
+						static_cast<float>(std::floor(radius))
+					},
+					{255, 255, 255, alpha},
+					true,
+					this->_angles[end] + M_PI
+				);
 
 			sf::Vector2i currentPoint =  {
 				this->_points[ptId].x,
@@ -207,20 +229,20 @@ namespace OsuReplayPlayer::HitObjects
 					currentPoint,
 					this->_skin.getImage("sliderb-nd"),
 					{
-						static_cast<int>(radius * 1.975),
-						static_cast<int>(radius * 1.975)
+						static_cast<float>(std::floor(radius * 1.975)),
+						static_cast<float>(std::floor(radius * 1.975))
 					},
 					{0, 0, 0,255},
 					true,
-					this->_angles.at(ptId) * 180 / M_PI
+					this->_angles.at(ptId)
 				);
 
 			target.drawImage(
 				currentPoint,
 				this->_skin.getImage("sliderb" + std::to_string(this->_ballAnimation)),
 				{
-					static_cast<int>(radius * 1.975),
-					static_cast<int>(radius * 1.975)
+					static_cast<float>(std::floor(radius * 1.975)),
+					static_cast<float>(std::floor(radius * 1.975))
 				},
 				{
 					this->_color.red,
@@ -229,7 +251,7 @@ namespace OsuReplayPlayer::HitObjects
 					255
 				},
 				true,
-				this->_angles.at(ptId) * 180 / M_PI
+				angle
 			);
 
 			if (!this->_skin.hasImage("sliderb" + std::to_string(++this->_ballAnimation)))
@@ -239,27 +261,39 @@ namespace OsuReplayPlayer::HitObjects
 				currentPoint,
 				this->_skin.getImage("sliderfollowcircle"),
 				{
-					static_cast<int>(radius * 4),
-					static_cast<int>(radius * 4)
+					static_cast<float>(std::floor(radius * 4)),
+					static_cast<float>(std::floor(radius * 4))
 				},
 				{255, 255, 255, 255},
 				true,
 				0
 			);
-		} else
+		} else {
+			if (this->_nbOfRepeats > 1)
+				target.drawImage(
+					{this->_points.back().x, this->_points.back().y},
+					this->_skin.getImage("reversearrow"),
+					{
+						static_cast<float>(std::floor(radius)),
+						static_cast<float>(std::floor(radius))
+					},
+					{255, 255, 255, alpha},
+					true,
+					this->_angles.back() + M_PI
+				);
 			this->_displayApproachCircle(target, radius, alpha, state.elapsedTime);
-
-		this->_displayComboNumber(target, alpha);
+			this->_displayComboNumber(target, alpha);
+		}
 	}
 
 	bool Slider::hasExpired(ReplayState &state) const
 	{
-		return this->_clicked || this->getTimeToAppear() + this->_getTimeLength(state.timingPt) < state.elapsedTime;
+		return this->_clicked || this->getTimeToAppear() + this->_getTimeLength(state.timingPt) * this->_nbOfRepeats < state.elapsedTime;
 	}
 
 	double Slider::_getTimeLength(OsuMap_timingPointEvent timingPt) const
 	{
-		return this->_pixelLength / (100 * this->_difficulty.sliderMultiplayer) * timingPt.millisecondsPerBeat * this->_nbOfRepeats;
+		return this->_pixelLength / (100 * this->_difficulty.sliderMultiplayer) * timingPt.millisecondsPerBeat;
 	}
 
 	OsuIntegerVector Slider::_getBezierPoint(const std::vector<OsuIntegerVector> &points, double percent)

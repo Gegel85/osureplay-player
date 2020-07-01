@@ -66,7 +66,7 @@ namespace OsuReplayPlayer
 			double factorY = static_cast<double>(size.y) / targetSize.y;
 			auto factor = std::min(factorX, factorY);
 
-			this->_bgSize = sf::Vector2i(size.x / factor, size.y / factor);
+			this->_bgSize = sf::Vector2f(size.x / factor, size.y / factor);
 			this->_bgPos = sf::Vector2i(
 				static_cast<int>(targetSize.x - this->_bgSize.x) / 2,
 				static_cast<int>(targetSize.y - this->_bgSize.y) / 2

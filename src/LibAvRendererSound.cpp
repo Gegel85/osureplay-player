@@ -124,7 +124,7 @@ namespace OsuReplayPlayer
 				this->drawPoint({static_cast<float>(x) + pos.x, static_cast<float>(y) + pos.y}, color);
 	}
 
-	void LibAvRendererSound::clear(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize, unsigned char dimPercent)
+	void LibAvRendererSound::clear(sf::Vector2i pos, const sf::Image &image, sf::Vector2f newSize, unsigned char dimPercent)
 	{
 		sf::Vector2u size = image.getSize();
 
@@ -159,7 +159,7 @@ namespace OsuReplayPlayer
 			}
 	}
 
-	void LibAvRendererSound::drawImage(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize, sf::Color tint, bool centered, float rotation)
+	void LibAvRendererSound::drawImage(sf::Vector2i pos, const sf::Image &image, sf::Vector2f newSize, sf::Color tint, bool centered, float rotation)
 	{
 		sf::Vector2u size = image.getSize();
 
@@ -171,14 +171,13 @@ namespace OsuReplayPlayer
 
 		const sf::Color *array = reinterpret_cast<const sf::Color *>(image.getPixelsPtr());
 		sf::Vector2f scale = {
-			newSize.x < 0 ? 1 : (static_cast<float>(newSize.x) / size.x),
-			newSize.y < 0 ? 1 : (static_cast<float>(newSize.y) / size.y)
+			newSize.x < 0 ? -newSize.x : (newSize.x / size.x),
+			newSize.y < 0 ? -newSize.y : (newSize.y / size.y)
 		};
 		double c;
 		double s;
 		sf::Color col;
 
-		rotation = rotation * M_PI / 180;
 		c = cos(rotation);
 		s = sin(rotation);
 		if (centered) {

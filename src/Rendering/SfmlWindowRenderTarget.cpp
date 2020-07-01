@@ -2,6 +2,7 @@
 // Created by Gegel85 on 18/05/2020.
 //
 
+#include <cmath>
 #include "SfmlWindowRenderTarget.hpp"
 
 namespace OsuReplayPlayer
@@ -65,7 +66,7 @@ namespace OsuReplayPlayer
 		this->draw(this->_rect);
 	}
 
-	void SFMLWindowRenderTarget::drawImage(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize, sf::Color tint, bool centered, float rotation)
+	void SFMLWindowRenderTarget::drawImage(sf::Vector2i pos, const sf::Image &image, sf::Vector2f newSize, sf::Color tint, bool centered, float rotation)
 	{
 		sf::Vector2u size = image.getSize();
 
@@ -73,8 +74,8 @@ namespace OsuReplayPlayer
 			return;
 
 		sf::Vector2f scale = {
-			newSize.x < 0 ? 1 : static_cast<float>(newSize.x) / size.x,
-			newSize.y < 0 ? 1 : static_cast<float>(newSize.y) / size.y
+			newSize.x < 0 ? -newSize.x : (newSize.x / size.x),
+			newSize.y < 0 ? -newSize.y : (newSize.y / size.y)
 		};
 
 		if (centered)
@@ -86,7 +87,7 @@ namespace OsuReplayPlayer
 		this->_sprite.setPosition(pos.x, pos.y);
 		this->_sprite.setScale(scale);
 		this->_sprite.setColor(tint);
-		this->_sprite.setRotation(rotation);
+		this->_sprite.setRotation(rotation * 180 / M_PI);
 		this->draw(this->_sprite);
 	}
 
@@ -137,7 +138,7 @@ namespace OsuReplayPlayer
 		return this->_padding;
 	}
 
-	void SFMLWindowRenderTarget::clear(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize, unsigned char dimPercent)
+	void SFMLWindowRenderTarget::clear(sf::Vector2i pos, const sf::Image &image, sf::Vector2f newSize, unsigned char dimPercent)
 	{
 		sf::Color color{
 			static_cast<sf::Uint8>(255 * (100 - dimPercent) / 100),

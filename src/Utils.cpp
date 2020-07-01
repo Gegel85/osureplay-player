@@ -42,7 +42,7 @@ namespace OsuReplayPlayer::Utils {
 					static_cast<int>(pos.y - size.y / 2 + getTextSize(displayed, textSize).y - 7.5),
 				},
 				skin.getImage(font + "-" + c),
-				{static_cast<int>(textSize), static_cast<int>(textSize)},
+				{static_cast<float>(textSize), static_cast<float>(textSize)},
 				{255, 255, 255, alpha},
 				true,
 				0

@@ -104,7 +104,6 @@ void	FrameBuffer_drawImage(FrameBuffer *this, sfVector2i pos, sfImage *image, sf
 	double	s;
 	sfColor col;
 
-	rotation = rotation * M_PI / 180;
 	c = cos(rotation);
 	s = sin(rotation);
 	if (centered) {

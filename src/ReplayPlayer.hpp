@@ -35,7 +35,7 @@ namespace OsuReplayPlayer
 	class ReplayPlayer {
 	private:
 		sf::Vector2i _bgPos;
-		sf::Vector2<int> _bgSize;
+		sf::Vector2f _bgSize;
 		ReplayController _controller;
 		bool _musicStarted = false;
 		float _preempt;
