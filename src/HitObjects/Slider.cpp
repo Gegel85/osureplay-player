@@ -83,6 +83,8 @@ namespace OsuReplayPlayer::HitObjects
 	{
 		unsigned char alpha = this->calcAlpha(state.elapsedTime);
 		double radius = this->getRadius();
+		auto len = this->_getTimeLength(state.timingPt);
+		double ptsBetweenPoints = state.timingPt.millisecondsPerBeat * this->_points.size() / len;
 
 		target.drawImage(
 			{
@@ -101,12 +103,66 @@ namespace OsuReplayPlayer::HitObjects
 			0
 		);
 
+		for (double i = ptsBetweenPoints; i < this->_points.size(); i += ptsBetweenPoints)
+			target.drawImage(
+				{
+					this->_points[i].x,
+					this->_points[i].y,
+				},
+				this->_skin.getImage("sliderscorepoint"),
+				{-1, -1},
+				{255, 255, 255, alpha},
+				true,
+				0
+			);
+
 		target.drawImage(
 			{
 				this->_end.x,
 				this->_end.y
 			},
-			this->_skin.getImage("sliderendcircle"),
+			this->_skin.hasImage("sliderendcircle") ?
+				this->_skin.getImage("sliderendcircle") :
+				this->_skin.getImage("hitcircle"),
+			{
+				static_cast<int>(radius * 2),
+				static_cast<int>(radius * 2)
+			},
+			{
+				this->_color.red,
+				this->_color.green,
+				this->_color.blue,
+				alpha
+			},
+			true,
+			0
+		);
+
+		target.drawImage(
+			{
+				this->_end.x,
+				this->_end.y
+			},
+			this->_skin.hasImage("sliderendcircleoverlay") ?
+				this->_skin.getImage("sliderendcircleoverlay") :
+				this->_skin.getImage("hitcircleoverlay"),
+			{
+				static_cast<int>(radius * 2),
+				static_cast<int>(radius * 2)
+			},
+			{255, 255, 255, alpha},
+			true,
+			0
+		);
+
+		target.drawImage(
+			{
+				this->getPosition().x,
+				this->getPosition().y
+			},
+			this->_skin.hasImage("sliderstartcircle") ?
+				this->_skin.getImage("sliderstartcircle") :
+				this->_skin.getImage("hitcircle"),
 			{
 				static_cast<int>(radius * 2),
 				static_cast<int>(radius * 2)
@@ -126,27 +182,9 @@ namespace OsuReplayPlayer::HitObjects
 				this->getPosition().x,
 				this->getPosition().y
 			},
-			this->_skin.hasImage("sliderstartcircle") ? this->_skin.getImage("sliderstartcircle") : this->_skin.getImage("hitcircle"),
-			{
-				static_cast<int>(radius * 2),
-				static_cast<int>(radius * 2)
-			},
-			{
-				this->_color.red,
-				this->_color.green,
-				this->_color.blue,
-				alpha
-			},
-			true,
-			0
-		);
-
-		target.drawImage(
-			{
-				this->getPosition().x,
-				this->getPosition().y
-			},
-			this->_skin.hasImage("sliderstartcircleoverlay") ? this->_skin.getImage("sliderstartcircleoverlay") : this->_skin.getImage("hitcircleoverlay"),
+			this->_skin.hasImage("sliderstartcircleoverlay") ?
+				this->_skin.getImage("sliderstartcircleoverlay") :
+				this->_skin.getImage("hitcircleoverlay"),
 			{
 				static_cast<int>(radius * 2),
 				static_cast<int>(radius * 2)
@@ -157,7 +195,6 @@ namespace OsuReplayPlayer::HitObjects
 		);
 
 		if (this->getTimeToAppear() < state.elapsedTime) {
-			auto len = this->_getTimeLength(state.timingPt);
 			double ptId = this->_points.size() * std::fmod(state.elapsedTime - this->getTimeToAppear(), len) / len;
 
 			sf::Vector2i currentPoint =  {
