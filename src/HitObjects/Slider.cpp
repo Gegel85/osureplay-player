@@ -413,7 +413,7 @@ namespace OsuReplayPlayer::HitObjects
 			double val = static_cast<float>(i) / newArray.size();
 			double angle = ((goClockwise ? angles[2] : angles[0]) + (arcAngle * (goClockwise ? 1 - val : val))) * M_PI / 180;
 
-			this->_angles.push_back(-angle + M_PI_2);
+			this->_angles.push_back(goClockwise ? -angle - M_PI_2 : M_PI_2 - angle);
 			newArray[i] = OsuIntegerVector{
 				lround(-cos(angle) * radius + center.x),
 				lround(sin(angle) * radius + center.y)
