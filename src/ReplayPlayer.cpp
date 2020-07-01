@@ -404,7 +404,8 @@ namespace OsuReplayPlayer
 		this->_target.clear(
 			this->_bgPos,
 			this->_skin.getImage("__bgPicture"),
-			this->_bgSize
+			this->_bgSize,
+			50
 		);
 	}
 }

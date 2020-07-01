@@ -77,7 +77,7 @@ namespace OsuReplayPlayer
 		~LibAvRendererSound() override;
 		sf::Vector2u getSize() const override;
 		void clear(sf::Color color) override;
-		void clear(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize) override;
+		void clear(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize, unsigned char dimPercent) override;
 		void drawPixel(sf::Vector2i pos, sf::Color color) override;
 		void drawPoint(sf::Vector2f pos, sf::Color color) override;
 		void drawRectangle(sf::Vector2i pos, sf::Vector2u size, unsigned thickness, sf::Color color) override;

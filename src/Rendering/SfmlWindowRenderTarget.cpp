@@ -137,8 +137,15 @@ namespace OsuReplayPlayer
 		return this->_padding;
 	}
 
-	void SFMLWindowRenderTarget::clear(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize)
+	void SFMLWindowRenderTarget::clear(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize, unsigned char dimPercent)
 	{
-		this->drawImage(pos, image, newSize, sf::Color::White, false, 0);
+		sf::Color color{
+			static_cast<sf::Uint8>(255 * (100 - dimPercent) / 100),
+			static_cast<sf::Uint8>(255 * (100 - dimPercent) / 100),
+			static_cast<sf::Uint8>(255 * (100 - dimPercent) / 100),
+			255
+		};
+
+		this->drawImage(pos, image, newSize, color, false, 0);
 	}
 }

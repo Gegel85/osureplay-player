@@ -124,8 +124,9 @@ namespace OsuReplayPlayer
 				this->drawPoint({static_cast<float>(x) + pos.x, static_cast<float>(y) + pos.y}, color);
 	}
 
-	void LibAvRendererSound::clear(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize)
-	{sf::Vector2u size = image.getSize();
+	void LibAvRendererSound::clear(sf::Vector2i pos, const sf::Image &image, sf::Vector2i newSize, unsigned char dimPercent)
+	{
+		sf::Vector2u size = image.getSize();
 
 		if (!size.x || !size.y)
 			return;
@@ -148,7 +149,13 @@ namespace OsuReplayPlayer
 					continue;
 				if (pos.y + y >= this->_size.y)
 					continue;
-				this->_pixelArray[pos.y + y][pos.x + x] = col;
+
+				this->_pixelArray[pos.y + y][pos.x + x] = sf::Color{
+					static_cast<sf::Uint8>(col.r * (100 - dimPercent) / 100),
+					static_cast<sf::Uint8>(col.g * (100 - dimPercent) / 100),
+					static_cast<sf::Uint8>(col.b * (100 - dimPercent) / 100),
+					255
+				};
 			}
 	}
 
