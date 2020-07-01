@@ -64,7 +64,7 @@ int main(int argc, char **argv)
 #endif
 
 	state->getSkin().addFolder("test_skin_1");
-	state->getSkin().addFolder(std::filesystem::path(argv[2]).parent_path().string());
+	state->getSkin().addFolder(std::filesystem::path(argv[1]).parent_path().string());
 	state->run();
 	delete state;
 	return EXIT_SUCCESS;
