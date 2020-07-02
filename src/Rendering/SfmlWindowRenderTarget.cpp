@@ -147,6 +147,6 @@ namespace OsuReplayPlayer
 			255
 		};
 
-		this->drawImage(pos, image, newSize, color, false, 0);
+		this->drawImage({pos.x - this->_padding.x, pos.y - this->_padding.y}, image, newSize, color, false, 0);
 	}
 }

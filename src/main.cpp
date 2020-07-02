@@ -244,6 +244,7 @@ int main(int argc, char **argv)
 	state->displayMapInfos();
 #endif
 
+	std::cout << "Loading skins..." << std::endl;
 	state->getSkin().addFolder("default_skin");
 	if (!params.skinPath.empty())
 		state->getSkin().addFolder(params.skinPath);
