@@ -88,6 +88,9 @@ namespace OsuReplayPlayer::HitObjects
 		auto len = this->_getTimeLength(state.timingPt);
 		double ptsBetweenPoints = state.timingPt.millisecondsPerBeat * this->_points.size() / len;
 
+		while (this->_skin.hasImage("sliderb" + std::to_string(this->_maxBallAnimation)))
+			this->_maxBallAnimation++;
+
 		target.drawImage(
 			{
 				static_cast<int>(this->_topLeft.x),
@@ -241,7 +244,16 @@ namespace OsuReplayPlayer::HitObjects
 
 			target.drawImage(
 				currentPoint,
-				this->_skin.getImage("sliderb" + std::to_string(this->_ballAnimation)),
+				this->_skin.getImage(
+					"sliderb" + std::to_string(
+						static_cast<int>(
+							std::fmod(
+								(state.elapsedTime - this->getTimeToAppear()) / 20,
+								this->_maxBallAnimation
+							)
+						)
+					)
+				),
 				{
 					static_cast<float>(std::floor(radius * 1.975)),
 					static_cast<float>(std::floor(radius * 1.975))
@@ -255,9 +267,6 @@ namespace OsuReplayPlayer::HitObjects
 				true,
 				angle
 			);
-
-			if (!this->_skin.hasImage("sliderb" + std::to_string(++this->_ballAnimation)))
-				this->_ballAnimation = 0;
 
 			target.drawImage(
 				currentPoint,
