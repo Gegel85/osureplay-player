@@ -20,6 +20,7 @@ namespace OsuReplayPlayer::HitObjects
 		void draw(RenderTarget &target, const ReplayState &state) override;
 		bool hasExpired(ReplayState &state) const override;
 		void update(const ReplayState &state) override;
+		void click(const ReplayState &state) override;
 	};
 }
 

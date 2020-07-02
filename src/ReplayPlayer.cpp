@@ -250,11 +250,9 @@ namespace OsuReplayPlayer
 
 			this->_target.clear(sf::Color::Black);
 			this->_drawBackground();
-			if (this->_state.currentGameHitObject < this->_objs.size()) {
-				this->_objs[this->_state.currentGameHitObject]->update(this->_state);
+			if (this->_state.currentGameHitObject < this->_objs.size())
 				for (int i = this->_getLastObjToDisplay() - 1; static_cast<unsigned>(i) >= this->_state.currentGameHitObject && i >= 0; i--)
 					this->_objs[i]->draw(this->_target, this->_state);
-			}
 
 			this->_drawCursor();
 			this->_updateCursorState();
@@ -316,7 +314,28 @@ namespace OsuReplayPlayer
 			this->_state.timingPt = this->_beatmap.timingPoints.content[this->_state.currentTimingPt];
 		}
 
-		this->_controller.update(this->_state.elapsedTime);
+		auto elapsedTime = this->_state.elapsedTime;
+
+		this->_controller.update(this->_state.elapsedTime, [this](float time){
+			this->_state.elapsedTime = time;
+			if (this->_state.currentGameHitObject < this->_objs.size()) {
+				this->_objs[this->_state.currentGameHitObject]->click(this->_state);
+				if (this->_objs[this->_state.currentGameHitObject]->hasExpired(this->_state)) {
+					this->_onExpire(*this->_objs[this->_state.currentGameHitObject]);
+					this->_state.currentGameHitObject++;
+				}
+			}
+		}, [this](float time){
+			this->_state.elapsedTime = time;
+			if (this->_state.currentGameHitObject < this->_objs.size()) {
+				this->_objs[this->_state.currentGameHitObject]->update(this->_state);
+				if (this->_objs[this->_state.currentGameHitObject]->hasExpired(this->_state)) {
+					this->_onExpire(*this->_objs[this->_state.currentGameHitObject]);
+					this->_state.currentGameHitObject++;
+				}
+			}
+		});
+		this->_state.elapsedTime = elapsedTime;
 	}
 
 	void ReplayPlayer::_drawCursor()
@@ -386,12 +405,7 @@ namespace OsuReplayPlayer
 
 	void ReplayPlayer::_updateCursorState()
 	{
-		this->_state.clicked =
-			(!this->_state.K1clicked && this->_controller.isK1Pressed()) ||
-			(!this->_state.K2clicked && this->_controller.isK2Pressed()) ||
-			(!this->_state.M1clicked && this->_controller.isM1Pressed()) ||
-			(!this->_state.M2clicked && this->_controller.isM2Pressed());
-
+		this->_state.clicked = this->_controller.isPressed();
 		this->_state.K1clicked = this->_controller.isK1Pressed();
 		this->_state.K2clicked = this->_controller.isK2Pressed();
 		this->_state.M1clicked = this->_controller.isM1Pressed();

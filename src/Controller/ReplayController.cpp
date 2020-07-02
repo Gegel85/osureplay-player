@@ -46,13 +46,31 @@ namespace OsuReplayPlayer
 		return this->_events[this->_currentEvent].keysPressed & INPUT_M2;
 	}
 
-	void ReplayController::update(float timeElapsed)
+	void ReplayController::update(float timeElapsed, const std::function<void (float time)> &onClick, const std::function<void (float time)> &onMove)
 	{
 		while (
 			this->_currentEvent < this->_events.size() - 1 &&
 			this->_events[this->_currentEvent + 1].timeToHappen <= timeElapsed
-		)
+		) {
 			this->_currentEvent++;
+
+			bool clicked =
+				(!(this->_events[this->_currentEvent - 1].keysPressed & INPUT_K1) && this->isK1Pressed()) ||
+				(!(this->_events[this->_currentEvent - 1].keysPressed & INPUT_K2) && this->isK2Pressed()) ||
+				(!(this->_events[this->_currentEvent - 1].keysPressed & INPUT_M1) && this->isM1Pressed()) ||
+				(!(this->_events[this->_currentEvent - 1].keysPressed & INPUT_M2) && this->isM2Pressed());
+
+			sf::Vector2f oldPos{
+				this->_events[this->_currentEvent - 1].cursorPos.x,
+				this->_events[this->_currentEvent - 1].cursorPos.y
+			};
+
+			if (oldPos != this->getPosition())
+				onMove(this->_events[this->_currentEvent].timeToHappen);
+
+			if (clicked)
+				onClick(this->_events[this->_currentEvent].timeToHappen);
+		}
 	}
 
 	void ReplayController::setEvents(const OsuGameEventArray &events)

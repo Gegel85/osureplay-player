@@ -56,7 +56,11 @@ namespace OsuReplayPlayer::HitObjects
 		this->_displayComboNumber(target, alpha);
 	}
 
-	void HitCircle::update(const ReplayState &state)
+	void HitCircle::update(const ReplayState &)
+	{
+	}
+
+	void HitCircle::click(const ReplayState &state)
 	{
 		auto dist =
 			std::pow(state.cursorPos.x - this->getPosition().x, 2) +
@@ -64,19 +68,17 @@ namespace OsuReplayPlayer::HitObjects
 
 		if (std::pow(this->getRadius(), 2) < dist)
 			return;
-		if (!state.clicked)
-			return;
 
 		double diff = std::abs(this->getTimeToAppear() - state.elapsedTime);
 
 		this->_clicked = true;
-		if (diff < 50 + 30 * (5 - this->_difficulty.overallDifficulty) / 5) {
+		if (diff < 160 - 12 * this->_difficulty.overallDifficulty) {
 			this->_gainedScore = 300;
 			this->_brokeCombo = false;
-		} else if (diff < 100 + 40 * (5 - this->_difficulty.overallDifficulty) / 5) {
+		} else if (diff < 280 - 16 * this->_difficulty.overallDifficulty) {
 			this->_gainedScore = 100;
 			this->_brokeCombo = false;
-		} else if (diff < 150 + 50 * (5 - this->_difficulty.overallDifficulty) / 5) {
+		} else if (diff < 400 - 20 * this->_difficulty.overallDifficulty) {
 			this->_gainedScore = 50;
 			this->_brokeCombo = false;
 		}

@@ -82,6 +82,7 @@ namespace OsuReplayPlayer
 
 		virtual void draw(RenderTarget &target, const ReplayState &state) = 0;
 		virtual void update(const ReplayState &state) = 0;
+		virtual void click(const ReplayState &state) = 0;
 	};
 }
 

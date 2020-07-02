@@ -43,4 +43,9 @@ namespace OsuReplayPlayer::HitObjects
 	{
 
 	}
+
+	void Spinner::click(const ReplayState &)
+	{
+
+	}
 }

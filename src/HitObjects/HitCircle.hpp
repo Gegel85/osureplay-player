@@ -14,7 +14,7 @@ namespace OsuReplayPlayer::HitObjects
 	public:
 		HitCircle(const OsuMap_hitObject &obj, MapState &state, bool endsCombo);
 		void draw(RenderTarget &target, const ReplayState &state) override;
-
+		void click(const ReplayState &state) override;
 		void update(const ReplayState &state) override;
 	};
 }

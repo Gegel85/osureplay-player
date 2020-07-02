@@ -26,7 +26,7 @@ namespace OsuReplayPlayer
 		bool isK2Pressed() const override;
 		bool isM1Pressed() const override;
 		bool isM2Pressed() const override;
-		void update(float timeElapsed) override;
+		void update(float timeElapsed, const std::function<void (float time)> &onClick, const std::function<void (float time)> &onMove) override;
 	};
 }
 

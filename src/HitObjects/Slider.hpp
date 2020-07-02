@@ -47,6 +47,7 @@ namespace OsuReplayPlayer::HitObjects
 		bool hasExpired(ReplayState &state) const override;
 		OsuIntegerVector getScoreParticlePosition() const override;
 		void update(const ReplayState &state) override;
+		void click(const ReplayState &state) override;
 	};
 }
 
