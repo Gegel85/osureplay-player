@@ -28,18 +28,24 @@ namespace OsuReplayPlayer
 		unsigned currentGameHitObject = 0;
 		unsigned currentTimingPt = 0;
 		unsigned combo = 0;
+		unsigned totalScore;
 		bool perfectCombo = true;
 		OsuMap_timingPointEvent timingPt;
+	};
+
+	struct ReplayConfig {
+		unsigned frameRate;
+		unsigned char bgDim;
 	};
 
 	class ReplayPlayer {
 	private:
 		sf::Vector2i _bgPos;
 		sf::Vector2f _bgSize;
+		ReplayConfig _config;
 		ReplayController _controller;
 		bool _musicStarted = false;
 		float _preempt;
-		unsigned _fps;
 		OsuSkin _skin;
 		OsuMap _beatmap;
 		OsuReplay _replay;
@@ -61,7 +67,7 @@ namespace OsuReplayPlayer
 		void _drawScoreResult(HitObject &obj);
 
 	public:
-		ReplayPlayer(RenderTarget &target, SoundManager &sound, const std::string &beatmapPath, const std::string &replayPath, unsigned fps = 60);
+		ReplayPlayer(RenderTarget &target, SoundManager &sound, const std::string &beatmapPath, const std::string &replayPath, const ReplayConfig &config);
 		~ReplayPlayer();
 		void displayMapInfos();
 		void displayReplayInfos();

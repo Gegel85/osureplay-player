@@ -13,8 +13,8 @@
 
 namespace OsuReplayPlayer
 {
-	ReplayPlayer::ReplayPlayer(RenderTarget &target, SoundManager &sound, const std::string &beatmapPath, const std::string &replayPath, unsigned fps) :
-		_fps(fps),
+	ReplayPlayer::ReplayPlayer(RenderTarget &target, SoundManager &sound, const std::string &beatmapPath, const std::string &replayPath, const ReplayConfig &config) :
+		_config(config),
 		_target(target),
 		_sound(sound)
 	{
@@ -42,11 +42,11 @@ namespace OsuReplayPlayer
 			this->_preempt += 600 * (5 - this->_beatmap.difficulty.approachRate) / 5;
 
 		if (this->_replay.mods & MODE_DOUBLE_TIME)
-			this->_totalFrames = this->_replay.replayLength * fps / 1500 + 1;
+			this->_totalFrames = this->_replay.replayLength * config.frameRate / 1500 + 1;
 		else if (this->_replay.mods & MODE_HALF_TIME)
-			this->_totalFrames = this->_replay.replayLength * fps / 750 + 1;
+			this->_totalFrames = this->_replay.replayLength * config.frameRate / 750 + 1;
 		else
-			this->_totalFrames = this->_replay.replayLength * fps / 1000 + 1;
+			this->_totalFrames = this->_replay.replayLength * config.frameRate / 1000 + 1;
 
 		try {
 			this->_skin.addSound(std::filesystem::path(beatmapPath).parent_path().append(this->_beatmap.generalInfos.audioFileName).string(), "__bgMusic");
@@ -262,14 +262,14 @@ namespace OsuReplayPlayer
 
 			std::cout << "Rendering frame " << currentFrame++ << "/" << this->_totalFrames << std::endl;
 			this->_target.renderFrame();
-			this->_sound.tick(currentFrame, this->_fps);
+			this->_sound.tick(currentFrame, this->_config.frameRate);
 
 			if (this->_replay.mods & MODE_DOUBLE_TIME)
-				this->_state.elapsedTime = 1500.f * currentFrame / this->_fps;
+				this->_state.elapsedTime = 1500.f * currentFrame / this->_config.frameRate;
 			else if (this->_replay.mods & MODE_HALF_TIME)
-				this->_state.elapsedTime = 750.f * currentFrame / this->_fps;
+				this->_state.elapsedTime = 750.f * currentFrame / this->_config.frameRate;
 			else
-				this->_state.elapsedTime = 1000.f * currentFrame / this->_fps;
+				this->_state.elapsedTime = 1000.f * currentFrame / this->_config.frameRate;
 			this->_updateState();
 		}
 	}
@@ -340,6 +340,7 @@ namespace OsuReplayPlayer
 			this->_state.combo = 0;
 		this->_state.perfectCombo &= obj.getScore() == 300;
 		this->_state.combo++;
+		this->_state.totalScore += obj.getScore() * this->_state.combo;
 		this->_drawScoreResult(obj);
 		this->_state.perfectCombo |= obj.isNewCombo();
 	}
@@ -348,7 +349,7 @@ namespace OsuReplayPlayer
 	{
 		for (auto &particle : this->_particles) {
 			particle.draw(this->_target);
-			particle.update(1000.f / this->_fps);
+			particle.update(1000.f / this->_config.frameRate);
 		}
 		this->_particles.erase(
 			std::remove_if(
@@ -404,7 +405,7 @@ namespace OsuReplayPlayer
 			this->_bgPos,
 			this->_skin.getImage("__bgPicture"),
 			this->_bgSize,
-			50
+			this->_config.bgDim
 		);
 	}
 }

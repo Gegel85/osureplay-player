@@ -69,6 +69,11 @@ namespace OsuReplayPlayer
 	public:
 		SystemCallFailedException(const std::string &msg) : BaseException(msg) {};
 	};
+
+	class InvalidCommandLineArgumentException : public BaseException {
+	public:
+		InvalidCommandLineArgumentException(const std::string &msg) : BaseException(msg) {};
+	};
 }
 
 

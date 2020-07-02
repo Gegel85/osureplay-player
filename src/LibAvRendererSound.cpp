@@ -298,6 +298,7 @@ namespace OsuReplayPlayer
 		if (!c)
 			throw AvErrorException("Could not alloc an encoding context");
 
+		printf("Bitrate is %llu\n", bitRate);
 		c->codec_id = this->_fmtContext->oformat->video_codec;
 		c->bit_rate = bitRate;
 
