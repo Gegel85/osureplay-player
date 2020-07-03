@@ -182,7 +182,28 @@ namespace OsuReplayPlayer
 	}
 }
 
+#ifndef _DEBUG
+
+#include "Utils.hpp"
+
+int realMain(int argc, char **argv);
+
 int main(int argc, char **argv)
+{
+	try {
+		return realMain(argc, argv);
+	} catch (std::exception &e) {
+		std::cerr << "An unexpected error occured:" << std::endl;
+		std::cerr << OsuReplayPlayer::Utils::getLastExceptionName() << ": " << std::endl;
+		std::cerr << "\t" << e.what() << std::endl;
+		return EXIT_FAILURE;
+	}
+}
+
+int realMain(int argc, char **argv)
+#else
+int main(int argc, char **argv)
+#endif
 {
 	std::cout << "OsuReplayPlayer v" << PLAYER_VERSION << std::endl << std::endl;
 
@@ -208,6 +229,10 @@ int main(int argc, char **argv)
 			.frameRate = 60,
 			.bgDim = 0
 		},
+		.beatmapPath = "",
+		.replayPath = "",
+		.outputPath = "",
+		.skinPath = "",
 		.debug = false
 	};
 

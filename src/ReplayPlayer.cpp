@@ -24,6 +24,10 @@ namespace OsuReplayPlayer
 			std::cerr << "Replay file (" << replayPath << ") is not valid: " << this->_replay.error << std::endl;
 			throw InvalidReplayException(this->_replay.error);
 		}
+
+		if (this->_replay.mode != GAME_OSU_STANDARD)
+			throw InvalidReplayException("Only osu! standard replays are supported yet.");
+
 		this->_controller.setEvents(this->_replay.gameEvents);
 
 		std::cout << "Loading beatmap file " << beatmapPath << std::endl;
