@@ -65,8 +65,9 @@ namespace OsuReplayPlayer::HitObjects
 		auto dist =
 			std::pow(state.cursorPos.x - this->getPosition().x, 2) +
 			std::pow(state.cursorPos.y - this->getPosition().y, 2);
+		auto radius = std::pow(this->getRadius(), 2);
 
-		if (std::pow(this->getRadius(), 2) < dist)
+		if (radius < dist)
 			return;
 
 		double diff = std::abs(this->getTimeToAppear() - state.elapsedTime);

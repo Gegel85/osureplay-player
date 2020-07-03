@@ -50,7 +50,7 @@ namespace OsuReplayPlayer::HitObjects
 		}
 		this->_end = infos->curvePoints.content[infos->curvePoints.length - 1];
 		this->_type = static_cast<OsuSliderShape>(infos->type);
-		this->_makeCurve();
+		//this->_makeCurve();
 
 		if (this->_angles.size() < this->_points.size())
 			this->_angles.resize(this->_points.size());

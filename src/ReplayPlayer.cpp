@@ -322,6 +322,7 @@ namespace OsuReplayPlayer
 
 		this->_controller.update(this->_state.elapsedTime, [this](float time){
 			this->_state.elapsedTime = time;
+			this->_state.cursorPos = this->_controller.getPosition();
 			if (this->_state.currentGameHitObject < this->_objs.size()) {
 				this->_objs[this->_state.currentGameHitObject]->click(this->_state);
 				if (this->_objs[this->_state.currentGameHitObject]->hasExpired(this->_state)) {
@@ -331,6 +332,7 @@ namespace OsuReplayPlayer
 			}
 		}, [this](float time){
 			this->_state.elapsedTime = time;
+			this->_state.cursorPos = this->_controller.getPosition();
 			if (this->_state.currentGameHitObject < this->_objs.size()) {
 				this->_objs[this->_state.currentGameHitObject]->update(this->_state);
 				if (this->_objs[this->_state.currentGameHitObject]->hasExpired(this->_state)) {
