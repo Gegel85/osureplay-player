@@ -442,8 +442,10 @@ namespace OsuReplayPlayer
 
 		for (; this->_i < currentFrame * SAMPLE_RATE / framePerSeconds; this->_i++) {
 			for (auto &sound : this->_sounds) {
-				if (sound.sound.get()[0].size() > sound.pos) {
-					int diff = sound.sound.get()[0][sound.pos] * this->_volume / 2.;
+				auto &s = sound.sound.get();
+
+				if (s.getNbChannels() && s[0].size() > sound.pos) {
+					int diff = s[0][sound.pos] * this->_volume / 2.;
 
 					buffer[this->_index] = std::max(INT16_MIN, std::min(INT16_MAX, buffer[this->_index] + diff));
 					sound.pos += sound.pitch;
