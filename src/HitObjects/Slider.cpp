@@ -201,7 +201,8 @@ namespace OsuReplayPlayer::HitObjects
 
 		if (this->getTimeToAppear() < state.elapsedTime) {
 			double ptId = this->_points.size() * std::fmod(state.elapsedTime - this->getTimeToAppear(), len) / len;
-			auto angle = this->_angles.at(ptId);
+			double angle = this->_angles.at(ptId);
+
 			auto currentLoop = static_cast<unsigned>((state.elapsedTime - this->getTimeToAppear()) / len);
 			size_t end = this->_points.size() - 1;
 
@@ -353,8 +354,19 @@ namespace OsuReplayPlayer::HitObjects
 		OsuIntegerVector diff;
 		std::vector<OsuIntegerVector> array;
 
+		for (size_t i = 0; i < this->_points.size() - 1; i++) {
+			if (this->_points[i].x == this->_points[i + 1].x && this->_points[i].y == this->_points[i + 1].y) {
+				this->_points.erase(this->_points.begin() + i);
+				i--;
+			}
+		}
+
+		if (this->_points.size() == 1)
+			return;
+
 		if (this->_points.size() != 2)
 			throw InvalidSliderException("Invalid linear slider: there is more than a single point");
+
 		diff = {
 			this->_points[1].x - this->_points[0].x,
 			this->_points[1].y - this->_points[0].y
