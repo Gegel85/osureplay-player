@@ -207,7 +207,7 @@ namespace OsuReplayPlayer::HitObjects
 
 			if (currentLoop % 2 == 1) {
 				ptId = this->_points.size() - ptId - 1;
-				angle += M_PI;
+				angle = this->_angles.at(ptId) + M_PI;
 				end = 0;
 			}
 
@@ -239,7 +239,7 @@ namespace OsuReplayPlayer::HitObjects
 					},
 					{0, 0, 0,255},
 					true,
-					this->_angles.at(ptId)
+					angle
 				);
 
 			target.drawImage(
