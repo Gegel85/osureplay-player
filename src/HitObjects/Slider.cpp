@@ -17,18 +17,6 @@
 #define M_PI_2 1.57079632679489661923
 #endif
 
-template<typename _Tp>
-struct __less : public std::binary_function<_Tp, _Tp, bool>
-{
-	constexpr bool operator()(const _Tp& v1, const _Tp& v2) const
-	{
-		size_t val1 = (static_cast<size_t>(v1.y) << 32U) | (static_cast<size_t>(v1.x) & 0xFFFFFFFFU);
-		size_t val2 = (static_cast<size_t>(v2.y) << 32U) | (static_cast<size_t>(v2.x) & 0xFFFFFFFFU);
-
-		return val1 < val2;
-	}
-};
-
 namespace OsuReplayPlayer::HitObjects
 {
 	Slider::Slider(const OsuMap_hitObject &obj, MapState &state, bool endsCombo) :
@@ -55,30 +43,78 @@ namespace OsuReplayPlayer::HitObjects
 		if (this->_angles.size() < this->_points.size())
 			this->_angles.resize(this->_points.size());
 
+		while (this->_skin.hasImage("sliderb" + std::to_string(this->_maxBallAnimation)))
+			this->_maxBallAnimation++;
+
 		double radius = this->getRadius();
 		double sqRadius = radius * radius;
-		std::set<sf::Vector2i, __less<sf::Vector2i>> _temp;
+		std::vector<sf::Vector2i> _temp;
 		sf::Vector2i _bottomRight = {INT32_MIN, INT32_MIN};
 
 		this->_topLeft = {INT32_MAX, INT32_MAX};
 		this->_gainedScore = 300;
 		this->_brokeCombo = false;
 
+		_temp.reserve(this->_points.size() * sqRadius * 4);
 		for (auto &pt : this->_points)
 			for (int x = -radius; x <= radius; x++)
 				for (int y = -radius; y <= radius; y++)
 					if (pow(x, 2) + pow(y, 2) <= sqRadius) {
 						sf::Vector2i point(x + pt.x, y + pt.y);
 
-						_temp.emplace(point);
+						_temp.push_back(point);
 						this->_topLeft.x = std::min(this->_topLeft.x, point.x);
 						this->_topLeft.y = std::min(this->_topLeft.y, point.y);
 						_bottomRight.x = std::max(_bottomRight.x, point.x);
 						_bottomRight.y = std::max(_bottomRight.y, point.y);
 					}
+
 		this->_image.create(_bottomRight.x - this->_topLeft.x + 1, _bottomRight.y - this->_topLeft.y + 1, sf::Color::Transparent);
 		for (auto &pt : _temp)
-			this->_image.setPixel(pt.x - this->_topLeft.x, pt.y - this->_topLeft.y, {255, 255, 255, 255});
+			this->_image.setPixel(pt.x - this->_topLeft.x, pt.y - this->_topLeft.y, state.skin.getProperty<sf::Color>("Colours", "SliderBorder"));
+
+		sf::Color color =
+			state.skin.isPropertySet("Colours", "SliderTrackOverride") ?
+			state.skin.getProperty<sf::Color>("Colours", "SliderTrackOverride") :
+			sf::Color{
+				state.colors.content[state.lastColor].red,
+				state.colors.content[state.lastColor].green,
+				state.colors.content[state.lastColor].blue
+			};
+
+		const sf::Color baseColor = color;
+		const sf::Color endColor = {
+			static_cast<sf::Uint8>(color.r * 75 / 100),
+			static_cast<sf::Uint8>(color.g * 75 / 100),
+			static_cast<sf::Uint8>(color.b * 75 / 100),
+			255
+		};
+		const double baseRadius = radius - 4;
+
+		radius -= 4;
+		sqRadius = radius * radius;
+		color.a = 255;
+		while (radius > 4) {
+			color.r = std::min(255., endColor.r + baseColor.r * (255 - endColor.r) * (1 - (radius + 6) / baseRadius) / 255);
+			color.g = std::min(255., endColor.g + baseColor.g * (255 - endColor.g) * (1 - (radius + 6) / baseRadius) / 255);
+			color.b = std::min(255., endColor.b + baseColor.b * (255 - endColor.b) * (1 - (radius + 6) / baseRadius) / 255);
+
+			_temp.clear();
+			_temp.reserve(this->_points.size() * sqRadius * 4);
+			for (auto &pt : this->_points)
+				for (int x = -radius; x <= radius; x++)
+					for (int y = -radius; y <= radius; y++)
+						if (pow(x, 2) + pow(y, 2) <= sqRadius) {
+							sf::Vector2i point(x + pt.x, y + pt.y);
+
+							_temp.push_back(point);
+						}
+
+			for (auto &pt : _temp)
+				this->_image.setPixel(pt.x - this->_topLeft.x, pt.y - this->_topLeft.y, color);
+			radius--;
+			sqRadius = radius * radius;
+		}
 	}
 
 	void Slider::draw(RenderTarget &target, const ReplayState &state)
@@ -88,9 +124,6 @@ namespace OsuReplayPlayer::HitObjects
 		auto len = this->_getTimeLength(state.timingPt);
 		double ptsBetweenPoints = state.timingPt.millisecondsPerBeat * this->_points.size() / len;
 
-		while (this->_skin.hasImage("sliderb" + std::to_string(this->_maxBallAnimation)))
-			this->_maxBallAnimation++;
-
 		target.drawImage(
 			{
 				static_cast<int>(this->_topLeft.x),
@@ -98,12 +131,7 @@ namespace OsuReplayPlayer::HitObjects
 			},
 			this->_image,
 			{-1, -1},
-			{
-				this->_color.red,
-				this->_color.green,
-				this->_color.blue,
-				alpha
-			},
+			{255, 255, 255, alpha},
 			false,
 			0
 		);

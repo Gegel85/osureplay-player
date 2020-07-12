@@ -74,6 +74,31 @@ namespace OsuReplayPlayer
 	public:
 		InvalidCommandLineArgumentException(const std::string &msg) : BaseException(msg) {};
 	};
+
+	class PropertyNotSetException : public BaseException {
+	public:
+		PropertyNotSetException(const std::string &msg) : BaseException(msg) {};
+	};
+
+	class InvalidColorException : public BaseException {
+	public:
+		InvalidColorException(const std::string &msg) : BaseException(msg) {};
+	};
+
+	class InvalidBoolException : public BaseException {
+	public:
+		InvalidBoolException(const std::string &msg) : BaseException(msg) {};
+	};
+
+	class InvalidLongException : public BaseException {
+	public:
+		InvalidLongException(const std::string &msg) : BaseException(msg) {};
+	};
+
+	class InvalidDoubleException : public BaseException {
+	public:
+		InvalidDoubleException(const std::string &msg) : BaseException(msg) {};
+	};
 }
 
 

@@ -244,13 +244,21 @@ int main(int argc, char **argv)
 		return EXIT_FAILURE;
 	}
 
+	std::vector<std::string> skins{
+		"default_skin"
+	};
+
+	if (!params.skinPath.empty())
+		skins.push_back(params.skinPath);
+	skins.push_back(std::filesystem::path(params.beatmapPath).parent_path().string());
+
 	std::cout << "Initializing..." << std::endl;
 	if (params.debug) {
 		auto *sfmlTarget = new OsuReplayPlayer::SFMLWindowRenderTarget(params.vc.resolution, "");
 
 		manager = std::make_unique<OsuReplayPlayer::SFMLSoundManager>();
 		target.reset(sfmlTarget);
-		state = new OsuReplayPlayer::ReplayPlayer(*target, *manager, params.beatmapPath, params.replayPath, params.rc);
+		state = new OsuReplayPlayer::ReplayPlayer(*target, *manager, params.beatmapPath, params.replayPath, params.rc, skins);
 
 		const auto &bm = state->getBeatmap();
 
@@ -258,7 +266,7 @@ int main(int argc, char **argv)
 		sfmlTarget->setTitle(std::string(state->getReplay().playerName) + " playing " + bm.metaData.artist + " - " + bm.metaData.title + " (" + bm.metaData.difficulty + ") mapped by " + bm.metaData.creator);
 	} else {
 		libAv = std::make_unique<OsuReplayPlayer::LibAvRendererSound>(params.outputPath, params.vc, params.ac);
-		state = new OsuReplayPlayer::ReplayPlayer(*libAv, *libAv, params.beatmapPath, params.replayPath, params.rc);
+		state = new OsuReplayPlayer::ReplayPlayer(*libAv, *libAv, params.beatmapPath, params.replayPath, params.rc, skins);
 	}
 
 #ifdef _DEBUG
@@ -268,12 +276,6 @@ int main(int argc, char **argv)
 	std::cout << "Map file: " << params.beatmapPath << std::endl;
 	state->displayMapInfos();
 #endif
-
-	std::cout << "Loading skins..." << std::endl;
-	state->getSkin().addFolder("default_skin");
-	if (!params.skinPath.empty())
-		state->getSkin().addFolder(params.skinPath);
-	state->getSkin().addFolder(std::filesystem::path(params.beatmapPath).parent_path().string());
 
 	state->run();
 	delete state;

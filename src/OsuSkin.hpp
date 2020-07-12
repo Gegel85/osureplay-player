@@ -10,6 +10,8 @@
 #include <map>
 #include <SFML/Graphics.hpp>
 #include "Sound.hpp"
+#include "Exceptions.hpp"
+#include "SimpleIni.h"
 
 namespace OsuReplayPlayer
 {
@@ -17,9 +19,14 @@ namespace OsuReplayPlayer
 	private:
 		Sound _emptySound;
 		sf::Image _emptyImage;
+		std::vector<std::string> _skinned;
 		std::map<std::string, Sound> _sounds;
 		std::map<std::string, sf::Image> _images;
-		std::vector<std::string> _skinned;
+		std::map<std::pair<std::string, std::string>, std::string> _properties;
+		mutable std::map<std::pair<std::string, std::string>, long> _propertiesLongCache;
+		mutable std::map<std::pair<std::string, std::string>, bool> _propertiesBoolCache;
+		mutable std::map<std::pair<std::string, std::string>, double> _propertiesDoubleCache;
+		mutable std::map<std::pair<std::string, std::string>, sf::Color> _propertiesColorCache;
 
 		static const std::map<std::string, std::function<void (OsuSkin *, const std::string &)>> _handlers;
 
@@ -32,6 +39,21 @@ namespace OsuReplayPlayer
 		bool hasSound(const std::string &name) const;
 		bool hasImage(const std::string &name) const;
 		bool isImageSkinned(const std::string &name) const;
+
+		template<typename T>
+		T getProperty(const std::string &section, const std::string &name) const;
+
+		template<typename T>
+		T getProperty(const std::string &section, const std::string &name, const T &defaultValue) const
+		{
+			try {
+				return this->getProperty<T>(section, name);
+			} catch (PropertyNotSetException &) {
+				return defaultValue;
+			}
+		}
+
+		bool isPropertySet(const std::string &section, const std::string &name) const;
 	};
 }
 

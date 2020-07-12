@@ -66,4 +66,32 @@ namespace OsuReplayPlayer::Utils {
 		size.x = std::max(size.x, buffer);
 		return size;
 	}
+
+	unsigned char stouc(const std::string &str)
+	{
+		unsigned long elem = std::stoul(str);
+
+		if (elem > 255)
+			throw std::out_of_range("Utils::stouc");
+		return elem;
+	}
+
+	std::vector<std::string> splitString(const std::string &str, const std::string &delim)
+	{
+		std::vector<std::string> tokens;
+		size_t prev = 0;
+		size_t pos = 0;
+
+		do {
+			pos = str.find(delim, prev);
+			if (pos == std::string::npos)
+				pos = str.length();
+
+			std::string token = str.substr(prev, pos - prev);
+
+			tokens.push_back(token);
+			prev = pos + delim.length();
+		} while (pos < str.length() && prev < str.length());
+		return tokens;
+	}
 }

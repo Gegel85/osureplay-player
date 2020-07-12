@@ -67,12 +67,18 @@ namespace OsuReplayPlayer
 		void _drawScoreResult(HitObject &obj);
 
 	public:
-		ReplayPlayer(RenderTarget &target, SoundManager &sound, const std::string &beatmapPath, const std::string &replayPath, const ReplayConfig &config);
+		ReplayPlayer(
+			RenderTarget &target,
+			SoundManager &sound,
+			const std::string &beatmapPath,
+			const std::string &replayPath,
+			const ReplayConfig &config,
+			const std::vector<std::string> &skins = {}
+		);
 		~ReplayPlayer();
 		void displayMapInfos();
 		void displayReplayInfos();
 		double getBeatmapAr();
-		OsuSkin &getSkin();
 		const OsuMap &getBeatmap() const;
 		const OsuReplay &getReplay() const;
 		void run();

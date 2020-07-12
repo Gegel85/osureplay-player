@@ -4,9 +4,17 @@
 
 #include <filesystem>
 #include <iostream>
+#include <csetjmp>
+#include <osu_map_parser.hpp>
+#include <fstream>
 #include "OsuSkin.hpp"
-#include "Exceptions.hpp"
 #include "Utils.hpp"
+
+extern "C" {
+	void OsuMap_deleteEmptyLines(char **lines);
+	OsuMapCategory *OsuMap_getCategories(char **lines, char *error_buffer, jmp_buf jump_buffer);
+	char **OsuMap_splitString(char *str, char separator, char *error_buffer, jmp_buf jump_buffer);
+}
 
 namespace OsuReplayPlayer
 {
@@ -33,6 +41,72 @@ namespace OsuReplayPlayer
 					std::cerr << p.string() << " ignored: " << Utils::getLastExceptionName() << ": " << e.what() << std::endl;
 				}
 		}
+
+		std::cout << "Loading file " << path << "/skin.ini" << std::endl;
+
+		std::ifstream stream{path + "/skin.ini"};
+		std::string string{
+			std::istreambuf_iterator<char>{stream},
+			std::istreambuf_iterator<char>{}
+		};
+
+		if (stream.fail()) {
+			std::cerr << "Cannot load " << path << "/skin.ini: " << strerror(errno) << std::endl;
+			return;
+		}
+
+		auto str = strdup(string.c_str());
+		char error[PATH_MAX + 1024];
+		jmp_buf jump_buffer;
+		char **lines = nullptr;
+		OsuMapCategory *categories = nullptr;
+
+		//Init the error handler
+		if (setjmp(jump_buffer)) {
+			std::cerr << "Cannot load " << path << "/skin.ini: " << error << std::endl;
+			for (int i = 0; categories && categories[i].lines; i++)
+				free(categories[i].lines);
+			free(categories);
+			free(lines);
+			free(str);
+			return;
+		}
+
+		lines = OsuMap_splitString(str, '\n', error, jump_buffer);
+		OsuMap_deleteEmptyLines(lines);
+
+		if (!*lines) {
+			free(lines);
+			free(str);
+			return;
+		}
+		categories = OsuMap_getCategories(lines, error, jump_buffer);
+
+		for (int i = 0; categories && categories[i].lines; i++) {
+			std::cout << "[" << categories[i].name << "]" << std::endl;
+			for (int j = 0; categories[i].lines[j]; j++) {
+				char *elem = strchr(categories[i].lines[j], ':');
+
+				if (!elem)
+					continue;
+
+				*elem = '\0';
+				do {
+					elem++;
+				} while (std::isspace(*elem) && *elem);
+
+				this->_properties[{
+					categories[i].name,
+					categories[i].lines[j]
+				}] = elem;
+			}
+		}
+
+		for (int i = 0; categories && categories[i].lines; i++)
+			free(categories[i].lines);
+		free(categories);
+		free(lines);
+		free(str);
 	}
 
 	const std::map<std::string, std::function<void (OsuSkin *, const std::string &)>> OsuSkin::_handlers{
@@ -117,5 +191,94 @@ namespace OsuReplayPlayer
 	bool OsuSkin::isImageSkinned(const std::string &name) const
 	{
 		return std::find(this->_skinned.begin(), this->_skinned.end(), name) != this->_skinned.end();
+	}
+
+	template <> std::string OsuSkin::getProperty<std::string>(const std::string &section, const std::string &name) const
+	{
+		try {
+			return this->_properties.at({section.c_str(), name.c_str()});
+		} catch (std::out_of_range &) {
+			throw PropertyNotSetException("[" + section + "]: " + name + " is not set.");
+		}
+	}
+
+	template <> bool OsuSkin::getProperty<bool>(const std::string &section, const std::string &name) const
+	{
+		try {
+			return this->_propertiesBoolCache.at({section, name});
+		} catch (std::out_of_range &e) {}
+
+		auto elem = this->getProperty<std::string>(section, name);
+
+		if (elem == "false")
+			return this->_propertiesBoolCache[{section, name}] = false;
+		if (elem == "true")
+			return this->_propertiesBoolCache[{section, name}] = true;
+
+		try {
+			return this->_propertiesBoolCache[{section, name}] = std::stoul(elem);
+		} catch (std::exception &e) {
+			throw InvalidBoolException("[" + section + "] " + name + ": " + e.what());
+		}
+	}
+
+	template <> double OsuSkin::getProperty<double>(const std::string &section, const std::string &name) const
+	{
+		try {
+			return this->_propertiesDoubleCache.at({section, name});
+		} catch (std::out_of_range &e) {}
+
+		try {
+			return this->_propertiesDoubleCache[{section, name}] = std::stod(this->getProperty<std::string>(section, name));
+		} catch (std::exception &e) {
+			throw InvalidDoubleException("[" + section + "] " + name + ": " + e.what());
+		}
+	}
+
+	template <> long OsuSkin::getProperty<long>(const std::string &section, const std::string &name) const
+	{
+		try {
+			return this->_propertiesLongCache.at({section, name});
+		} catch (std::out_of_range &e) {}
+
+		try {
+			return this->_propertiesLongCache[{section, name}] = std::stol(this->getProperty<std::string>(section, name));
+		} catch (std::exception &e) {
+			throw InvalidLongException("[" + section + "] " + name + ": " + e.what());
+		}
+	}
+
+	template <> sf::Color OsuSkin::getProperty<sf::Color>(const std::string &section, const std::string &name) const
+	{
+		try {
+			return this->_propertiesColorCache.at({section, name});
+		} catch (std::out_of_range &e) {}
+
+		auto property = this->getProperty<std::string>(section, name);
+		auto color = Utils::splitString(property, ",");
+
+		if (color.size() < 3)
+			throw InvalidColorException("[" + section + "] " + name + ": \"" + property + "\" is not a valid color.");
+
+		try {
+			return this->_propertiesColorCache[{section, name}] = {
+				Utils::stouc(color[0]),
+				Utils::stouc(color[1]),
+				Utils::stouc(color[2]),
+				color.size() == 3 ? static_cast<unsigned char>(255) : Utils::stouc(color[3])
+			};
+		} catch (std::exception &e) {
+			throw InvalidColorException("[" + section + "] " + name + ": " + e.what());
+		}
+	}
+
+	bool OsuSkin::isPropertySet(const std::string &section, const std::string &name) const
+	{
+		try {
+			this->getProperty<std::string>(section, name);
+			return true;
+		} catch (PropertyNotSetException &) {
+			return false;
+		}
 	}
 }

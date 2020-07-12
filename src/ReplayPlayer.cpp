@@ -13,11 +13,22 @@
 
 namespace OsuReplayPlayer
 {
-	ReplayPlayer::ReplayPlayer(RenderTarget &target, SoundManager &sound, const std::string &beatmapPath, const std::string &replayPath, const ReplayConfig &config) :
+	ReplayPlayer::ReplayPlayer(
+		RenderTarget &target,
+		SoundManager &sound,
+		const std::string &beatmapPath,
+		const std::string &replayPath,
+		const ReplayConfig &config,
+		const std::vector<std::string> &skins
+	) :
 		_config(config),
 		_target(target),
 		_sound(sound)
 	{
+		std::cout << "Loading skins" << std::endl;
+		for (auto &skin : skins)
+			this->_skin.addFolder(skin);
+
 		std::cout << "Loading replay file " << replayPath << std::endl;
 		this->_replay = OsuReplay_parseReplayFile(replayPath.c_str());
 		if (this->_replay.error) {
@@ -206,11 +217,6 @@ namespace OsuReplayPlayer
 		std::cout << "Timestamp: " << std::hex << this->_replay.timestamp << std::endl;
 		std::cout << "Something: " << this->_replay.something << std::endl;
 		std::cout << "Replay length: " << std::dec << this->_replay.replayLength << std::endl << std::endl;
-	}
-
-	OsuSkin &ReplayPlayer::getSkin()
-	{
-		return this->_skin;
 	}
 
 	void ReplayPlayer::_buildHitObjects()
